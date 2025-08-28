@@ -17,8 +17,11 @@ var getCmd = &cobra.Command{
 	Short: "List resources of a defined type e.g. process instances",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		_ = strings.ToLower(args[0])
+		rn := strings.ToLower(args[0])
+		switch rn {
+		case "cluster":
 
+		}
 	},
 }
 
