@@ -1,0 +1,2684 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Camunda 8 API (REST)",
+    "description": "## 🚀 Overview\n\nThe Camunda 8 API is a REST API designed to interact with a Camunda 8 cluster. Requests and responses are in JSON notation.\n\nTake a closer look at Camunda's Camunda 8 API (REST) documentation, and see [the interactive Camunda 8 REST API Explorer](https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/camunda-8-rest-api/) for specifications, example requests and responses, and code samples of interacting with the Camunda 8 REST API.\n\nFor SaaS: `https://${REGION}.zeebe.camunda.io:443/${CLUSTER_ID}/v2/`, and for Self-Managed installations: `http://localhost:8080/v2/`.\n\n**Note: The Camunda 8 REST API only supports user tasks managed by Camunda (formerly known as** [<b>Zeebe user tasks</b>](https://docs.camunda.io/docs/next/apis-tools/migration-manuals/migrate-to-camunda-user-tasks/)**, which may still appear as such in your XML content).**\n\n## 💪 What do you need to make it work?\n\n### Authentication\n\nAll requests to the Camunda 8 API require [authentication](https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/camunda-api-rest-authentication/).\n\nThis Postman collection is configured to automatically handle the authentication process if:\n\n- You are using the SaaS offering of Camunda\n    \n- You provide an API client ID and secret\n    \n\n### 1\\. Configure an API client\n\nTo interact with the Camunda 8 API programmatically, [create client credentials](https://docs.camunda.io/docs/guides/setup-client-connection-credentials/) in your cluster's settings under the **API** tab.\n\n**After client credentials are created, the** **`Client secret`** **is only shown once. Save this** **`Client secret`** **somewhere safe.**\n\n### 2\\. Configure a Postman environment\n\nEnable the \"Camunda SaaS\" environment in Postman. From the Camunda 8 Postman workspace, click the **Environments** tab on the left side of the page, mouse over **Camunda SaaS**, and click the **Set active** checkmark icon. See the [Postman documentation](https://learning.postman.com/docs/sending-requests/variables/managing-environments/) on managing environments for more information.\n\nConfigure the `Current value` of the following variables in the environment:\n\n- `authorizationServerUrl` - The URL of the authorization server. For the SaaS offering, this is `https://login.cloud.camunda.io/oauth/token`.\n    \n- `camundaApiAudience` - The audience associated with the API client. For the SaaS offering, this is `zeebe.camunda.io`.\n    \n- `camundaApiBaseUrl` - The base URL of your Camunda 8 instance. For the SaaS offering, this is `https://${REGION}.zeebe.camunda.io:443/${CLUSTER_ID}/v2/`, and can be captured from your API client connection information in the Camunda 8 Console.\n    \n- `camundaApiClientId` - The client ID of the API client you created in the Camunda 8 Console.\n    \n- `camundaApiClientSecret` - The client secret of the API client you created in the Camunda 8 Console.\n    \n\nWith these values configured, a pre-request script defined on the collection will automatically retrieve an access token before each request, and store it in the `camundaApiBearerToken` variable. If you forget to configure any of these variables, requests will show a failed test with an error message indicating the unconfigured variable.\n\nIf you prefer to manually manage the access token, configure its value in the `camundaApiBearerToken` variable.\n\nThe access token is automatically included in the headers of every request in the collection: `Authorization: Bearer {{camundaApiBearerToken}}`.\n\n### 3\\. Make requests to the API\n\nWith the environment configured, you can now make requests to the Camunda 8 API. The collection includes a variety of requests to get cluster topology, activate or fail jobs, and more.\n\nSee [the Camunda 8 documentation](https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/camunda-8-rest-api/) for more information on the available endpoints and their usage.\n\n### Common issues\n\n#### No request made, 1/2 tests pass\n\nIf it appears no request was made, and the **Test Results** tab shows a failing test, there is likely misconfigured data. Common issues include:\n\n- No environment selected.\n    \n- Unconfigured `authorizationServerUrl`, `camundaApiAudience`, `camundaApiBaseUrl`, `camundaApiClientId`, or `camundaApiClientSecret` variables.\n    \n- Improperly formed access token.\n    \n\n#### Error message: \"There was an error in evaluating the Pre-request Script:Error: No data, empty input at 1:1 ^\"\n\nAdditional information can be found in the Postman console. This error may indicate a problem with credentials, such as an invalid `camundaApiClientId` or `camundaApiClientSecret`.\n\n#### 403 Forbidden response\n\nA 403 Forbidden response may indicate insufficient permissions for the API client. Ensure the client has the necessary scopes and permissions to perform the requested operation.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "servers": [
+    {
+      "url": "{{camundaApiBaseUrl}}"
+    }
+  ],
+  "paths": {
+    "/clock": {
+      "put": {
+        "tags": [
+          "Clock"
+        ],
+        "summary": "Pin internal clock (alpha)",
+        "description": "Set a precise, static time for the Zeebe engine’s internal clock. When the clock is pinned, it remains at the specified time and does not advance. To change the time, the clock must be pinned again with a new timestamp.",
+        "operationId": "pinInternalClockAlpha",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "timestamp": {
+                    "type": "number",
+                    "example": 0
+                  }
+                }
+              },
+              "examples": {
+                "Pin internal clock (alpha)": {
+                  "value": {
+                    "timestamp": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/clock/reset": {
+      "post": {
+        "tags": [
+          "Clock"
+        ],
+        "summary": "Reset internal clock (alpha)",
+        "description": "Resets the Zeebe engine’s internal clock to the current system time, enabling it to tick in real-time. This operation is useful for returning the clock to normal behavior after it has been pinned to a specific time.",
+        "operationId": "resetInternalClockAlpha",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/topology": {
+      "get": {
+        "tags": [
+          "Cluster"
+        ],
+        "summary": "Get cluster typology",
+        "description": "Obtains the current topology of the cluster the gateway is part of.\n\n**Schema**\n\n**brokers**object\\[\\] _nullable_\n\nA list of brokers that are part of this cluster.\n\nArray \\[\n\n**nodeId** int32\n\nThe unique (within a cluster) node ID for the broker.\n\n**host** string\n\nThe hostname for reaching the broker.\n\n**port** int32\n\nThe port for reaching the broker.\n\n**partitions** object\\[\\]\n\n**version** string\n\nThe broker version.\n\n\\]\n\n**clusterSize** int32 _nullable_\n\nThe number of brokers in the cluster.\n\n**partitionsCount** int32 _nullable_\n\nThe number of partitions are spread across the cluster.\n\n**replicationFactor** int32 _nullable_\n\nThe configured replication factor for this cluster.\n\n**gatewayVersion** string _nullable_\n\nThe version of the Zeebe Gateway.",
+        "operationId": "getClusterTypology",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/decision-definitions/search": {
+      "post": {
+        "tags": [
+          "Decision definition"
+        ],
+        "summary": "Query decision definitions (alpha)",
+        "description": "Search for decision definitions based on given criteria.\n\n**Schema**\n\n**page** object\n\n**totalItems** int64\n\n**firstSortValues** object\\[\\]\n\n**lastSortValues** object\\[\\]\n\n**items** object\\[\\]\n\nArray \\[\n\n**decisionDefinitionKey** int64\n\nThe assigned key, which acts as a unique identifier for this decision definition.\n\n**decisionDefinitionId** string\n\nThe DMN id of the decision definition.\n\n**decisionDefinitionName** string\n\nThe DMN name of the decision definition.\n\n**version** int32\n\nThe assigned version of the decision definition.\n\n**decisionRequirementsId** string\n\nthe DMN id of the decision requirements graph that the decision definition is part of.\n\n**decisionRequirementsKey** int64\n\nThe assigned key of the decision requirements graph that the decision definition is part of.\n\n**tenantId** string\n\nThe tenant id of the decision definition.\n\n\\]",
+        "operationId": "queryDecisionDefinitionsAlpha",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "object",
+                    "properties": {
+                      "decisionKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "decisionRequirementsKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "dmnDecisionId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "dmnDecisionName": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "dmnDecisionRequirementsId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "tenantId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "version": {
+                        "type": "number",
+                        "example": 0
+                      }
+                    }
+                  },
+                  "page": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "limit": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "searchAfter": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      },
+                      "searchBefore": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "order": {
+                          "type": "string",
+                          "example": "asc"
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "Query decision definitions (alpha)": {
+                  "value": {
+                    "filter": {
+                      "decisionKey": 0,
+                      "decisionRequirementsKey": 0,
+                      "dmnDecisionId": "string",
+                      "dmnDecisionName": "string",
+                      "dmnDecisionRequirementsId": "string",
+                      "tenantId": "string",
+                      "version": 0
+                    },
+                    "page": {
+                      "from": 0,
+                      "limit": 0,
+                      "searchAfter": [
+                        {}
+                      ],
+                      "searchBefore": [
+                        {}
+                      ]
+                    },
+                    "sort": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/decision-definitions/{decisionKey}/xml": {
+      "get": {
+        "tags": [
+          "Decision definition"
+        ],
+        "summary": "Get decision definition XML (alpha)",
+        "description": "Returns decision definition as XML.",
+        "operationId": "getDecisionDefinitionXmlAlpha",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "decisionKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/decision-definitions/evaluation": {
+      "post": {
+        "tags": [
+          "Decision definition"
+        ],
+        "summary": "Evaluate decision",
+        "description": "Evaluates a decision. You specify the decision to evaluate either by using its unique key (as returned by DeployResource), or using the decision ID. When using the decision ID, the latest deployed version of the decision is used.",
+        "operationId": "evaluateDecision",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "decisionDefinitionKey": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "tenantId": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "examples": {
+                "Evaluate decision": {
+                  "value": {
+                    "decisionDefinitionKey": 0,
+                    "tenantId": "string",
+                    "variables": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/decision-instances/search": {
+      "post": {
+        "tags": [
+          "Decision instance"
+        ],
+        "summary": "Query decision instances (alpha)",
+        "description": "Search for decision instances based on given criteria.\n\n**Schema**\n\n**page** object\n\n**totalItems** int64\n\n**firstSortValues** object\\[\\]\n\n**lastSortValues** object\\[\\]\n\n**items** object\\[\\]\n\nArray \\[\n\n**key** int64\n\nThe key of the decision instance.\n\n**state** DecisionInstanceStateEnum\n\n**Possible values:** \\[`EVALUATED`, `FAILED`, `UNKNOWN`, `UNSPECIFIED`\\]\n\nThe state of the decision instance.\n\n**evaluationDate** date-time\n\nThe evaluation date of the decision instance.\n\n**evaluationFailure** string\n\nThe evaluation failure of the decision instance.\n\n**processDefinitionKey** int64\n\nThe key of the process definition.\n\n**processInstanceKey** int64\n\nThe key of the process instance.\n\n**decisionDefinitionKey** int64\n\nThe key of the decision.\n\n**decisionDefinitionId** string\n\nThe ID of the DMN decision.\n\n**decisionDefinitionName** string\n\nThe name of the DMN decision.\n\n**decisionDefinitionVersion** int32\n\nThe version of the decision.\n\n**decisionDefinitionType** DecisionInstanceTypeEnum\n\n**Possible values:** \\[`DECISION`, `DECISION_TABLE`, `LITERAL_EXPRESSION`, `RELATION`, `UNSPECIFIED`, `UNKNOWN`\\]\n\nThe type of the decision.\n\n**result** string\n\nThe result of the decision instance.\n\n**tenantId** string\n\nThe tenant ID of the decision instance.\n\n\\]",
+        "operationId": "queryDecisionInstancesAlpha",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "object",
+                    "properties": {
+                      "decisionDefinitionId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "decisionDefinitionKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "decisionDefinitionName": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "decisionDefinitionVersion": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "evaluationFailure": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "key": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "processDefinitionKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "processInstanceKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "tenantId": {
+                        "type": "string",
+                        "example": "string"
+                      }
+                    }
+                  },
+                  "page": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "limit": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "searchAfter": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      },
+                      "searchBefore": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "order": {
+                          "type": "string",
+                          "example": "asc"
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "Query decision instances (alpha)": {
+                  "value": {
+                    "filter": {
+                      "decisionDefinitionId": "string",
+                      "decisionDefinitionKey": 0,
+                      "decisionDefinitionName": "string",
+                      "decisionDefinitionVersion": 0,
+                      "evaluationFailure": "string",
+                      "key": 0,
+                      "processDefinitionKey": 0,
+                      "processInstanceKey": 0,
+                      "tenantId": "string"
+                    },
+                    "page": {
+                      "from": 0,
+                      "limit": 0,
+                      "searchAfter": [
+                        {}
+                      ],
+                      "searchBefore": [
+                        {}
+                      ]
+                    },
+                    "sort": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/decision-requirements/search": {
+      "post": {
+        "tags": [
+          "Decision requirements"
+        ],
+        "summary": "Query decision requirements (alpha)",
+        "description": "Search for decision requirements based on given criteria.\n\n**Schema**\n\n**page** object\n\n**totalItems** int64\n\n**firstSortValues** object\\[\\]\n\n**lastSortValues** object\\[\\]\n\n**items** object\\[\\]\n\nArray \\[\n\n**decisionRequirementsKey** int64\n\nThe assigned key, which acts as a unique identifier for this decision requirements.\n\n**decisionRequirementsName** string\n\nThe DMN name of the decision requirements.\n\n**version** int32\n\nThe assigned version of the decision requirements.\n\n**decisionRequirementsId** string\n\nthe DMN id of the decision requirements.\n\n**resourceName** string\n\nThe name of the resource from which this decision requirements was parsed.\n\n**tenantId** string\n\nThe tenant ID of the decision requirements.\n\n\\]",
+        "operationId": "queryDecisionRequirementsAlpha",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "object",
+                    "properties": {
+                      "decisionRequirementsKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "dmnDecisionRequirementsId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "dmnDecisionRequirementsName": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "tenantId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "version": {
+                        "type": "number",
+                        "example": 0
+                      }
+                    }
+                  },
+                  "page": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "limit": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "searchAfter": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      },
+                      "searchBefore": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "order": {
+                          "type": "string",
+                          "example": "asc"
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "Query decision requirements (alpha)": {
+                  "value": {
+                    "filter": {
+                      "decisionRequirementsKey": 0,
+                      "dmnDecisionRequirementsId": "string",
+                      "dmnDecisionRequirementsName": "string",
+                      "tenantId": "string",
+                      "version": 0
+                    },
+                    "page": {
+                      "from": 0,
+                      "limit": 0,
+                      "searchAfter": [
+                        {}
+                      ],
+                      "searchBefore": [
+                        {}
+                      ]
+                    },
+                    "sort": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/documents": {
+      "post": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Upload document",
+        "description": "Upload a document to the Camunda 8 cluster.\n\nNote that this currently only supports an in-memory document store, which is not meant for production use.\n\n**Schema**\n\n**documentType** string\n\n**Possible values:** \\[`camunda`\\]\n\nDocument discriminator. Always set to \"camunda\".\n\n**storeId** string\n\nThe ID of the document store.\n\n**documentId** string\n\nThe ID of the document.\n\n**metadata** object\n\n**contentType** string\n\nThe content type of the document.\n\n**fileName** string\n\nThe name of the file.\n\n**expiresAt** date-time\n\nThe date and time when the document expires.\n\n**size** int64\n\nThe size of the document in bytes.\n\n**property name**\\* any\n\nAdditional properties allowed.",
+        "operationId": "uploadDocument",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/documents/batch": {
+      "post": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Upload multiple documents",
+        "description": "Upload multiple documents to the Camunda 8 cluster.\n\nThe caller must provide a file name for each document, which will be used in case of a multi-status response to identify which documents failed to upload. The file name can be provided in the `Content-Disposition` header of the file part or in the `filename` field of the metadata part. If both are provided, the `filename` field takes precedence.\n\nIn case of a multi-status response, the response body will contain a list of `DocumentBatchProblemDetail` objects, each of which contains the file name of the document that failed to upload and the reason for the failure. The client can choose to retry the whole batch or individual documents based on the response.\n\nNote that this currently only supports an in-memory document store, which is not meant for production use.",
+        "operationId": "uploadMultipleDocuments",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/documents/{documentId}": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Download document",
+        "description": "Download a document from the Camunda 8 cluster.\n\nNote that this currently only supports an in-memory document store, which is not meant for production use.",
+        "operationId": "downloadDocument",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Delete document",
+        "description": "Delete a document from the Camunda 8 cluster.\n\nNote that this currently only supports an in-memory document store, which is not meant for production use.",
+        "operationId": "deleteDocument",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/document/{documentId}/links": {
+      "post": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Create document link",
+        "description": "Create a link to a document in the Camunda 8 cluster.\n\nNote that this currently only supports an in-memory document store, which is not meant for production use.\n\n**Schema**\n\n**url** string\n\nThe link to the document.\n\n**expiresAt** date-time\n\nThe date and time when the link expires.",
+        "operationId": "createDocumentLink",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expiresAt": {
+                    "type": "string",
+                    "example": "2024-09-16T07:02:41.429Z"
+                  }
+                }
+              },
+              "examples": {
+                "Create document link": {
+                  "value": {
+                    "expiresAt": "2024-09-16T07:02:41.429Z"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/element-instances/{elementInstanceKey}/variables": {
+      "put": {
+        "tags": [
+          "Element instance"
+        ],
+        "summary": "Update element instance variables",
+        "description": "Updates all the variables of a particular scope (for example, process instance, flow element instance) with the given variable data. Specify the element instance in the `elementInstanceKey` parameter.",
+        "operationId": "updateElementInstanceVariables",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "local": {
+                    "type": "boolean",
+                    "example": false
+                  },
+                  "operationReference": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "examples": {
+                "Update element instance variables": {
+                  "value": {
+                    "local": false,
+                    "operationReference": 0,
+                    "variables": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "elementInstanceKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/flownode-instances/search": {
+      "post": {
+        "tags": [
+          "Flow node instance"
+        ],
+        "summary": "Query flow node instances (alpha)",
+        "description": "Search for flow node instances based on given criteria.\n\n**Schema**\n\n**page** object\n\n**totalItems** int64\n\n**firstSortValues** object\\[\\]\n\n**lastSortValues** object\\[\\]\n\n**items** object\\[\\]\n\nArray \\[\n\n**flowNodeInstanceKey** int64\n\n**processInstanceKey** int64\n\n**processDefinitionKey** int64\n\n**startDate** string\n\n**endDate** string\n\n**flowNodeId** string\n\n**flowNodeName** string\n\n**treePath** string\n\n**type** string\n\n**state** string\n\n**incident** boolean\n\n**incidentKey** int64\n\n**tenantId** string\n\n\\]",
+        "operationId": "queryFlowNodeInstancesAlpha",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "object",
+                    "properties": {
+                      "flowNodeId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "flowNodeInstanceKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "flowNodeName": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "incident": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "incidentKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "processDefinitionKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "processInstanceKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "state": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "tenantId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "treePath": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "example": "string"
+                      }
+                    }
+                  },
+                  "page": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "limit": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "searchAfter": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      },
+                      "searchBefore": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "order": {
+                          "type": "string",
+                          "example": "asc"
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "Query flow node instances (alpha)": {
+                  "value": {
+                    "filter": {
+                      "flowNodeId": "string",
+                      "flowNodeInstanceKey": 0,
+                      "flowNodeName": "string",
+                      "incident": true,
+                      "incidentKey": 0,
+                      "processDefinitionKey": 0,
+                      "processInstanceKey": 0,
+                      "state": "string",
+                      "tenantId": "string",
+                      "treePath": "string",
+                      "type": "string"
+                    },
+                    "page": {
+                      "from": 0,
+                      "limit": 0,
+                      "searchAfter": [
+                        {}
+                      ],
+                      "searchBefore": [
+                        {}
+                      ]
+                    },
+                    "sort": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/incidents/{incidentKey}/resolution": {
+      "post": {
+        "tags": [
+          "Incident"
+        ],
+        "summary": "Resolve incident",
+        "description": "Marks the incident as resolved; most likely a call to Update job will be necessary to reset the job’s retries, followed by this call.",
+        "operationId": "resolveIncident",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "incidentKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/incidents/search": {
+      "post": {
+        "tags": [
+          "Incident"
+        ],
+        "summary": "Query incidents",
+        "description": "Search for incidents based on given criteria.\n\n**Schema**\n\n**page** object\n\n**totalItems** int64\n\n**firstSortValues** object\\[\\]\n\n**lastSortValues** object\\[\\]\n\n**items** object\\[\\]\n\nArray \\[\n\n**key** int64\n\nThe assigned key, which acts as a unique identifier for this incident.\n\n**processDefinitionKey** int64\n\nThe process definition key associated to this incident.\n\n**processDefinitionId** string\n\nThe bpmn process id associated to this incident.\n\n**processInstanceKey** int64\n\nThe process instance key associated to this incident.\n\n**errorType** string\n\n**Possible values:** \\[`UNSPECIFIED`, `UNKNOWN`, `IO_MAPPING_ERROR`, `JOB_NO_RETRIES`, `CONDITION_ERROR`, `EXTRACT_VALUE_ERROR`, `CALLED_ELEMENT_ERROR`, `UNHANDLED_ERROR_EVENT`, `MESSAGE_SIZE_EXCEEDED`, `CALLED_DECISION_ERROR`, `DECISION_EVALUATION_ERROR`, `FORM_NOT_FOUND`\\]\n\nIncident error type with a defined set of values.\n\n**errorMessage** string\n\nError message which describes the error in more detail.\n\n**flowNodeId** string\n\nThe flow node id associated to this incident.\n\n**flowNodeInstanceKey** int64\n\nThe flow node instance key associated to this incident.\n\n**creationTime** date-time\n\nDate of incident creation.\n\n**state** string\n\n**Possible values:** \\[`ACTIVE`, `MIGRATED`, `RESOLVED`, `PENDING`\\]\n\nState of this incident with a defined set of values.\n\n**jobKey** int64\n\nThe job key, if exists, associated with this incident.\n\n**treePath** string\n\nThe path from process instance via flow node ids and flow node instance keys leading to this incident.\n\n**tenantId** string\n\nThe tenant id of the incident.\n\n\\]",
+        "operationId": "queryIncidents",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "object",
+                    "properties": {
+                      "flowNodeId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "flowNodeInstanceId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "hasActiveOperation": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "jobKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "key": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "processDefinitionKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "processInstanceKey": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "state": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "tenantId": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "example": "string"
+                      }
+                    }
+                  },
+                  "page": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "limit": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "searchAfter": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      },
+                      "searchBefore": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "order": {
+                          "type": "string",
+                          "example": "asc"
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "Query incidents": {
+                  "value": {
+                    "filter": {
+                      "flowNodeId": "string",
+                      "flowNodeInstanceId": "string",
+                      "hasActiveOperation": true,
+                      "jobKey": 0,
+                      "key": 0,
+                      "message": "string",
+                      "processDefinitionKey": 0,
+                      "processInstanceKey": 0,
+                      "state": "string",
+                      "tenantId": "string",
+                      "type": "string"
+                    },
+                    "page": {
+                      "from": 0,
+                      "limit": 0,
+                      "searchAfter": [
+                        {}
+                      ],
+                      "searchBefore": [
+                        {}
+                      ]
+                    },
+                    "sort": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/incidents/{incidentKey}": {
+      "get": {
+        "tags": [
+          "Incident"
+        ],
+        "summary": "Get incident by key",
+        "description": "Returns incident as JSON.\n\n**Schema**\n\n**key** int64\n\nThe assigned key, which acts as a unique identifier for this incident.\n\n**processDefinitionKey** int64\n\nThe process definition key associated to this incident.\n\n**processDefinitionId** string\n\nThe bpmn process id associated to this incident.\n\n**processInstanceKey** int64\n\nThe process instance key associated to this incident.\n\n**errorType** string\n\n**Possible values:** \\[`UNSPECIFIED`, `UNKNOWN`, `IO_MAPPING_ERROR`, `JOB_NO_RETRIES`, `CONDITION_ERROR`, `EXTRACT_VALUE_ERROR`, `CALLED_ELEMENT_ERROR`, `UNHANDLED_ERROR_EVENT`, `MESSAGE_SIZE_EXCEEDED`, `CALLED_DECISION_ERROR`, `DECISION_EVALUATION_ERROR`, `FORM_NOT_FOUND`\\]\n\nIncident error type with a defined set of values.\n\n**errorMessage** string\n\nError message which describes the error in more detail.\n\n**flowNodeId** string\n\nThe flow node id associated to this incident.\n\n**flowNodeInstanceKey** int64\n\nThe flow node instance key associated to this incident.\n\n**creationTime** date-time\n\nDate of incident creation.\n\n**state** string\n\n**Possible values:** \\[`ACTIVE`, `MIGRATED`, `RESOLVED`, `PENDING`\\]\n\nState of this incident with a defined set of values.\n\n**jobKey** int64\n\nThe job key, if exists, associated with this incident.\n\n**treePath** string\n\nThe path from process instance via flow node ids and flow node instance keys leading to this incident.\n\n**tenantId** string\n\nThe tenant id of the incident.",
+        "operationId": "getIncidentByKey",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "incidentKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/jobs/activation": {
+      "post": {
+        "tags": [
+          "Job"
+        ],
+        "summary": "Activate jobs",
+        "description": "Iterate through all known partitions and activate jobs up to the requested maximum.\n\n**Schema**\n\n**jobs** object\\[\\]\n\nArray \\[\n\n**key** int64\n\nthe key, a unique identifier for the job\n\n**type** string\n\nthe type of the job (should match what was requested)\n\n**processInstanceKey** int64\n\nthe job's process instance key\n\n**processDefinitionId** string\n\nthe bpmn process ID of the job's process definition\n\n**processDefinitionVersion** int32\n\nthe version of the job's process definition\n\n**processDefinitionKey** int64\n\nthe key of the job's process definition\n\n**elementId** string\n\nthe associated task element ID\n\n**elementInstanceKey** int64\n\nthe unique key identifying the associated task, unique within the scope of the process instance\n\n**customHeaders** object\n\na set of custom headers defined during modelling; returned as a serialized JSON document\n\n**property name**\\* any\n\nAdditional properties allowed.\n\n**worker** string\n\nthe name of the worker which activated this job\n\n**retries** int32\n\nthe amount of retries left to this job (should always be positive)\n\n**deadline** int64\n\nwhen the job can be activated again, sent as a UNIX epoch timestamp\n\n**variables** object\n\nAll variables visible to the task scope, computed at activation time\n\n**property name**\\* any\n\nAdditional properties allowed.\n\n**tenantId** string\n\nThe ID of the tenant that owns the job\n\n\\]",
+        "operationId": "activateJobs",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fetchVariable": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "example": "string"
+                    },
+                    "example": [
+                      "string"
+                    ]
+                  },
+                  "maxJobsToActivate": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "requestTimeout": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "tenantIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "example": "string"
+                    },
+                    "example": [
+                      "string"
+                    ]
+                  },
+                  "timeout": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "type": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "worker": {
+                    "type": "string",
+                    "example": "string"
+                  }
+                }
+              },
+              "examples": {
+                "Activate jobs": {
+                  "value": {
+                    "fetchVariable": [
+                      "string"
+                    ],
+                    "maxJobsToActivate": 0,
+                    "requestTimeout": 0,
+                    "tenantIds": [
+                      "string"
+                    ],
+                    "timeout": 0,
+                    "type": "string",
+                    "worker": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/jobs/{jobKey}/failure": {
+      "post": {
+        "tags": [
+          "Job"
+        ],
+        "summary": "Fail job",
+        "description": "Mark the job as failed",
+        "operationId": "failJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "retries": {
+                    "type": "number",
+                    "example": 1
+                  },
+                  "retryBackOff": {
+                    "type": "number",
+                    "example": 0
+                  }
+                }
+              },
+              "examples": {
+                "Fail job": {
+                  "value": {
+                    "retries": 1,
+                    "retryBackOff": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "jobKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/jobs/{jobKey}/completion": {
+      "post": {
+        "tags": [
+          "Job"
+        ],
+        "summary": "Complete job",
+        "description": "Complete a job with the given payload, which allows completing the associated service task.",
+        "operationId": "completeJob",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "jobKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/jobs/{jobKey}/error": {
+      "post": {
+        "tags": [
+          "Job"
+        ],
+        "summary": "Report error for job",
+        "description": "Reports a business error (i.e. non-technical) that occurs while processing a job.",
+        "operationId": "reportErrorForJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "errorCode": {
+                    "type": "string",
+                    "example": "string"
+                  }
+                }
+              },
+              "examples": {
+                "Report error for job": {
+                  "value": {
+                    "errorCode": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "jobKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/jobs/{jobKey}": {
+      "patch": {
+        "tags": [
+          "Job"
+        ],
+        "summary": "Update a job",
+        "description": "Update a job with the given key.",
+        "operationId": "updateAJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "changeset": {
+                    "type": "object",
+                    "properties": {
+                      "retries": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "timeout": {
+                        "type": "number",
+                        "example": 0
+                      }
+                    }
+                  }
+                }
+              },
+              "examples": {
+                "Update a job": {
+                  "value": {
+                    "changeset": {
+                      "retries": 0,
+                      "timeout": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "jobKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/license": {
+      "get": {
+        "tags": [
+          "License"
+        ],
+        "summary": "Get status of Camunda license",
+        "description": "Obtains the status of the current Camunda license\n\n**Schema**\n\n**validLicense** boolean\n\nTrue if the Camunda license is valid, false if otherwise\n\n**licenseType** string\n\nWill return the license type property of the Camunda license",
+        "operationId": "getStatusOfCamundaLicense",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/messages/publication": {
+      "post": {
+        "tags": [
+          "Message"
+        ],
+        "summary": "Publish a message",
+        "description": "Publishes a single message. Messages are published to specific partitions computed from their correlation keys. Messages can be buffered. The endpoint does not wait for a correlation result. Use the message correlation endpoint for such use cases.\n\n**Schema**\n\n**messageKey** int64\n\nThe key of the message\n\n**tenantId** string\n\nThe tenant ID of the message.",
+        "operationId": "publishAMessage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "correlationKey": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "messageId": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "tenantId": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "timeToLive": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "examples": {
+                "Publish a message": {
+                  "value": {
+                    "correlationKey": "string",
+                    "messageId": "string",
+                    "name": "string",
+                    "tenantId": "string",
+                    "timeToLive": 0,
+                    "variables": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/messages/correlation": {
+      "post": {
+        "tags": [
+          "Message"
+        ],
+        "summary": "Correlate a message",
+        "description": "Publishes a message and correlates it to a subscription. If correlation is successful it will return the first process instance key the message correlated with. The message is not buffered. Use the publish message endpoint to send messages that can be buffered.\n\n**Schema**\n\n**messageKey** int64\n\nThe key of the correlated message\n\n**tenantId** string\n\nThe tenant ID of the correlated message\n\n**processInstanceKey** int64\n\nThe key of the first process instance the message correlated with",
+        "operationId": "correlateAMessage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "correlationKey": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "tenantId": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "examples": {
+                "Correlate a message": {
+                  "value": {
+                    "correlationKey": "string",
+                    "name": "string",
+                    "tenantId": "string",
+                    "variables": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/process-instances/search": {
+      "post": {
+        "tags": [
+          "Process instance"
+        ],
+        "summary": "Query process instances (alpha)",
+        "description": "Search for process instances based on given criteria.\n\n**Schema**\n\n**page** object\n\n**totalItems** int64\n\n**firstSortValues** object\\[\\]\n\n**lastSortValues** object\\[\\]\n\n**items** object\\[\\]\n\nArray \\[\n\n**key** int64\n\n**processDefinitionName** string\n\nThe process name.\n\n**processDefinitionVersion** int32\n\n**bpmnProcessId** string\n\n**parentKey** int64\n\n**parentFlowNodeInstanceKey** int64\n\n**startDate** date-time\n\n**endDate** date-time\n\n**state** string\n\n**Possible values:** \\[`ACTIVE`, `INCIDENT`, `COMPLETED`, `CANCELED`, `UNKNOWN`, `UNSPECIFIED`\\]\n\n**incident** boolean\n\n**hasActiveOperation** boolean\n\n**processDefinitionKey** int64\n\n**tenantId** string\n\n**rootInstanceId** string\n\n**operations** object\\[\\]\n\n**callHierarchy** object\\[\\]\n\n\\]",
+        "operationId": "queryProcessInstancesAlpha",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "array",
+                        "items": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "example": [
+                          0
+                        ]
+                      },
+                      "variables": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "eq": {
+                              "type": "object",
+                              "properties": {}
+                            },
+                            "gt": {
+                              "type": "object",
+                              "properties": {}
+                            },
+                            "gte": {
+                              "type": "object",
+                              "properties": {}
+                            },
+                            "lt": {
+                              "type": "object",
+                              "properties": {}
+                            },
+                            "lte": {
+                              "type": "object",
+                              "properties": {}
+                            },
+                            "name": {
+                              "type": "string",
+                              "example": "string"
+                            }
+                          }
+                        },
+                        "example": [
+                          {
+                            "eq": {},
+                            "gt": {},
+                            "gte": {},
+                            "lt": {},
+                            "lte": {},
+                            "name": "string"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "page": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "limit": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "searchAfter": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      },
+                      "searchBefore": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "order": {
+                          "type": "string",
+                          "example": "asc"
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "Query process instances (alpha)": {
+                  "value": {
+                    "filter": {
+                      "key": [
+                        0
+                      ],
+                      "variables": [
+                        {
+                          "eq": {},
+                          "gt": {},
+                          "gte": {},
+                          "lt": {},
+                          "lte": {},
+                          "name": "string"
+                        }
+                      ]
+                    },
+                    "page": {
+                      "from": 0,
+                      "limit": 0,
+                      "searchAfter": [
+                        {}
+                      ],
+                      "searchBefore": [
+                        {}
+                      ]
+                    },
+                    "sort": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/process-instances": {
+      "post": {
+        "tags": [
+          "Process instance"
+        ],
+        "summary": "Create process instance",
+        "description": "Creates and starts an instance of the specified process. The process definition to use to create the instance can be specified either using its unique key (as returned by Deploy resources), or using the BPMN process ID and a version.\n\nWaits for the completion of the process instance before returning a result when awaitCompletion is enabled.\n\n**Schema**\n\n**processDefinitionKey** int64\n\nThe key of the process definition which was used to create the process instance.\n\n**processDefinitionId** string\n\nThe BPMN process ID of the process definition which was used to create the process. instance\n\n**processDefinitionVersion** int32\n\nThe version of the process definition which was used to create the process instance.\n\n**processInstanceKey** int64\n\nThe unique identifier of the created process instance; to be used wherever a request needs a process instance key (e.g. CancelProcessInstanceRequest).\n\n**tenantId** string\n\nThe tenant ID of the created process instance.\n\n**variables** object\n\nAll the variables visible in the root scope.\n\n**property name**\\* any\n\nAdditional properties allowed.",
+        "operationId": "createProcessInstance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "awaitCompletion": {
+                    "type": "boolean",
+                    "example": false
+                  },
+                  "bpmnProcessId": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "operationReference": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "processDefinitionKey": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "requestTimeout": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "startInstructions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "elementId": {
+                          "type": "string",
+                          "example": "string"
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "elementId": "string"
+                      }
+                    ]
+                  },
+                  "tenantId": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "version": {
+                    "type": "number",
+                    "example": -1
+                  }
+                }
+              },
+              "examples": {
+                "Create process instance": {
+                  "value": {
+                    "awaitCompletion": false,
+                    "bpmnProcessId": "string",
+                    "operationReference": 0,
+                    "processDefinitionKey": 0,
+                    "requestTimeout": 0,
+                    "startInstructions": [
+                      {
+                        "elementId": "string"
+                      }
+                    ],
+                    "tenantId": "string",
+                    "variables": {},
+                    "version": -1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/process-instances/{processInstanceKey}/migration": {
+      "post": {
+        "tags": [
+          "Process instance"
+        ],
+        "summary": "Migrate process instance",
+        "description": "Migrates a process instance to a new process definition. This request can contain multiple mapping instructions to define mapping between the active process instance's elements and target process definition elements.\n\nUse this to upgrade a process instance to a new version of a process or to a different process definition, e.g. to keep your running instances up-to-date with the latest process improvements.",
+        "operationId": "migrateProcessInstance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mappingInstructions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "sourceElementId": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "targetElementId": {
+                          "type": "string",
+                          "example": "string"
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "sourceElementId": "string",
+                        "targetElementId": "string"
+                      }
+                    ]
+                  },
+                  "operationReference": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "targetProcessDefinitionKey": {
+                    "type": "number",
+                    "example": 0
+                  }
+                }
+              },
+              "examples": {
+                "Migrate process instance": {
+                  "value": {
+                    "mappingInstructions": [
+                      {
+                        "sourceElementId": "string",
+                        "targetElementId": "string"
+                      }
+                    ],
+                    "operationReference": 0,
+                    "targetProcessDefinitionKey": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "processInstanceKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/process-instances/{processInstanceKey}/modification": {
+      "post": {
+        "tags": [
+          "Process instance"
+        ],
+        "summary": "Modify process instance",
+        "description": "Modifies a running process instance. This request can contain multiple instructions to activate an element of the process or to terminate an active instance of an element.\n\nUse this to repair a process instance that is stuck on an element or took an unintended path. For example, because an external system is not available or doesn't respond as expected.",
+        "operationId": "modifyProcessInstance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "activateInstructions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "ancestorElementInstanceKey": {
+                          "type": "number",
+                          "example": -1
+                        },
+                        "elementId": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "variableInstructions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "scopeId": {
+                                "type": "string",
+                                "example": "string"
+                              },
+                              "variables": {
+                                "type": "object",
+                                "properties": {}
+                              }
+                            }
+                          },
+                          "example": [
+                            {
+                              "scopeId": "string",
+                              "variables": {}
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "ancestorElementInstanceKey": -1,
+                        "elementId": "string",
+                        "variableInstructions": [
+                          {
+                            "scopeId": "string",
+                            "variables": {}
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "operationReference": {
+                    "type": "number",
+                    "example": 0
+                  },
+                  "terminateInstructions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "elementInstanceKey": {
+                          "type": "number",
+                          "example": 0
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "elementInstanceKey": 0
+                      }
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "Modify process instance": {
+                  "value": {
+                    "activateInstructions": [
+                      {
+                        "ancestorElementInstanceKey": -1,
+                        "elementId": "string",
+                        "variableInstructions": [
+                          {
+                            "scopeId": "string",
+                            "variables": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "operationReference": 0,
+                    "terminateInstructions": [
+                      {
+                        "elementInstanceKey": 0
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "processInstanceKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/process-instances/{processInstanceKey}/cancellation": {
+      "post": {
+        "tags": [
+          "Process instance"
+        ],
+        "summary": "Cancel process instance",
+        "description": "Cancels a running process instance. As a cancelation includes more than just the removal of the process instance resource, the cancelation resource must be posted.",
+        "operationId": "cancelProcessInstance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "operationReference": {
+                    "type": "number",
+                    "example": 0
+                  }
+                }
+              },
+              "examples": {
+                "Cancel process instance": {
+                  "value": {
+                    "operationReference": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "processInstanceKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/deployments": {
+      "post": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Deploy resources",
+        "description": "Deploys one or more resources (e.g. processes, decision models, or forms). This is an atomic call, i.e. either all resources are deployed or none of them are.\n\n**Schema**\n\n**deploymentKey** int64\n\nThe unique key identifying the deployment.\n\n**deployments** object\\[\\]\n\nArray \\[\n\n**processDefinition** object\n\n**decisionDefinition** object\n\n**decisionRequirements** object\n\n**form** object\n\n\\]\n\n**tenantId** string",
+        "operationId": "deployResources",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/resources/{resourceKey}/deletion": {
+      "post": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Delete resource",
+        "description": "Deletes a deployed resource. This can be a process definition, decision requirements definition, or form definition deployed using the deploy resources endpoint. Specify the resource you want to delete in the `resourceKey` parameter.",
+        "operationId": "deleteResource",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "operationReference": {
+                    "type": "number",
+                    "example": 0
+                  }
+                }
+              },
+              "examples": {
+                "Delete resource": {
+                  "value": {
+                    "operationReference": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "resourceKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/resources/{resourceKey}": {
+      "get": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Get resource",
+        "description": "Returns a deployed resource.",
+        "operationId": "getResource",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "resourceKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/resources/{resourceKey}/content": {
+      "delete": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Get resource content",
+        "description": "Returns the content of a deployed resource.",
+        "operationId": "getResourceContent",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "resourceKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/signals/broadcast": {
+      "post": {
+        "tags": [
+          "Signal"
+        ],
+        "summary": "Broadcast signal",
+        "description": "Broadcasts a signal.\n\n**Schema**\n\n**signalKey** int64\n\nThe unique ID of the signal that was broadcast.\n\n**tenantId** string\n\nThe tenant ID of the signal that was broadcast.",
+        "operationId": "broadcastSignal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "signalName": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "tenantId": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "examples": {
+                "Broadcast signal": {
+                  "value": {
+                    "signalName": "string",
+                    "tenantId": "string",
+                    "variables": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/users/search": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Query users (alpha)",
+        "description": "Search for users based on given criteria.\n\n**Schema**\n\n**page** object\n\n**totalItems** int64\n\n**firstSortValues** object\\[\\]\n\n**lastSortValues** object\\[\\]\n\n**items** object\\[\\]\n\nArray \\[\n\n**id** int64\n\n**key** int64\n\n**username** string\n\n**name** string\n\n**email** string\n\n\\]",
+        "operationId": "queryUsersAlpha",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "type": "object",
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "name": {
+                        "type": "string",
+                        "example": "string"
+                      },
+                      "username": {
+                        "type": "string",
+                        "example": "string"
+                      }
+                    }
+                  },
+                  "page": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "limit": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "searchAfter": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      },
+                      "searchBefore": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {}
+                        },
+                        "example": [
+                          {}
+                        ]
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "order": {
+                          "type": "string",
+                          "example": "asc"
+                        }
+                      }
+                    },
+                    "example": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "Query users (alpha)": {
+                  "value": {
+                    "filter": {
+                      "email": "string",
+                      "name": "string",
+                      "username": "string"
+                    },
+                    "page": {
+                      "from": 0,
+                      "limit": 0,
+                      "searchAfter": [
+                        {}
+                      ],
+                      "searchBefore": [
+                        {}
+                      ]
+                    },
+                    "sort": [
+                      {
+                        "field": "string",
+                        "order": "asc"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/user-tasks/{userTaskKey}/completion": {
+      "post": {
+        "tags": [
+          "User task"
+        ],
+        "summary": "Complete a user task",
+        "description": "Completes a user task with the given key.",
+        "operationId": "completeAUserTask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              },
+              "examples": {
+                "Complete a user task": {
+                  "value": {
+                    "action": "string",
+                    "variables": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "userTaskKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/user-tasks/{userTaskKey}/assignment": {
+      "post": {
+        "tags": [
+          "User task"
+        ],
+        "summary": "Assign a user task",
+        "description": "Assigns a user task with the given key to the given assignee.",
+        "operationId": "assignAUserTask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "allowOverride": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "assignee": {
+                    "type": "string",
+                    "example": "string"
+                  }
+                }
+              },
+              "examples": {
+                "Assign a user task": {
+                  "value": {
+                    "action": "string",
+                    "allowOverride": true,
+                    "assignee": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "userTaskKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/user-tasks/{userTaskKey}": {
+      "patch": {
+        "tags": [
+          "User task"
+        ],
+        "summary": "Update a user task",
+        "description": "Update a user task with the given key.",
+        "operationId": "updateAUserTask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "example": "string"
+                  },
+                  "changeset": {
+                    "type": "object",
+                    "properties": {
+                      "candidateGroups": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "example": [
+                          "string"
+                        ]
+                      },
+                      "candidateUsers": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "example": "string"
+                        },
+                        "example": [
+                          "string"
+                        ]
+                      },
+                      "dueDate": {
+                        "type": "string",
+                        "example": "2024-06-17T05:41:22.718Z"
+                      },
+                      "followUpDate": {
+                        "type": "string",
+                        "example": "2024-06-17T05:41:22.718Z"
+                      }
+                    }
+                  }
+                }
+              },
+              "examples": {
+                "Update a user task": {
+                  "value": {
+                    "action": "string",
+                    "changeset": {
+                      "candidateGroups": [
+                        "string"
+                      ],
+                      "candidateUsers": [
+                        "string"
+                      ],
+                      "dueDate": "2024-06-17T05:41:22.718Z",
+                      "followUpDate": "2024-06-17T05:41:22.718Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "userTaskKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/user-tasks/{userTaskKey}/assignee": {
+      "delete": {
+        "tags": [
+          "User task"
+        ],
+        "summary": "Unassign a user task",
+        "description": "Removes the assignee of a task with the given key.",
+        "operationId": "unassignAUserTask",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "userTaskKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      ]
+    },
+    "/user-tasks/search": {
+      "post": {
+        "tags": [
+          "User task"
+        ],
+        "summary": "Query user tasks (alpha)",
+        "description": "Search for user tasks based on given criteria.\n\n**Schema**\n\n**page** object\n\n**totalItems** int64\n\n**firstSortValues** object\\[\\]\n\n**lastSortValues** object\\[\\]\n\n**items** object\\[\\]\n\nArray \\[\n\n**key** int64\n\n**state** string\n\n**assignee** string\n\n**elementId** string\n\n**elementInstanceKey** int64\n\n**candidateGroup** string\\[\\]\n\n**candidateUser** string\\[\\]\n\n**processDefinitionId** string\n\n**processDefinitionKey** int64\n\n**processInstanceKey** int64\n\n**formKey** int64\n\n**creationDate** date-time\n\n**completionDate** date-time\n\n**followUpDate** date-time\n\n**dueDate** date-time\n\n**tenantIds** string\n\n**externalFormReference** string\n\n**processDefinitionVersion** int32\n\n**customHeaders** object\n\n**priority** integer\n\n**Possible values:** `<= 100`\n\n**Default value:** `50`\n\nThe priority of a user task. The higher the value the higher the priority.\n\n\\]",
+        "operationId": "queryUserTasksAlpha",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "Query user tasks (alpha)": {
+                  "value": "{\n  \"filter\": {\n    \"key\": 0,\n    \"state\": \"string\",\n    \"assignee\": \"string\",\n    \"elementId\": \"string\",\n    \"candidateGroup\": \"string\",\n    \"candidateUser\": \"string\",\n    \"processDefinitionKey\": 0,\n    \"processInstanceKey\": 0,\n    \"tenantIds\": \"string\",\n    \"bpmnDefinitionId\": \"string\"\n  },\n  \"sort\": [\n    {\n      \"field\": \"string\",\n      \"order\": \"asc\"\n    }\n  ],\n  \"page\": {\n    \"from\": 0,\n    \"limit\": 0,\n    \"searchAfter\": [\n      {}\n    ],\n    \"searchBefore\": [\n      {}\n    ]"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Clock"
+    },
+    {
+      "name": "Cluster"
+    },
+    {
+      "name": "Decision definition"
+    },
+    {
+      "name": "Decision instance"
+    },
+    {
+      "name": "Decision requirements"
+    },
+    {
+      "name": "Documents"
+    },
+    {
+      "name": "Element instance"
+    },
+    {
+      "name": "Flow node instance"
+    },
+    {
+      "name": "Incident"
+    },
+    {
+      "name": "Job"
+    },
+    {
+      "name": "License"
+    },
+    {
+      "name": "Message"
+    },
+    {
+      "name": "Process instance"
+    },
+    {
+      "name": "Resource"
+    },
+    {
+      "name": "Signal"
+    },
+    {
+      "name": "User"
+    },
+    {
+      "name": "User task"
+    }
+  ]
+}

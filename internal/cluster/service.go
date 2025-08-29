@@ -2,25 +2,33 @@ package cluster
 
 import (
 	"context"
+	"io"
+	"net/http"
 
-	"github.com/grafvonb/camunder/internal/httpcore"
+	c87camunda8v2 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda8/v2"
 )
 
 type Service struct {
-	c *httpcore.Client
+	c *c87camunda8v2.Client
 }
 
-func New(c *httpcore.Client) *Service {
+func New(c *c87camunda8v2.Client) *Service {
 	return &Service{
 		c: c,
 	}
 }
 
-func (s *Service) GetTopology(ctx context.Context) (*Cluster, error) {
-	var topology Cluster
-	err := s.c.Get(ctx, "/v2/topology", &topology)
+func (s *Service) GetTopology(ctx context.Context, cluster *Cluster) error {
+	resp, err := s.c.GetClusterTypology(ctx, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &topology, nil
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(res.Body)
+
+	}
+
+	return nil
 }
