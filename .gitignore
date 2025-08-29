@@ -17,7 +17,7 @@ coverage.*
 *.coverprofile
 profile.cov
 
-# Dependency directories (remove the comment below to include it)
+# Dependency directories (remove the comment below to
 # vendor/
 
 # Go workspace file
@@ -30,3 +30,6 @@ go.work.sum
 # Editor/IDE
 .idea/
 .vscode/
+
+# Private http test configuration
+http-client.private.env.json

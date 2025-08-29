@@ -1,0 +1,137 @@
+### Retrieve token for app
+POST {{auth_url}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&client_secret={{client_secret}}&client_id={{client_id}}
+
+> {% client.global.set("access_token", response.body.access_token); %}
+
+### Retrieve process definitions
+POST {{operate_base_url}}/v1/process-definitions/search
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{"size":1000}
+
+### Retrieve process instances
+POST {{operate_base_url}}/v1/process-instances/search
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{"size":1000}
+
+### Get process instance
+@processInstanceKey=2251799813696429
+GET {{operate_base_url}}/v1/process-instances/{{processInstanceKey}}
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200; got " + response.status);
+    })
+%}
+
+### Cancel process instance
+POST {{zeebe_broker_rest_address}}/v2/process-instances/{{processInstanceKey}}/cancellation
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+### Retrieve process instance variables
+POST {{operate_base_url}}/v1/variables/search
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "filter": {
+    "name": "status"
+  },
+  "size": 1000
+}
+
+### Get user tasks
+POST {{tasklist_base_url}}/v1/tasks/search
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{"size":1000}
+
+### Get user task
+@taskId=2251799813703826
+GET {{tasklist_base_url}}/v1/tasks/{{taskId}}
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+### Assign user task
+PATCH {{tasklist_base_url}}/v1/tasks/{{taskId}}/assign
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "assignee": "demo",
+  "allowOverrideAssignment": true
+}
+
+### Complete user task
+PATCH {{tasklist_base_url}}/v1/tasks/{{taskId}}/complete
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
+### Search for process instances
+POST {{zeebe_broker_rest_address}}/v2/process-instances/search
+Content-Type: application/json #application/vnd.camunda.api.keys.string+json
+Accept:  application/json #application/vnd.camunda.api.keys.string+json
+Authorization: Bearer {{access_token}}
+
+{
+}
+
+### Search for zeebe user tasks
+POST {{zeebe_broker_rest_address}}/v2/user-tasks/search
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "filter": {
+    "processInstanceKey": 2251799813686121
+  }
+}
+
+### Assign zeebe user task
+@userTaskKey=2251799813686176
+POST {{zeebe_broker_rest_address}}/v2/user-tasks/{{userTaskKey}}/assignment
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "assignee": "demo",
+  "allowOverride": true,
+  "action": "assign"
+}
+
+### Complete zeebe user task
+POST {{zeebe_broker_rest_address}}/v2/user-tasks/{{userTaskKey}}/completion
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
+### Get cluster topology
+GET {{zeebe_broker_rest_address}}/v2/topology
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
+### Get license
+GET {{zeebe_broker_rest_address}}/v2/license
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
+### Get usage metrics
+GET {{zeebe_broker_rest_address}}/v2/admin-api/usage-metrics
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{access_token}}
