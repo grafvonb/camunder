@@ -2,33 +2,39 @@ package cluster
 
 import (
 	"context"
-	"io"
 	"net/http"
 
 	c87camunda8v2 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda8/v2"
 )
 
 type Service struct {
-	c *c87camunda8v2.Client
+	c *c87camunda8v2.ClientWithResponses
 }
 
-func New(c *c87camunda8v2.Client) *Service {
-	return &Service{
-		c: c,
+func New(baseUrl string, httpClient *http.Client, token string) (*Service, error) {
+	authEditor := func(ctx context.Context, req *http.Request) error {
+		if token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+		return nil
 	}
-}
 
-func (s *Service) GetTopology(ctx context.Context, cluster *Cluster) error {
-	resp, err := s.c.GetClusterTypology(ctx, nil)
+	c, err := c87camunda8v2.NewClientWithResponses(
+		baseUrl,
+		c87camunda8v2.WithHTTPClient(httpClient),
+		c87camunda8v2.WithRequestEditorFn(authEditor),
+	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer resp.Body.Close()
+	return &Service{c: c}, nil
+}
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(res.Body)
-
+func (s *Service) GetTopology(ctx context.Context) (*Cluster, error) {
+	resp, err := s.c.GetClusterTypologyWithResponse(ctx, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return *resp.JSON200, nil
 }
