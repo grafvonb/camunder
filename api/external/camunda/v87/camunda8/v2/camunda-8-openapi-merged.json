@@ -74,7 +74,14 @@
         "operationId": "getClusterTopology",
         "responses": {
           "200": {
-            "description": ""
+            "description": "Cluster topology",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Topology"
+                }
+              }
+            }
           }
         }
       }
@@ -2621,11 +2628,66 @@
         "type": "http",
         "scheme": "bearer"
       }
+    },
+    "schemas": {
+      "Topology": {
+        "type": "object",
+        "properties": {
+          "brokers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BrokerInfo"
+            }
+          },
+          "clusterSize": {
+            "type": "integer"
+          },
+          "partitionsCount": {
+            "type": "integer"
+          },
+          "replicationFactor": {
+            "type": "integer"
+          }
+        }
+      },
+      "BrokerInfo": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "nodeId": {
+            "type": "integer"
+          },
+          "partitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartitionInfo"
+            }
+          }
+        }
+      },
+      "PartitionInfo": {
+        "type": "object",
+        "properties": {
+          "partitionId": {
+            "type": "integer"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "LEADER",
+              "FOLLOWER",
+              "INACTIVE"
+            ]
+          }
+        }
+      }
     }
   },
   "security": [
     {
-      "bearerAuth": []
+      "bearerAuth": null
     }
   ],
   "tags": [

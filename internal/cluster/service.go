@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	c87camunda8v2 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda8/v2"
@@ -30,11 +31,13 @@ func New(baseUrl string, httpClient *http.Client, token string) (*Service, error
 	return &Service{c: c}, nil
 }
 
-func (s *Service) GetTopology(ctx context.Context) (*Cluster, error) {
-	resp, err := s.c.GetClusterTypologyWithResponse(ctx, nil)
+func (s *Service) GetTopology(ctx context.Context) (*c87camunda8v2.Topology, error) {
+	resp, err := s.c.GetClusterTopologyWithResponse(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	return *resp.JSON200, nil
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+	}
+	return resp.JSON200, nil
 }
