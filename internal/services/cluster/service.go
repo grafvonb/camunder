@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	c87camunda8v2 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda8/v2"
+	"github.com/grafvonb/camunder/internal/editors"
 )
 
 type Service struct {
@@ -13,17 +14,10 @@ type Service struct {
 }
 
 func New(baseUrl string, httpClient *http.Client, token string) (*Service, error) {
-	authEditor := func(ctx context.Context, req *http.Request) error {
-		if token != "" {
-			req.Header.Set("Authorization", "Bearer "+token)
-		}
-		return nil
-	}
-
 	c, err := c87camunda8v2.NewClientWithResponses(
 		baseUrl,
 		c87camunda8v2.WithHTTPClient(httpClient),
-		c87camunda8v2.WithRequestEditorFn(authEditor),
+		c87camunda8v2.WithRequestEditorFn(editors.BearerTokenEditor(token)),
 	)
 	if err != nil {
 		return nil, err
@@ -31,7 +25,7 @@ func New(baseUrl string, httpClient *http.Client, token string) (*Service, error
 	return &Service{c: c}, nil
 }
 
-func (s *Service) GetTopology(ctx context.Context) (*c87camunda8v2.Topology, error) {
+func (s *Service) GetClusterTopology(ctx context.Context) (*c87camunda8v2.Topology, error) {
 	resp, err := s.c.GetClusterTopologyWithResponse(ctx)
 	if err != nil {
 		return nil, err

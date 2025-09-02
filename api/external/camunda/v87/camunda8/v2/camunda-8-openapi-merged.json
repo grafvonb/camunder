@@ -2687,7 +2687,7 @@
   },
   "security": [
     {
-      "bearerAuth": null
+      "bearerAuth": []
     }
   ],
   "tags": [

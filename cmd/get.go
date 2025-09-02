@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafvonb/camunder/internal/cluster"
+	"github.com/grafvonb/camunder/internal/services/cluster"
 	"github.com/spf13/cobra"
 )
 
@@ -23,14 +23,14 @@ var (
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get [resource type]",
-	Short: "List resources of a defined type e.g. process instances",
+	Short: "List resources of a defined type e.g. cluster-topology, process-instances etc.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
 		if token == "" {
-			token = os.Getenv("CAMUNDA_TOKEN")
+			token = os.Getenv("CAMUNDA8_API_TOKEN")
 			if token == "" {
-				cmd.PrintErrln("Error: Bearer token must be provided via --token flag or CAMUNDA_TOKEN environment variable")
+				cmd.PrintErrln("Error: Bearer token must be provided via --token flag or CAMUNDA8_API_TOKEN environment variable")
 				return
 			}
 		}
@@ -40,13 +40,13 @@ var getCmd = &cobra.Command{
 		}
 
 		switch rn {
-		case "topology":
+		case "cluster-topology", "ct":
 			svc, err := cluster.New("http://localhost:8086/v2", httpClient, token)
 			if err != nil {
 				cmd.PrintErrf("Error creating cluster service: %v\n", err)
 				return
 			}
-			topology, err := svc.GetTopology(cmd.Context())
+			topology, err := svc.GetClusterTopology(cmd.Context())
 			if err != nil {
 				cmd.PrintErrf("Error fetching topology: %v\n", err)
 				return
