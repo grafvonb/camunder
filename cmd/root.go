@@ -13,7 +13,11 @@ import (
 var (
 	cfgFile  string
 	logLevel string
-	baseUrl  string
+)
+
+var (
+	cfg config.Config
+	v   = viper.New()
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -21,19 +25,27 @@ var rootCmd = &cobra.Command{
 	Use:   "camunder",
 	Short: "Camunder is a CLI tool to interact with Camunda 8",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		c, err := config.Load(cmd)
+		config.Defaults(v)
+		// (read file/env/flags as you already do)
+		_ = v.ReadInConfig()
+		v.SetEnvPrefix("CAMUNDER")
+		v.AutomaticEnv()
+
+		var err error
+		cfg, err = config.LoadFrom(v)
 		if err != nil {
 			return err
 		}
 
-		// flags override config file
-		if f := viper.GetString("camunda8_api.base_url"); f != "" {
-			c.Camunda8API.BaseURL = f
-		}
-
+		// <- make cfg available to ALL subcommands
+		cmd.SetContext(config.IntoContext(cmd.Context(), cfg))
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Example usage of loaded config:
+		fmt.Printf("BaseURL=%s\n", cfg.API.BaseURL)
+		fmt.Printf("Token=%q\n", cfg.API.Token)
+		fmt.Printf("Timeout=%s\n", cfg.HTTP.Timeout)
 		return cmd.Help()
 		// return runUI(cmd, args)
 	},
@@ -51,15 +63,19 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	// cobra.OnInitialize(initConfig)
 
-	// Flags common to all subcommands.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.camunder.yaml)")
-	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "info", "log level [debug, info, warn, error]")
-	rootCmd.PersistentFlags().StringVar(&baseUrl, "base-url", "", "Camunda 8 base URL (overrides config file)")
+	// User-facing flags (highest precedence)
+	rootCmd.PersistentFlags().String("config", "", "Path to config file")
+	rootCmd.PersistentFlags().String("base-url", "", "API base URL")
+	rootCmd.PersistentFlags().String("token", "", "API bearer token")
+	rootCmd.PersistentFlags().Duration("timeout", 0, "HTTP timeout (e.g. 10s, 1m)")
 
-	_ = viper.BindPFlag("log-level", rootCmd.PersistentFlags().Lookup("log-level"))
-	_ = viper.BindPFlag("camunda8_api.base_url", rootCmd.PersistentFlags().Lookup("base-url"))
+	// Bind flags to viper keys
+	_ = v.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
+	_ = v.BindPFlag("api.base_url", rootCmd.PersistentFlags().Lookup("base-url"))
+	_ = v.BindPFlag("api.token", rootCmd.PersistentFlags().Lookup("token"))
+	_ = v.BindPFlag("http.timeout", rootCmd.PersistentFlags().Lookup("timeout"))
 }
 
 // initConfig reads in config file and ENV variables if set.

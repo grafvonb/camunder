@@ -1,9 +1,9 @@
 package config
 
 import (
-	"strings"
+	"net/http"
+	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -13,40 +13,30 @@ type API struct {
 }
 
 type HTTP struct {
-	Timeout int `mapstructure:"timeout"`
+	Timeout time.Duration `mapstructure:"timeout"`
 }
 
-type C87Config struct {
-	Camunda8API API  `mapstructure:"camunda8_api"`
-	OperateAPI  API  `mapstructure:"operate_api"`
-	TasklistAPI API  `mapstructure:"tasklist_api"`
-	HTTP        HTTP `mapstructure:"http"`
+type Config struct {
+	API  API  `mapstructure:"api"`
+	HTTP HTTP `mapstructure:"http"`
 }
 
-func Load(cmd *cobra.Command) (C87Config, error) {
-	v := viper.New()
-	v.SetConfigName("config")
-	v.AddConfigPath(".")
-	v.AddConfigPath("$HOME/.camunder")
-	v.SetEnvPrefix("CAMUNDER")
-	v.AutomaticEnv()
-	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
+// Defaults sets sensible defaults on the provided viper instance.
+func Defaults(v *viper.Viper) {
+	v.SetDefault("api.base_url", "http://localhost:8086/v2")
+	v.SetDefault("http.timeout", "10s")
+}
 
-	v.SetDefault("camunda8_api.base_url", "http://localhost:8086/v2")
-	v.SetDefault("http.timeout", "10")
-
-	// config file is optional
-	err := v.ReadInConfig()
-	if err != nil {
-		cmd.PrintErrln(err)
-	} else {
-		cmd.Println("config file loaded: " + v.ConfigFileUsed())
+// LoadFrom unmarshals config values from the given viper into a Config struct.
+func LoadFrom(v *viper.Viper) (Config, error) {
+	var c Config
+	if err := v.Unmarshal(&c); err != nil {
+		return Config{}, err
 	}
+	return c, nil
+}
 
-	var cfg C87Config
-	if err := v.Unmarshal(&cfg); err != nil {
-		return C87Config{}, err
-	}
-
-	return cfg, nil
+// HTTPClient returns a ready-to-use http.Client based on the config.
+func (c Config) HTTPClient() *http.Client {
+	return &http.Client{Timeout: c.HTTP.Timeout}
 }
