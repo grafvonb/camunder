@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafvonb/camunder/internal/services/cluster"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -27,6 +28,8 @@ var getCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
+
+		token = viper.GetString("token")
 		if token == "" {
 			token = os.Getenv("CAMUNDA8_API_TOKEN")
 			if token == "" {
@@ -34,14 +37,16 @@ var getCmd = &cobra.Command{
 				return
 			}
 		}
+		baseUrl := viper.GetString("camunda8_api.base_url")
+		timeout := viper.GetDuration("timeout")
 
 		httpClient := &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: timeout * time.Second,
 		}
 
 		switch rn {
 		case "cluster-topology", "ct":
-			svc, err := cluster.New("http://localhost:8086/v2", httpClient, token)
+			svc, err := cluster.New(baseUrl, httpClient, token)
 			if err != nil {
 				cmd.PrintErrf("Error creating cluster service: %v\n", err)
 				return

@@ -1,2 +1,2 @@
 # Camunder
-Camunder is a CLI Tool for Camunda 8
+Camunder is a CLI tool to interact with Camunda 8.
