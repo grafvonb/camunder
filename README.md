@@ -19,6 +19,7 @@ It provides a convenient way to manage and monitor Camunda 8 resources directly 
 - get process definitions: `camunder get process-definitions`
 - cancel process instances (bulk): `camunder cancel process-instances --ids <id1,id2,...>`
 - delete process instances (bulk): `camunder delete process-instances --ids <id1,id2,...>`
+- ...and more to come!
 
 ## Usage 
 ```

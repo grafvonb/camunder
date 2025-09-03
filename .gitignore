@@ -33,3 +33,6 @@ go.work.sum
 
 # Private http test configuration
 http-client.private.env.json
+
+# goreleaser
+dist/
