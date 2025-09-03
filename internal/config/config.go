@@ -1,11 +1,17 @@
 package config
 
-import (
-	"net/http"
-	"time"
+import "errors"
 
-	"github.com/spf13/viper"
+var (
+	ErrNoBaseURL = errors.New("no base_url provided in api configuration")
+	ErrNoToken   = errors.New("no token provided in api configuration")
 )
+
+type Config struct {
+	Config string `mapstructure:"config"`
+	API    API    `mapstructure:"api"`
+	HTTP   HTTP   `mapstructure:"http"`
+}
 
 type API struct {
 	BaseURL string `mapstructure:"base_url"`
@@ -13,30 +19,16 @@ type API struct {
 }
 
 type HTTP struct {
-	Timeout time.Duration `mapstructure:"timeout"`
+	Timeout string `mapstructure:"timeout"`
 }
 
-type Config struct {
-	API  API  `mapstructure:"api"`
-	HTTP HTTP `mapstructure:"http"`
-}
-
-// Defaults sets sensible defaults on the provided viper instance.
-func Defaults(v *viper.Viper) {
-	v.SetDefault("api.base_url", "http://localhost:8086/v2")
-	v.SetDefault("http.timeout", "10s")
-}
-
-// LoadFrom unmarshals config values from the given viper into a Config struct.
-func LoadFrom(v *viper.Viper) (Config, error) {
-	var c Config
-	if err := v.Unmarshal(&c); err != nil {
-		return Config{}, err
+func (c Config) Validate() error {
+	if c.API.BaseURL == "" {
+		return ErrNoBaseURL
 	}
-	return c, nil
-}
+	if c.API.Token == "" {
+		return ErrNoToken
+	}
 
-// HTTPClient returns a ready-to-use http.Client based on the config.
-func (c Config) HTTPClient() *http.Client {
-	return &http.Client{Timeout: c.HTTP.Timeout}
+	return nil
 }

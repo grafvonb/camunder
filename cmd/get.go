@@ -23,23 +23,19 @@ var getCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
-		cfg := config.MustFrom(cmd.Context())
-
-		/*
-			token = viper.GetString("token")
-			if token == "" {
-				token = os.Getenv("CAMUNDA8_API_TOKEN")
-				if token == "" {
-					cmd.PrintErrln("Error: Bearer token must be provided via --token flag or CAMUNDA8_API_TOKEN environment variable")
-					return
-				}
-			}
-		*/
-
-		httpClient := &http.Client{
-			Timeout: cfg.HTTP.Timeout * time.Second,
+		cfg, err := config.FromContext(cmd.Context())
+		if err != nil {
+			cmd.PrintErrf("Error retrieving config from context: %v\n", err)
+			return
 		}
-
+		timeout, err := time.ParseDuration(cfg.HTTP.Timeout)
+		if err != nil {
+			cmd.PrintErrf("Error parsing '%s' as timeout duration: %v\n", cfg.HTTP.Timeout, err)
+			return
+		}
+		httpClient := &http.Client{
+			Timeout: timeout,
+		}
 		switch rn {
 		case "cluster-topology", "ct":
 			svc, err := cluster.New(cfg.API.BaseURL, httpClient, cfg.API.Token)
@@ -60,8 +56,6 @@ var getCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(getCmd)
-
-	getCmd.Flags().String("token", "", "Bearer token for authentication")
 
 	// Here you will define your flags and configuration settings.
 

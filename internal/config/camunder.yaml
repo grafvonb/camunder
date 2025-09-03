@@ -1,0 +1,7 @@
+api:
+    base_url: http://localhost:8086/v2
+    token: ${CAMUNDER_API_TOKEN}
+http:
+    timeout: 30s
+    max_retries: 3
+    retry_delay: 5s
