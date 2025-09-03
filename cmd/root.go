@@ -17,8 +17,18 @@ var (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "camunder",
-	Short: "Camunder is a CLI tool to interact with Camunda 8",
+	Short: "Camunder is a CLI tool to interact with Camunda 8.",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		if cmd.Name() == "camunder" {
+			return nil
+		}
+		if cmd.Name() == "help" || cmd.Name() == "version" || cmd.Name() == "completion" {
+			return nil
+		}
+		if cmd.Flags().Changed("help") {
+			return nil
+		}
+
 		cfg, err := initConfig()
 		if err != nil {
 			return fmt.Errorf("failed to initialize config: %w", err)
@@ -30,15 +40,6 @@ var rootCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.FromContext(cmd.Context())
-		if err != nil {
-			return err
-		}
-
-		// Example usage of loaded config:
-		fmt.Printf("BaseURL=%s\n", cfg.API.BaseURL)
-		fmt.Printf("Token=%q\n", cfg.API.Token)
-		fmt.Printf("Timeout=%s\n", cfg.HTTP.Timeout)
 		return cmd.Help()
 		// return runUI(cmd, args)
 	},
