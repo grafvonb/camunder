@@ -13,7 +13,7 @@ It provides a convenient way to manage and monitor Camunda 8 resources directly 
 
 - get cluster topology: `$ camunder get cluster-topology`
 - get process definitions: `$ camunder get process-definition`
-- 
+
 ## Features planned
 
 - run process instances (bulk): `$ camunder run process-instance --bpmn-process-id <bpmnProcessId> --variables <key1=value1,key2=value2,...> --count <number>`

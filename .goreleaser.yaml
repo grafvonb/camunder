@@ -12,6 +12,15 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - >-
+        -X github.com/grafvonb/camunder/cmd.version={{.Version}}
+        -X github.com/grafvonb/camunder/cmd.commit={{.Commit}}
+        -X github.com/grafvonb/camunder/cmd.date={{.Date}}
+        -X github.com/grafvonb/camunder/cmd.builtBy=GoReleaser
 
 archives:
   - format: tar.gz
