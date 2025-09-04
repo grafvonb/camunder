@@ -1,0 +1,809 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Operate Public API (Self-Managed)",
+    "description": "## 💪 What do you need to make it work?\n\n### Authentication for Self-Managed cluster[​](https://docs.camunda.io/docs/next/apis-tools/operate-api/overview/#authentication-for-self-managed-cluster)\n\n#### Authentication via Identity JWT access token[​](https://docs.camunda.io/docs/next/apis-tools/operate-api/overview/#authentication-via-identity-jwt-access-token)\n\nThis authentication method is described in [Operate Configuration - Authentication](https://docs.camunda.io/docs/self-managed/operate-deployment/operate-authentication/#identity).\n\n#### Authentication via cookie[​](https://docs.camunda.io/docs/next/apis-tools/operate-api/overview/#authentication-via-cookie)\n\nAnother way to access the Operate API in a Self-Managed cluster is to send cookie headers in each request. The cookie can be obtained by using the API endpoint `/api/login`. Take the steps in the following example:\n\n**Example:**\n\n1. Log in as user 'demo' and store the cookie in the file `cookie.txt`.\n    \n\n```\ncurl -c cookie.txt -X POST 'http://localhost:8080/api/login?username=demo&password=demo'\n\n ```\n\n1. Send the cookie (as a header) in each API request. In this case, request all process definitions.\n    \n\n```\ncurl -b cookie.txt -X POST 'http://localhost:8080/v1/process-definitions/search' -H 'Content-Type: app\n\n ```\n\n### Set variables\n\n1. **baseUrlOperateLocal**: URL of your Self-Managed deployment. Default is `localhost:8081`. If this doesn't work, check your ports mapping and define it in the global or environment scope.\n    \n2. **apiVersion**: Currently supported and default is `v1` - define this in the global or environment scope.\n    \n3. **username and password**: Change it if different than `demo/demo` in collection variables.\n    \n\nYour Operate API is now up and running in Self-Managed mode, and you can execute API requests.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "servers": [
+    {
+      "url": "{{baseUrlOperateLocal}}/{{apiVersion}}"
+    }
+  ],
+  "paths": {
+    "/process-definitions/search": {
+      "post": {
+        "tags": [
+          "Process definitions"
+        ],
+        "summary": "Search for process definitions",
+        "description": "Search for process definitions",
+        "operationId": "searchForProcessDefinitions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "$ref": "#/components/schemas/ProcessDefinitionSearchRequest"
+              },
+              "examples": {
+                "Search for process definitions": {
+                  "value": {}
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache, no-store, max-age=0, must-revalidate"
+                }
+              },
+              "Connection": {
+                "schema": {
+                  "type": "string",
+                  "example": "keep-alive"
+                }
+              },
+              "Date": {
+                "schema": {
+                  "type": "string",
+                  "example": "Fri, 29 Apr 2022 11:00:11 GMT"
+                }
+              },
+              "Expires": {
+                "schema": {
+                  "type": "string",
+                  "example": "0"
+                }
+              },
+              "Keep-Alive": {
+                "schema": {
+                  "type": "string",
+                  "example": "timeout=60"
+                }
+              },
+              "Pragma": {
+                "schema": {
+                  "type": "string",
+                  "example": "no-cache"
+                }
+              },
+              "Transfer-Encoding": {
+                "schema": {
+                  "type": "string",
+                  "example": "chunked"
+                }
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "type": "string",
+                  "example": "nosniff"
+                }
+              },
+              "X-Frame-Options": {
+                "schema": {
+                  "type": "string",
+                  "example": "DENY"
+                }
+              },
+              "X-XSS-Protection": {
+                "schema": {
+                  "type": "string",
+                  "example": "1; mode=block"
+                }
+              }
+            },
+            "content": {
+              "text/plain": {
+                "examples": {
+                  "OK": {
+                    "value": ""
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessDefinitionSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found / Data invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "API application error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/process-definitions/{key}": {
+      "get": {
+        "tags": [
+          "Process definitions"
+        ],
+        "summary": "Get process definition by key",
+        "description": "Get process definition by key",
+        "operationId": "getProcessDefinitionByKey",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "2251799813874883"
+          },
+          "description": "Key of process definition"
+        }
+      ]
+    },
+    "/process-definitions/{key}/xml": {
+      "get": {
+        "tags": [
+          "Process definitions"
+        ],
+        "summary": "Get process defintion by key as XML",
+        "description": "Get process defintion by key as XML",
+        "operationId": "getProcessDefintionByKeyAsXml",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "2251799813874883"
+          },
+          "description": "Key of process definition"
+        }
+      ]
+    },
+    "/process-instances/search": {
+      "post": {
+        "tags": [
+          "Process instances"
+        ],
+        "summary": "Search for process instances",
+        "description": "Search for process instances",
+        "operationId": "searchForProcessInstances",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              },
+              "examples": {
+                "Search for process instances": {
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/process-instances/{key}": {
+      "get": {
+        "tags": [
+          "Process instances"
+        ],
+        "summary": "Get process instance by key",
+        "description": "Get process instance by key",
+        "operationId": "getProcessInstanceByKey",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Process instances"
+        ],
+        "summary": "Delete process instance and dependant data by key",
+        "description": "Delete process instance and dependant data by key",
+        "operationId": "deleteProcessInstanceAndDependantDataByKey",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "2251799813685484"
+          },
+          "description": "Key of process instance"
+        }
+      ]
+    },
+    "/incidents/search": {
+      "post": {
+        "tags": [
+          "Incidents"
+        ],
+        "summary": "Search for incidents",
+        "description": "Search for incidents",
+        "operationId": "searchForIncidents",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/incidents/{key}": {
+      "get": {
+        "tags": [
+          "Incidents"
+        ],
+        "summary": "Get incident by key",
+        "description": "Get incident by key",
+        "operationId": "getIncidentByKey",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "2251799813685702"
+          },
+          "description": "Key of process instance"
+        }
+      ]
+    },
+    "/flownode-instances/search": {
+      "post": {
+        "tags": [
+          "Flow node instances"
+        ],
+        "summary": "Search for flow node instances",
+        "description": "Search for flow node instances",
+        "operationId": "searchForFlowNodeInstances",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              },
+              "examples": {
+                "Search for flow node instances": {
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/flownode-instances/{key}": {
+      "get": {
+        "tags": [
+          "Flow node instances"
+        ],
+        "summary": "Get flow node instance by key",
+        "description": "Get flow node instance by key",
+        "operationId": "getFlowNodeInstanceByKey",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "2251799813685511"
+          },
+          "description": "Key of flownode instance"
+        }
+      ]
+    },
+    "/variables/search": {
+      "post": {
+        "tags": [
+          "Variables"
+        ],
+        "summary": "Search for variables",
+        "description": "Search for variables",
+        "operationId": "searchForVariables",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              },
+              "examples": {
+                "Search for variables": {
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/variables/{key}": {
+      "get": {
+        "tags": [
+          "Variables"
+        ],
+        "summary": "Get variable by key",
+        "description": "Get variable by key",
+        "operationId": "getVariableByKey",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "2251799813685520"
+          },
+          "description": "Key of variable"
+        }
+      ]
+    },
+    "/decision-definitions/search": {
+      "post": {
+        "tags": [
+          "Decision definitions"
+        ],
+        "summary": "Search for decision definitions",
+        "description": "Search for decision definitions",
+        "operationId": "searchForDecisionDefinitions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              },
+              "examples": {
+                "Search for decision definitions": {
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/decision-definitions/{key}": {
+      "get": {
+        "tags": [
+          "Decision definitions"
+        ],
+        "summary": "Get decision definition by key",
+        "description": "Get decision definition by key",
+        "operationId": "getDecisionDefinitionByKey",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "2251799813874883"
+          },
+          "description": "Key of decision definition"
+        }
+      ]
+    },
+    "/drd/search": {
+      "post": {
+        "tags": [
+          "Decision requirements"
+        ],
+        "summary": "Search for decision requirements",
+        "description": "Search for decision requirements",
+        "operationId": "searchForDecisionRequirements",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              },
+              "examples": {
+                "Search for decision requirements": {
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/drd/{key}": {
+      "get": {
+        "tags": [
+          "Decision requirements"
+        ],
+        "summary": "Get decision requirements by key",
+        "description": "Get decision requirements by key",
+        "operationId": "getDecisionRequirementsByKey",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "2251799813874883"
+          },
+          "description": "Key of decision requirements"
+        }
+      ]
+    },
+    "/drd/{key}/xml": {
+      "get": {
+        "tags": [
+          "Decision requirements"
+        ],
+        "summary": "Get decision requirements by key as XML",
+        "description": "Get decision requirements by key as XML",
+        "operationId": "getDecisionRequirementsByKeyAsXml",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "2251799813874883"
+          },
+          "description": "Key of decision requirements"
+        }
+      ]
+    },
+    "/decision-instances/search": {
+      "post": {
+        "tags": [
+          "Decision instances"
+        ],
+        "summary": "Search for decision instances",
+        "description": "Search for decision instances",
+        "operationId": "searchForDecisionInstances",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              },
+              "examples": {
+                "Search for decision instances": {
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/decision-instances/{key}": {
+      "get": {
+        "tags": [
+          "Decision instances"
+        ],
+        "summary": "Get decision instance by key",
+        "description": "Get decision instance by key",
+        "operationId": "getDecisionInstanceByKey",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "2251799813874883-1"
+          },
+          "description": "Id of decision instance"
+        }
+      ]
+    }
+  },
+  "tags": [
+    {
+      "name": "Process definitions"
+    },
+    {
+      "name": "Process instances"
+    },
+    {
+      "name": "Incidents"
+    },
+    {
+      "name": "Flow node instances"
+    },
+    {
+      "name": "Variables"
+    },
+    {
+      "name": "Decision definitions"
+    },
+    {
+      "name": "Decision requirements"
+    },
+    {
+      "name": "Decision instances"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "ProcessDefinitionSearchRequest": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "$ref": "#/components/schemas/ProcessDefinitionFilter"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "searchAfter": {
+            "type": "array",
+            "items": {}
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortInstruction"
+            }
+          }
+        }
+      },
+      "ProcessDefinitionFilter": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "versionTag": {
+            "type": "string"
+          },
+          "bpmnProcessId": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          }
+        }
+      },
+      "SortInstruction": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "order": {
+            "$ref": "#/components/schemas/SortOrder"
+          }
+        }
+      },
+      "SortOrder": {
+        "type": "string",
+        "enum": [
+          "ASC",
+          "DESC"
+        ]
+      },
+      "ProcessDefinitionItem": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "versionTag": {
+            "type": "string"
+          },
+          "bpmnProcessId": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          }
+        }
+      },
+      "ProcessDefinitionSearchResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessDefinitionItem"
+            }
+          },
+          "sortValues": {
+            "type": "array",
+            "items": {}
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
