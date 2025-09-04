@@ -3,7 +3,7 @@
 # Default values
 # https://www.postman.com/:publicHandle/collection/24684262-e4cb02e0-4f3e-42c2-b983-3644feef3565
 DEFAULT_COLLECTION_ID="24684262-e4cb02e0-4f3e-42c2-b983-3644feef3565"
-DEFAULT_OUTPUT_FILE="camunda-8-openapi.json"
+DEFAULT_OUTPUT_FILE="camunda8-openapi.json"
 
 # Use environment variables if set, otherwise fall back to defaults
 COLLECTION_ID="${POSTMAN_COLLECTION_ID:-$DEFAULT_COLLECTION_ID}"

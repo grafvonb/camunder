@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/refs/tags/v2.5.0/configuration-schema.json
-package: c87camunda8v2
-output: client.gen.go
+package: c87operatev1
+output: client.c87operatev1.gen.go
 
 generate:
   models: true
