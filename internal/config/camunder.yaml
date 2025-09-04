@@ -1,7 +1,13 @@
-api:
-    base_url: http://localhost:8086/v2
-    token: ${CAMUNDER_API_TOKEN}
+camunda8_api:
+  base_url: http://localhost:8086/v2
+  token: ${CAMUNDER_API_TOKEN}
+operate_api:
+  base_url: http://localhost:8081/v1
+  token: ${CAMUNDER_API_TOKEN}
+tasklist_api:
+  base_url: http://localhost:8082/v1
+  token: ${CAMUNDER_API_TOKEN}
 http:
-    timeout: 30s
-    max_retries: 3
-    retry_delay: 5s
+  timeout: 30s
+  max_retries: 3
+  retry_delay: 5s

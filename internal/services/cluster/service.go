@@ -17,7 +17,7 @@ func New(baseUrl string, httpClient *http.Client, token string) (*Service, error
 	c, err := c87camunda8v2.NewClientWithResponses(
 		baseUrl,
 		c87camunda8v2.WithHTTPClient(httpClient),
-		c87camunda8v2.WithRequestEditorFn(editors.BearerTokenEditor(token)),
+		c87camunda8v2.WithRequestEditorFn(editors.BearerTokenEditorFn[c87camunda8v2.RequestEditorFn](token)),
 	)
 	if err != nil {
 		return nil, err

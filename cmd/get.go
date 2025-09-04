@@ -13,13 +13,14 @@ import (
 
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/cluster"
+	processdefinition "github.com/grafvonb/camunder/internal/services/process-definition"
 	"github.com/spf13/cobra"
 )
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get [resource type]",
-	Short: "List resources of a defined type e.g. cluster-topology, process-instances etc.",
+	Short: "List resources of a defined type e.g. cluster-topology, process-definition, process-instance etc.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
@@ -38,7 +39,7 @@ var getCmd = &cobra.Command{
 		}
 		switch rn {
 		case "cluster-topology", "ct":
-			svc, err := cluster.New(cfg.API.BaseURL, httpClient, cfg.API.Token)
+			svc, err := cluster.New(cfg.Camunda8API.BaseURL, httpClient, cfg.Camunda8API.Token)
 			if err != nil {
 				cmd.PrintErrf("Error creating cluster service: %v\n", err)
 				return
@@ -49,6 +50,19 @@ var getCmd = &cobra.Command{
 				return
 			}
 			b, _ := json.MarshalIndent(topology, "", "  ")
+			cmd.Println(string(b))
+		case "process-definitions", "pd":
+			svc, err := processdefinition.New(cfg.OperateAPI.BaseURL, httpClient, cfg.OperateAPI.Token)
+			if err != nil {
+				cmd.PrintErrf("Error creating process definition service: %v\n", err)
+				return
+			}
+			pds, err := svc.SearchForProcessDefinitions(cmd.Context())
+			if err != nil {
+				cmd.PrintErrf("Error fetching process definitions: %v\n", err)
+				return
+			}
+			b, _ := json.MarshalIndent(pds, "", "  ")
 			cmd.Println(string(b))
 		}
 	},

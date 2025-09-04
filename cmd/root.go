@@ -58,22 +58,32 @@ func Execute() {
 
 func init() {
 	// User-facing flags (highest precedence)
-	rootCmd.PersistentFlags().String("config", "", "Path to config file")
-	rootCmd.PersistentFlags().String("base-url", "", "API base URL")
-	rootCmd.PersistentFlags().String("token", "", "API bearer token")
+	rootCmd.PersistentFlags().String("config", "", "path to config file")
+	rootCmd.PersistentFlags().String("camunda8-base-url", "", "Camunda 8 API base URL")
+	rootCmd.PersistentFlags().String("camunda8-token", "", "Camunda 8 API bearer token")
+	rootCmd.PersistentFlags().String("operate-base-url", "", "Operate API base URL")
+	rootCmd.PersistentFlags().String("operate-token", "", "Operate API bearer token")
+	rootCmd.PersistentFlags().String("tasklist-base-url", "", "Tasklist API base URL")
+	rootCmd.PersistentFlags().String("tasklist-token", "", "Tasklist API bearer token")
 	rootCmd.PersistentFlags().Duration("timeout", 0, "HTTP timeout (e.g. 10s, 1m)")
 
 	// Bind flags to viper keys
 	// Resolve precedence: flags > env > config file > defaults
 	_ = v.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
-	_ = v.BindPFlag("api.base_url", rootCmd.PersistentFlags().Lookup("base-url"))
-	_ = v.BindPFlag("api.token", rootCmd.PersistentFlags().Lookup("token"))
+	_ = v.BindPFlag("camunda8_api.base_url", rootCmd.PersistentFlags().Lookup("camunda8-base-url"))
+	_ = v.BindPFlag("camunda8_api.token", rootCmd.PersistentFlags().Lookup("camunda8-token"))
+	_ = v.BindPFlag("operate_api.base_url", rootCmd.PersistentFlags().Lookup("operate-base-url"))
+	_ = v.BindPFlag("operate_api.token", rootCmd.PersistentFlags().Lookup("operate-token"))
+	_ = v.BindPFlag("tasklist_api.base_url", rootCmd.PersistentFlags().Lookup("tasklist-base-url"))
+	_ = v.BindPFlag("tasklist_api.token", rootCmd.PersistentFlags().Lookup("tasklist-token"))
 	_ = v.BindPFlag("http.timeout", rootCmd.PersistentFlags().Lookup("timeout"))
 }
 
 func initConfig() (config.Config, error) {
 	// Define defaults
-	v.SetDefault("api.base_url", "http://localhost:8086/v2")
+	v.SetDefault("camunda8_api.base_url", "http://localhost:8086/v2")
+	v.SetDefault("operate_api.base_url", "http://localhost:8081/v1")
+	v.SetDefault("tasklist_api.base_url", "http://localhost:8082/v1")
 	v.SetDefault("http.timeout", "10s")
 
 	// Environment variables

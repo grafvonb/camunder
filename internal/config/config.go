@@ -1,6 +1,9 @@
 package config
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	ErrNoBaseURL = errors.New("no base_url provided in api configuration")
@@ -8,9 +11,24 @@ var (
 )
 
 type Config struct {
-	Config string `mapstructure:"config"`
-	API    API    `mapstructure:"api"`
-	HTTP   HTTP   `mapstructure:"http"`
+	Config      string `mapstructure:"config"`
+	Camunda8API API    `mapstructure:"camunda8_api"`
+	OperateAPI  API    `mapstructure:"operate_api"`
+	TasklistAPI API    `mapstructure:"tasklist_api"`
+	HTTP        HTTP   `mapstructure:"http"`
+}
+
+func (c Config) Validate() error {
+	if err := c.Camunda8API.Validate(); err != nil {
+		return fmt.Errorf("camunda8 API: %w", err)
+	}
+	if err := c.OperateAPI.Validate(); err != nil {
+		return fmt.Errorf("operate API: %w", err)
+	}
+	if err := c.TasklistAPI.Validate(); err != nil {
+		return fmt.Errorf("tasklist API: %w", err)
+	}
+	return nil
 }
 
 type API struct {
@@ -18,17 +36,17 @@ type API struct {
 	Token   string `mapstructure:"token"`
 }
 
-type HTTP struct {
-	Timeout string `mapstructure:"timeout"`
-}
-
-func (c Config) Validate() error {
-	if c.API.BaseURL == "" {
+func (a API) Validate() error {
+	if a.BaseURL == "" {
 		return ErrNoBaseURL
 	}
-	if c.API.Token == "" {
+	if a.Token == "" {
 		return ErrNoToken
 	}
 
 	return nil
+}
+
+type HTTP struct {
+	Timeout string `mapstructure:"timeout"`
 }
