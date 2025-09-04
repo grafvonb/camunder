@@ -51,7 +51,7 @@ var getCmd = &cobra.Command{
 			}
 			b, _ := json.MarshalIndent(topology, "", "  ")
 			cmd.Println(string(b))
-		case "process-definitions", "pd":
+		case "process-definition", "pd":
 			svc, err := processdefinition.New(cfg.OperateAPI.BaseURL, httpClient, cfg.OperateAPI.Token)
 			if err != nil {
 				cmd.PrintErrf("Error creating process definition service: %v\n", err)
