@@ -21,7 +21,7 @@ var asJSON bool
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "print version information",
+	Short: "Print version information",
 	Run: func(cmd *cobra.Command, args []string) {
 		if asJSON {
 			out := map[string]string{

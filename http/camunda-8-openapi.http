@@ -21,7 +21,7 @@ Authorization: Bearer {{access_token}}
 {"size":1000}
 
 ### Get process instance
-@processInstanceKey=2251799813696429
+@processInstanceKey=2251799813685301
 GET {{operate_base_url}}/v1/process-instances/{{processInstanceKey}}
 Content-Type: application/json
 Authorization: Bearer {{access_token}}
@@ -36,6 +36,17 @@ Authorization: Bearer {{access_token}}
 POST {{zeebe_broker_rest_address}}/v2/process-instances/{{processInstanceKey}}/cancellation
 Content-Type: application/json
 Authorization: Bearer {{access_token}}
+
+{
+  "operationalReference": "cancel-process-instance-{{processInstanceKey}}"
+}
+
+
+### Delete process instance by key
+DELETE {{operate_base_url}}/v1/process-instances/{{processInstanceKey}}
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
 
 ### Retrieve process instance variables
 POST {{operate_base_url}}/v1/variables/search
