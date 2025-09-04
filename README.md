@@ -15,6 +15,7 @@ It provides a convenient way to manage and monitor Camunda 8 resources directly 
 
 ## Features planned
 
+- run process instances (bulk): `camunder run process-instances --bpmn-process-id <bpmnProcessId> --variables <key1=value1,key2=value2,...> --count <number>`
 - get process instances: `camunder get process-instances`
 - get process definitions: `camunder get process-definitions`
 - cancel process instances (bulk): `camunder cancel process-instances --ids <id1,id2,...>`
