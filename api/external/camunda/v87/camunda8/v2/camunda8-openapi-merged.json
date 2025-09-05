@@ -2038,7 +2038,7 @@
           "Process instance"
         ],
         "summary": "Cancel process instance",
-        "description": "Cancels a running process instance. As a cancelation includes more than just the removal of the process instance resource, the cancelation resource must be posted.",
+        "description": "Cancels a running process instance.",
         "operationId": "cancelProcessInstance",
         "requestBody": {
           "content": {
@@ -2050,7 +2050,8 @@
                     "type": "number",
                     "example": 0
                   }
-                }
+                },
+                "$ref": "#/components/schemas/CancelProcessInstanceRequest"
               },
               "examples": {
                 "Cancel process instance": {
@@ -2060,13 +2061,58 @@
                 }
               }
             }
-          }
+          },
+          "required": false
         },
         "responses": {
           "200": {
             "description": ""
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "The provided data is not valid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rfc7807Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rfc7807Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "API application error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rfc7807Problem"
+                }
+              }
+            }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "processInstanceKey",
+            "in": "path",
+            "required": true,
+            "description": "The key of the process instance to cancel.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       },
       "parameters": [
         {
@@ -2682,6 +2728,46 @@
             ]
           }
         }
+      },
+      "CancelProcessInstanceRequest": {
+        "type": "object",
+        "properties": {
+          "operationReference": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "A user-chosen reference key that will be part of all records resulting from this operation. Must be > 0 if provided."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Rfc7807Problem": {
+        "type": "object",
+        "description": "RFC 7807 Problem Details object.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri",
+            "default": "about:blank"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 400,
+            "maximum": 600
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "additionalProperties": true
       }
     }
   },

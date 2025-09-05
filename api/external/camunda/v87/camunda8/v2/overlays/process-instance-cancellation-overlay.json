@@ -1,0 +1,84 @@
+{
+  "paths": {
+    "/process-instances/{processInstanceKey}/cancellation": {
+      "post": {
+        "summary": "Cancel process instance",
+        "description": "Cancels a running process instance.",
+        "parameters": [
+          {
+            "name": "processInstanceKey",
+            "in": "path",
+            "required": true,
+            "description": "The key of the process instance to cancel.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CancelProcessInstanceRequest" }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "The provided data is not valid.",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/Rfc7807Problem" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/Rfc7807Problem" }
+              }
+            }
+          },
+          "500": {
+            "description": "API application error",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/Rfc7807Problem" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CancelProcessInstanceRequest": {
+        "type": "object",
+        "properties": {
+          "operationReference": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "A user-chosen reference key that will be part of all records resulting from this operation. Must be > 0 if provided."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Rfc7807Problem": {
+        "type": "object",
+        "description": "RFC 7807 Problem Details object.",
+        "properties": {
+          "type": { "type": "string", "format": "uri", "default": "about:blank" },
+          "title": { "type": "string" },
+          "status": { "type": "integer", "format": "int32", "minimum": 400, "maximum": 600 },
+          "detail": { "type": "string" },
+          "instance": { "type": "string", "format": "uri" }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}
