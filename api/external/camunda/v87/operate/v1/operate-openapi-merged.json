@@ -229,7 +229,7 @@
         "tags": [
           "Process instances"
         ],
-        "summary": "Search for process instances",
+        "summary": "Search process instances",
         "description": "Search for process instances",
         "operationId": "searchForProcessInstances",
         "requestBody": {
@@ -237,7 +237,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {}
+                "properties": {},
+                "$ref": "#/components/schemas/ProcessInstanceSearchRequest"
               },
               "examples": {
                 "Search for process instances": {
@@ -245,11 +246,59 @@
                 }
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessInstanceSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Data invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "API application error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
           }
         }
       }
@@ -724,6 +773,42 @@
   ],
   "components": {
     "schemas": {
+      "SortInstruction": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "order": {
+            "$ref": "#/components/schemas/SortOrder"
+          }
+        }
+      },
+      "SortOrder": {
+        "type": "string",
+        "enum": [
+          "ASC",
+          "DESC"
+        ]
+      },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
       "ProcessDefinitionSearchRequest": {
         "type": "object",
         "properties": {
@@ -771,24 +856,6 @@
           }
         }
       },
-      "SortInstruction": {
-        "type": "object",
-        "properties": {
-          "field": {
-            "type": "string"
-          },
-          "order": {
-            "$ref": "#/components/schemas/SortOrder"
-          }
-        }
-      },
-      "SortOrder": {
-        "type": "string",
-        "enum": [
-          "ASC",
-          "DESC"
-        ]
-      },
       "ProcessDefinitionItem": {
         "type": "object",
         "properties": {
@@ -833,24 +900,6 @@
           }
         }
       },
-      "Problem": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
-          },
-          "instance": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          }
-        }
-      },
       "ProcessInstanceDeleteResponse": {
         "type": "object",
         "properties": {
@@ -866,6 +915,157 @@
           "message",
           "deleted"
         ]
+      },
+      "ProcessInstanceSearchRequest": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "$ref": "#/components/schemas/ProcessInstanceFilter"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "searchAfter": {
+            "type": "array",
+            "items": {}
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortInstruction"
+            }
+          }
+        }
+      },
+      "ProcessInstanceFilter": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "processVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "processVersionTag": {
+            "type": "string"
+          },
+          "bpmnProcessId": {
+            "type": "string"
+          },
+          "parentKey": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "parentFlowNodeInstanceKey": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "COMPLETED",
+              "CANCELED"
+            ]
+          },
+          "incident": {
+            "type": "boolean"
+          },
+          "processDefinitionKey": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "parentProcessInstanceKey": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ProcessInstanceItem": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "processVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "processVersionTag": {
+            "type": "string"
+          },
+          "bpmnProcessId": {
+            "type": "string"
+          },
+          "parentKey": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "parentFlowNodeInstanceKey": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "COMPLETED",
+              "CANCELED"
+            ]
+          },
+          "incident": {
+            "type": "boolean"
+          },
+          "processDefinitionKey": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "parentProcessInstanceKey": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ProcessInstanceSearchResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessInstanceItem"
+            }
+          },
+          "sortValues": {
+            "type": "array",
+            "items": {}
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
       }
     }
   }

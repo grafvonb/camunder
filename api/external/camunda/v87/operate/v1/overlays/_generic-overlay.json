@@ -1,0 +1,26 @@
+{
+  "components": {
+    "schemas": {
+      "SortInstruction": {
+        "type": "object",
+        "properties": {
+          "field": { "type": "string" },
+          "order": { "$ref": "#/components/schemas/SortOrder" }
+        }
+      },
+      "SortOrder": {
+        "type": "string",
+        "enum": ["ASC", "DESC"]
+      },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "integer", "format": "int32" },
+          "message": { "type": "string" },
+          "instance": { "type": "string" },
+          "type": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
+	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/editors"
 )
 
@@ -13,11 +14,11 @@ type Service struct {
 	c *c87operatev1.ClientWithResponses
 }
 
-func New(baseUrl string, httpClient *http.Client, token string) (*Service, error) {
+func New(cfg config.Config, httpClient *http.Client) (*Service, error) {
 	c, err := c87operatev1.NewClientWithResponses(
-		baseUrl,
+		cfg.OperateAPI.BaseURL,
 		c87operatev1.WithHTTPClient(httpClient),
-		c87operatev1.WithRequestEditorFn(editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token)),
+		c87operatev1.WithRequestEditorFn(editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](cfg.OperateAPI.Token)),
 	)
 	if err != nil {
 		return nil, err

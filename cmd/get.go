@@ -10,13 +10,17 @@ import (
 	"github.com/grafvonb/camunder/internal/services/cluster"
 	"github.com/grafvonb/camunder/internal/services/common"
 	processdefinition "github.com/grafvonb/camunder/internal/services/process-definition"
+	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 	"github.com/spf13/cobra"
 )
 
 var supportedResourcesForGet = common.ResourceTypes{
 	"ct": "cluster-topology",
 	"pd": "process-definition",
+	"pi": "process-instance",
 }
+
+var bpmnProcessId string
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
@@ -40,7 +44,7 @@ var getCmd = &cobra.Command{
 		}
 		switch rn {
 		case "cluster-topology", "ct":
-			svc, err := cluster.New(cfg.Camunda8API.BaseURL, httpClient, cfg.Camunda8API.Token)
+			svc, err := cluster.New(cfg, httpClient)
 			if err != nil {
 				cmd.PrintErrf("Error creating cluster service: %v\n", err)
 				return
@@ -53,7 +57,7 @@ var getCmd = &cobra.Command{
 			b, _ := json.MarshalIndent(topology, "", "  ")
 			cmd.Println(string(b))
 		case "process-definition", "pd":
-			svc, err := processdefinition.New(cfg.OperateAPI.BaseURL, httpClient, cfg.OperateAPI.Token)
+			svc, err := processdefinition.New(cfg, httpClient)
 			if err != nil {
 				cmd.PrintErrf("Error creating process definition service: %v\n", err)
 				return
@@ -65,6 +69,23 @@ var getCmd = &cobra.Command{
 			}
 			b, _ := json.MarshalIndent(pds, "", "  ")
 			cmd.Println(string(b))
+		case "process-instance", "pi":
+			if bpmnProcessId == "" {
+				cmd.PrintErrln("Please provide a process ID to filter process instances using the --bpmn-process-id flag.")
+				return
+			}
+			svc, err := processinstance.New(cfg, httpClient)
+			if err != nil {
+				cmd.PrintErrf("Error creating process instance service: %v\n", err)
+				return
+			}
+			pis, err := svc.SearchForProcessInstances(cmd.Context(), bpmnProcessId)
+			if err != nil {
+				cmd.PrintErrf("Error fetching process instances: %v\n", err)
+				return
+			}
+			b, _ := json.MarshalIndent(pis, "", "  ")
+			cmd.Println(string(b))
 		default:
 			cmd.PrintErrf("Unknown resource type: %s\n", rn)
 			cmd.Println(supportedResourcesForGet.PrettyString())
@@ -74,4 +95,6 @@ var getCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(getCmd)
+
+	getCmd.Flags().StringVarP(&bpmnProcessId, "bpmn-process-id", "b", "", "BPMN process ID to filter process instances")
 }

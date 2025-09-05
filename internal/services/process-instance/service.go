@@ -8,6 +8,7 @@ import (
 
 	c87camunda8v2 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda8/v2"
 	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
+	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/editors"
 )
 
@@ -16,16 +17,16 @@ type Service struct {
 	cc *c87camunda8v2.ClientWithResponses
 }
 
-func New(operateBaseUrl string, camunda8BaseUrl string, httpClient *http.Client, token string) (*Service, error) {
-	co, err := c87operatev1.NewClientWithResponses(
-		operateBaseUrl,
-		c87operatev1.WithHTTPClient(httpClient),
-		c87operatev1.WithRequestEditorFn(editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token)),
-	)
+func New(cfg config.Config, httpClient *http.Client) (*Service, error) {
 	cc, err := c87camunda8v2.NewClientWithResponses(
-		camunda8BaseUrl,
+		cfg.Camunda8API.BaseURL,
 		c87camunda8v2.WithHTTPClient(httpClient),
-		c87camunda8v2.WithRequestEditorFn(editors.BearerTokenEditorFn[c87camunda8v2.RequestEditorFn](token)),
+		c87camunda8v2.WithRequestEditorFn(editors.BearerTokenEditorFn[c87camunda8v2.RequestEditorFn](cfg.Camunda8API.Token)),
+	)
+	co, err := c87operatev1.NewClientWithResponses(
+		cfg.OperateAPI.BaseURL,
+		c87operatev1.WithHTTPClient(httpClient),
+		c87operatev1.WithRequestEditorFn(editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](cfg.OperateAPI.Token)),
 	)
 	if err != nil {
 		return nil, err
@@ -34,6 +35,24 @@ func New(operateBaseUrl string, camunda8BaseUrl string, httpClient *http.Client,
 		co: co,
 		cc: cc,
 	}, nil
+}
+
+func (s *Service) SearchForProcessInstances(ctx context.Context, bpmnProcessId string) (*c87operatev1.ProcessInstanceSearchResponse, error) {
+	size := int32(1000)
+	body := c87operatev1.ProcessInstanceSearchRequest{
+		Filter: &c87operatev1.ProcessInstanceFilter{
+			BpmnProcessId: &bpmnProcessId,
+		},
+		Size: &size,
+	}
+	resp, err := s.co.SearchForProcessInstancesWithResponse(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+	}
+	return resp.JSON200, nil
 }
 
 func (s *Service) CancelProcessInstance(ctx context.Context, key string) (*c87camunda8v2.CancelProcessInstanceResponse, error) {

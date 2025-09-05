@@ -57,15 +57,6 @@
           "deleted": { "type": "integer", "format": "int64" }
         },
         "required": ["message", "deleted"]
-      },
-      "Problem": {
-        "type": "object",
-        "properties": {
-          "status": { "type": "integer", "format": "int32" },
-          "message": { "type": "string" },
-          "instance": { "type": "string" },
-          "type": { "type": "string" }
-        }
       }
     }
   }
