@@ -10,16 +10,21 @@ import (
 	"time"
 
 	"github.com/grafvonb/camunder/internal/config"
+	"github.com/grafvonb/camunder/internal/services/common"
 	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 	"github.com/spf13/cobra"
 )
+
+var supportedResourcesForDelete = common.ResourceTypes{
+	"pi": "process-instance",
+}
 
 var piKey string
 
 // deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
 	Use:   "delete [resource name] [key]",
-	Short: "Delete a resource of a given type e.g. process instance by its key.",
+	Short: "Delete a resource of a given type by its key. " + supportedResourcesForDelete.PrettyString(),
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
@@ -51,6 +56,9 @@ var deleteCmd = &cobra.Command{
 			}
 			b, _ := json.MarshalIndent(pds, "", "  ")
 			cmd.Println(string(b))
+		default:
+			cmd.PrintErrf("Unknown resource type: %s\n", rn)
+			cmd.Println(supportedResourcesForDelete.PrettyString())
 		}
 	},
 }

@@ -13,14 +13,20 @@ import (
 
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/cluster"
+	"github.com/grafvonb/camunder/internal/services/common"
 	processdefinition "github.com/grafvonb/camunder/internal/services/process-definition"
 	"github.com/spf13/cobra"
 )
 
+var supportedResourcesForGet = common.ResourceTypes{
+	"ct": "cluster-topology",
+	"pd": "process-definition",
+}
+
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get [resource type]",
-	Short: "List resources of a defined type e.g. cluster-topology, process-definition, process-instance etc.",
+	Short: "List resources of a defined type. " + supportedResourcesForGet.PrettyString(),
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
@@ -64,20 +70,13 @@ var getCmd = &cobra.Command{
 			}
 			b, _ := json.MarshalIndent(pds, "", "  ")
 			cmd.Println(string(b))
+		default:
+			cmd.PrintErrf("Unknown resource type: %s\n", rn)
+			cmd.Println(supportedResourcesForGet.PrettyString())
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(getCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// getCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// getCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
