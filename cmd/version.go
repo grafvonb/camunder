@@ -1,6 +1,3 @@
-/*
-Copyright © 2026 Adam Boczek <adam@boczek.com>
-*/
 package cmd
 
 import (
