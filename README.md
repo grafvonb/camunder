@@ -1,10 +1,10 @@
 <p align="center">
-<img src="./docs/logo/camunder-logo-orange-background.png" alt="camunder logo" width="220" style="border-radius: 12px;" />
+<img src="./docs/logo/camunder-logo-orange-background_170x170.png" alt="camunder logo" style="border-radius: 12px;" />
 </p>
 
 # Camunder
 
-Camunder is a CLI tool to interact with Camunda 8.
+Camunder is a CLI tool to interact with [Camunda 8](https://camunda.com/platform/).
 
 > **Disclaimer:** This project is currently in an **early development stage**.  
 > Features, APIs, and behavior may change without notice. Use at your own risk.
@@ -25,16 +25,16 @@ like cancelling prior to deleting process instances.
 
 ## Features implemented
 
-- get cluster topology: `$ camunder get cluster-topology`
+- get process instances for a process definition id: `$ camunder get process-instance --bpmn-process-id <id>`
 - get process definitions: `$ camunder get process-definition`
+- get cluster topology: `$ camunder get cluster-topology`
 - delete single process instance with cancel option: `$ camunder delete process-instance --key <key>`
 
 ## Features planned
 
-- run process instances (bulk): `$ camunder run process-instance --bpmn-process-id <bpmnProcessId> --variables <key1=value1,key2=value2,...> --count <number>`
-- get process instances: `$ camunder get process-instance`
-- cancel process instance (bulk): `$ camunder cancel process-instance --bulk <key1,key2,...>`
-- delete process instance (bulk): `$ camunder delete process-instance --bulk <key1,key2,...>`
+- run process instances (bulk)
+- cancel process instance (bulk)
+- delete process instance (bulk)
 - ...and more to come!
 
 ## Configuration
@@ -47,8 +47,6 @@ Default configuration file locations are application path or user config directo
 
 ## Usage 
 ```
-Camunder is a CLI tool to interact with Camunda 8.
-
 Usage:
   camunder [flags]
   camunder [command]
@@ -56,7 +54,7 @@ Usage:
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
   delete      Delete a resource of a given type by its key. Supported resource types are: process-instance (pi)
-  get         List resources of a defined type. Supported resource types are: cluster-topology (ct), process-definition (pd)
+  get         List resources of a defined type. Supported resource types are: cluster-topology (ct), process-definition (pd), process-instance (pi)
   help        Help about any command
   version     Print version information
 
