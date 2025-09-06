@@ -37,6 +37,10 @@ like cancelling prior to deleting process instances.
 - delete process instance (bulk)
 - ...and more to come!
 
+## Supported Camunda 8 APIs
+
+- 8.7.x
+
 ## Configuration
 
 Camunder can be configured using command-line flags, environment variables or a configuration file. 
@@ -66,6 +70,7 @@ Flags:
   -h, --help                       help for camunder
       --operate-base-url string    Operate API base URL
       --operate-token string       Operate API bearer token
+  -q, --quiet                      suppress output, use exit code only
       --tasklist-base-url string   Tasklist API base URL
       --tasklist-token string      Tasklist API bearer token
       --timeout duration           HTTP timeout (e.g. 10s, 1m)
@@ -145,7 +150,8 @@ Trying to cancel process instance with key 2251799813685391...
 Process instance with key 2251799813685391 was successfully cancelled
 Waiting for process instance with key 2251799813685391 to be cancelled by workflow engine...
 {
-  "deleted": 1,
+
   "message": "Process instance and dependant data deleted for key '2251799813685391'"
 }
 ```
+Copyright © 2025 Adam Bogdan Boczek | [boczek.info](https://boczek.info)
