@@ -74,7 +74,7 @@ var getCmd = &cobra.Command{
 				cmd.PrintErrln("Please provide a process ID to filter process instances using the --bpmn-process-id flag.")
 				return
 			}
-			svc, err := processinstance.New(cfg, httpClient)
+			svc, err := processinstance.New(cfg, httpClient, isQuiet)
 			if err != nil {
 				cmd.PrintErrf("Error creating process instance service: %v\n", err)
 				return

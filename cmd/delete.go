@@ -42,7 +42,7 @@ var deleteCmd = &cobra.Command{
 		}
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(cfg, httpClient)
+			svc, err := processinstance.New(cfg, httpClient, isQuiet)
 			if err != nil {
 				cmd.PrintErrf("Error creating process instance service: %v\n", err)
 				return

@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	v = viper.New()
+	isQuiet bool // quiet mode, suppress output, use exit code only
+	v       = viper.New()
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -66,6 +67,7 @@ func init() {
 	rootCmd.PersistentFlags().String("tasklist-base-url", "", "Tasklist API base URL")
 	rootCmd.PersistentFlags().String("tasklist-token", "", "Tasklist API bearer token")
 	rootCmd.PersistentFlags().Duration("timeout", 0, "HTTP timeout (e.g. 10s, 1m)")
+	rootCmd.PersistentFlags().BoolVarP(&isQuiet, "quiet", "q", false, "suppress output, use exit code only")
 
 	// Bind flags to viper keys
 	// Resolve precedence: flags > env > config file > defaults

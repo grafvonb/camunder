@@ -46,6 +46,7 @@ Default configuration file locations are application path or user config directo
 - `%APPDATA%\camunder\config.yaml` (Windows)
 
 ## Usage 
+### Help Output
 ```
 Usage:
   camunder [flags]
@@ -70,4 +71,81 @@ Flags:
       --timeout duration           HTTP timeout (e.g. 10s, 1m)
 
 Use "camunder [command] --help" for more information about a command.
+```
+### Camunder in Action
+In the following example Camunder is used to list process definitions, get process instances for a specific process definition id,
+and tries to delete a process instance by its key. As the process instance is still active, the deletion fails, so the process instance is cancelled first and then deleted successfully.
+```bash
+# get process definitions
+$ camunder get pd
+{
+  "items": [
+    {
+      "bpmnProcessId": "DoSomethingUserTaskProcess2ID",
+      "key": 2251799813685251,
+      "name": "Do Something User Task Process",
+      "tenantId": "\u003cdefault\u003e",
+      "version": 1,
+      "versionTag": "v1.0.1"
+    },
+    {
+      "bpmnProcessId": "DoSomethingUserTaskProcessID",
+      "key": 2251799813685252,
+      "name": "Do Something User Task Process",
+      "tenantId": "\u003cdefault\u003e",
+      "version": 1,
+      "versionTag": "v1.0.1"
+    }
+  ],
+  "sortValues": [
+    "2251799813685252"
+  ],
+  "total": 2
+}
+# get process instances for a specific process definition id
+$ camunder get pi --bpmn-process-id=DoSomethingUserTaskProcess2ID
+{
+  "items": [
+    {
+      "bpmnProcessId": "DoSomethingUserTaskProcess2ID",
+      "incident": false,
+      "key": 2251799813685391,
+      "processDefinitionKey": 2251799813685251,
+      "processVersion": 1,
+      "processVersionTag": "v1.0.1",
+      "startDate": "2025-09-06T06:48:08.625+0000",
+      "state": "ACTIVE",
+      "tenantId": "\u003cdefault\u003e"
+    },
+    {
+      "bpmnProcessId": "DoSomethingUserTaskProcess2ID",
+      "incident": false,
+      "key": 2251799813685415,
+      "processDefinitionKey": 2251799813685251,
+      "processVersion": 1,
+      "processVersionTag": "v1.0.1",
+      "startDate": "2025-09-06T06:52:13.069+0000",
+      "state": "ACTIVE",
+      "tenantId": "\u003cdefault\u003e"
+    }
+  ],
+  "sortValues": [
+    2251799813685415
+  ],
+  "total": 2
+}
+# try to delete a process instance by its key
+$ camunder delete pi --key 2251799813685391
+Trying to delete process instance with key 2251799813685391...
+Error deleting process instance with key 2251799813685391: unexpected status 400: {"status":400,"message":"Process instances needs to be in one of the states [COMPLETED, CANCELED]","instance":"d24bb589-6c62-4985-a5cb-0712d1e31152","type":"Invalid request"}
+# as the process instance is still active, try to cancel it first and then delete it
+$ camunder delete pi --key 2251799813685391 -c
+Process instance with key 2251799813685391 not in state COMPLETED or CANCELED, cancelling it first...
+Trying to cancel process instance with key 2251799813685391...
+Process instance with key 2251799813685391 was successfully cancelled
+Waiting for process instance with key 2251799813685391 to be cancelled by workflow engine...
+{
+  "deleted": 1,
+  "message": "Process instance and dependant data deleted for key '2251799813685391'"
+}
 ```
