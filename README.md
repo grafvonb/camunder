@@ -1,4 +1,9 @@
+<p align="center">
+<img src="./docs/logo/camunder-logo-orange-background.png" alt="camunder logo" width="220" style="border-radius: 12px;" />
+</p>
+
 # Camunder
+
 Camunder is a CLI tool to interact with Camunda 8.
 
 > **Disclaimer:** This project is currently in an **early development stage**.  
