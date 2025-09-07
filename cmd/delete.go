@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,8 +18,8 @@ var supportedResourcesForDelete = common.ResourceTypes{
 	"pi": "process-instance",
 }
 
-var key string
-var withCancel bool
+var deletePIKey string
+var deleteWithCancel bool
 
 // deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
@@ -54,19 +53,17 @@ var deleteCmd = &cobra.Command{
 				cmd.PrintErrf("Error creating process instance service: %v\n", err)
 				return
 			}
-
-			var pds *c87operatev1.ProcessInstanceDeleteResponse
-			if withCancel {
-				pds, err = svc.DeleteProcessInstanceWithCancel(cmd.Context(), key)
+			var pidr *c87operatev1.ProcessInstanceDeleteResponse
+			if deleteWithCancel {
+				pidr, err = svc.DeleteProcessInstanceWithCancel(cmd.Context(), deletePIKey)
 			} else {
-				pds, err = svc.DeleteProcessInstance(cmd.Context(), key)
+				pidr, err = svc.DeleteProcessInstance(cmd.Context(), deletePIKey)
 			}
 			if err != nil {
-				cmd.PrintErrf("Error deleting process instance with key %s: %v\n", key, err)
+				cmd.PrintErrf("Error deleting process instance with key %s: %v\n", deletePIKey, err)
 				return
 			}
-			b, _ := json.MarshalIndent(pds, "", "  ")
-			cmd.Println(string(b))
+			cmd.Println(ToJSONString(pidr))
 		default:
 			cmd.PrintErrf("Unknown resource type: %s\n", rn)
 			cmd.Println(supportedResourcesForDelete.PrettyString())
@@ -77,8 +74,8 @@ var deleteCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(deleteCmd)
 
-	deleteCmd.Flags().StringVar(&key, "key", "", "process instance key to delete")
+	deleteCmd.Flags().StringVar(&deletePIKey, "key", "", "process instance key to delete")
 	deleteCmd.MarkFlagRequired("key")
 
-	deleteCmd.Flags().BoolVarP(&withCancel, "cancel", "c", false, "tries to cancel the process instance before deleting it (if not in the state COMPLETED or CANCELED)")
+	deleteCmd.Flags().BoolVarP(&deleteWithCancel, "cancel", "c", false, "tries to cancel the process instance before deleting it (if not in the state COMPLETED or CANCELED)")
 }

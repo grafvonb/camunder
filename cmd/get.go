@@ -1,14 +1,13 @@
 package cmd
 
 import (
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/internal/services/cluster"
 	"github.com/grafvonb/camunder/internal/services/common"
+	"github.com/grafvonb/camunder/internal/services/httpc"
 	processdefinition "github.com/grafvonb/camunder/internal/services/process-definition"
 	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 	"github.com/spf13/cobra"
@@ -34,22 +33,19 @@ var getCmd = &cobra.Command{
 			cmd.PrintErrf("error retrieving config from context: %v\n", err)
 			return
 		}
-		timeout, err := time.ParseDuration(cfg.HTTP.Timeout)
+		httpSvc, err := httpc.FromContext(cmd.Context())
 		if err != nil {
-			cmd.PrintErrf("error parsing '%s' as timeout duration: %v\n", cfg.HTTP.Timeout, err)
+			cmd.PrintErrf("error creating http service: %v\n", err)
 			return
 		}
-		httpClient := &http.Client{
-			Timeout: timeout,
-		}
-		auth, err := auth.FromContext(cmd.Context())
+		authSvc, err := auth.FromContext(cmd.Context())
 		if err != nil {
 			cmd.PrintErrf("error retrieving auth service: %v\n", err)
 			return
 		}
 		switch rn {
 		case "cluster-topology", "ct":
-			svc, err := cluster.New(cfg, httpClient, auth, isQuiet)
+			svc, err := cluster.New(cfg, httpSvc.Client(), authSvc, isQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating cluster service: %v\n", err)
 				return
@@ -61,33 +57,33 @@ var getCmd = &cobra.Command{
 			}
 			cmd.Println(ToJSONString(topology))
 		case "process-definition", "pd":
-			svc, err := processdefinition.New(cfg, httpClient, auth, isQuiet)
+			svc, err := processdefinition.New(cfg, httpSvc.Client(), authSvc, isQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process definition service: %v\n", err)
 				return
 			}
-			pds, err := svc.SearchForProcessDefinitions(cmd.Context())
+			pdsr, err := svc.SearchForProcessDefinitions(cmd.Context())
 			if err != nil {
 				cmd.PrintErrf("error fetching process definitions: %v\n", err)
 				return
 			}
-			cmd.Println(ToJSONString(pds))
+			cmd.Println(ToJSONString(pdsr))
 		case "process-instance", "pi":
 			if bpmnProcessId == "" {
 				cmd.PrintErrln("please provide a process ID to filter process instances using the --bpmn-process-id flag")
 				return
 			}
-			svc, err := processinstance.New(cfg, httpClient, auth, isQuiet)
+			svc, err := processinstance.New(cfg, httpSvc.Client(), authSvc, isQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
 			}
-			pis, err := svc.SearchForProcessInstances(cmd.Context(), bpmnProcessId)
+			pisr, err := svc.SearchForProcessInstances(cmd.Context(), bpmnProcessId)
 			if err != nil {
 				cmd.PrintErrf("error fetching process instances: %v\n", err)
 				return
 			}
-			cmd.Println(ToJSONString(pis))
+			cmd.Println(ToJSONString(pisr))
 		default:
 			cmd.PrintErrf("unknown resource type: %s\n", rn)
 			cmd.Println(supportedResourcesForGet.PrettyString())

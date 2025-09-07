@@ -29,6 +29,7 @@ like cancelling prior to deleting process instances.
 - get process definitions: `$ camunder get process-definition`
 - get cluster topology: `$ camunder get cluster-topology`
 - delete single process instance with cancel option: `$ camunder delete process-instance --key <key>`
+- cancel single process instance: `$ camunder cancel process-instance --key <key>`
 
 ## Features planned
 
@@ -176,9 +177,10 @@ Usage:
   camunder [command]
 
 Available Commands:
+  cancel      Cancel a resource of a given type by its key. Supported resource types are: process-instance (pi)
   completion  Generate the autocompletion script for the specified shell
   delete      Delete a resource of a given type by its key. Supported resource types are: process-instance (pi)
-  get         List resources of a defined type. Supported resource types are: process-instance (pi), cluster-topology (ct), process-definition (pd)
+  get         List resources of a defined type. Supported resource types are: cluster-topology (ct), process-definition (pd), process-instance (pi)
   help        Help about any command
   version     Print version information
 

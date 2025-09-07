@@ -3,14 +3,13 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/auth"
+	"github.com/grafvonb/camunder/internal/services/httpc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -46,24 +45,20 @@ var rootCmd = &cobra.Command{
 			cmd.Println(cfg.String())
 			os.Exit(0)
 		}
-
-		timeout, err := time.ParseDuration(cfg.HTTP.Timeout)
+		httpSvc, err := httpc.New(cfg, isQuiet)
 		if err != nil {
-			cmd.PrintErrf("parsing '%s' as timeout duration: %v\n", cfg.HTTP.Timeout, err)
-			return err
+			return fmt.Errorf("create http service: %w", err)
 		}
-		httpClient := &http.Client{
-			Timeout: timeout,
-		}
-		auth, err := auth.New(cfg, httpClient, isQuiet)
+		cmd.SetContext(httpSvc.ToContext(cmd.Context()))
+		authSvc, err := auth.New(cfg, httpSvc.Client(), isQuiet)
 		if err != nil {
 			return fmt.Errorf("create auth service: %w", err)
 		}
-		if err := auth.Warmup(cmd.Context()); err != nil {
+		if err := authSvc.Warmup(cmd.Context()); err != nil {
 			cmd.PrintErrf("warming up auth service: %v\n", err)
 			return err
 		}
-		cmd.SetContext(auth.ToContext(cmd.Context()))
+		cmd.SetContext(authSvc.ToContext(cmd.Context()))
 
 		return nil
 	},
