@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -26,12 +25,7 @@ var versionCmd = &cobra.Command{
 				"commit":  commit,
 				"date":    date,
 			}
-			b, err := json.MarshalIndent(out, "", "  ")
-			if err != nil {
-				cmd.PrintErrf("Error marshalling version info to JSON: %v\n", err)
-				return
-			}
-			fmt.Println(string(b))
+			cmd.Println(ToJSONString(out))
 			return
 		}
 		fmt.Printf("Camunder version %s, commit %s, built at %s\n", version, commit, date)

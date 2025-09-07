@@ -1,18 +1,23 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/grafvonb/camunder/internal/config"
+	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
-	isQuiet bool // quiet mode, suppress output, use exit code only
-	v       = viper.New()
+	isQuiet    bool // quiet mode, suppress output, use exit code only
+	showConfig bool // show effective config and exit
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -20,9 +25,7 @@ var rootCmd = &cobra.Command{
 	Use:   "camunder",
 	Short: "Camunder is a CLI tool to interact with Camunda 8.",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		if cmd.Name() == "camunder" {
-			return nil
-		}
+		// Skip config loading for root/help-like commands
 		if cmd.Name() == "help" || cmd.Name() == "version" || cmd.Name() == "completion" {
 			return nil
 		}
@@ -30,14 +33,38 @@ var rootCmd = &cobra.Command{
 			return nil
 		}
 
-		cfg, err := initConfig()
+		v := viper.New()
+		if err := initViper(v, cmd); err != nil {
+			return err
+		}
+		cfg, err := retrieveConfig(v, !showConfig)
 		if err != nil {
-			return fmt.Errorf("failed to initialize config: %w", err)
+			return err
 		}
-		if err := cfg.Validate(); err != nil {
-			return fmt.Errorf("invalid config: %w", err)
+		cmd.SetContext(cfg.ToContext(cmd.Context()))
+		if showConfig {
+			cmd.Println(cfg.String())
+			os.Exit(0)
 		}
-		cmd.SetContext(config.IntoContext(cmd.Context(), cfg))
+
+		timeout, err := time.ParseDuration(cfg.HTTP.Timeout)
+		if err != nil {
+			cmd.PrintErrf("parsing '%s' as timeout duration: %v\n", cfg.HTTP.Timeout, err)
+			return err
+		}
+		httpClient := &http.Client{
+			Timeout: timeout,
+		}
+		auth, err := auth.New(cfg, httpClient, isQuiet)
+		if err != nil {
+			return fmt.Errorf("create auth service: %w", err)
+		}
+		if err := auth.Warmup(cmd.Context()); err != nil {
+			cmd.PrintErrf("warming up auth service: %v\n", err)
+			return err
+		}
+		cmd.SetContext(auth.ToContext(cmd.Context()))
+
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -49,7 +76,6 @@ var rootCmd = &cobra.Command{
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -58,57 +84,109 @@ func Execute() {
 }
 
 func init() {
-	// User-facing flags (highest precedence)
 	rootCmd.PersistentFlags().String("config", "", "path to config file")
-	rootCmd.PersistentFlags().String("camunda8-base-url", "", "Camunda 8 API base URL")
-	rootCmd.PersistentFlags().String("camunda8-token", "", "Camunda 8 API bearer token")
+	rootCmd.PersistentFlags().String("auth-token-url", "", "auth token URL")
+	rootCmd.PersistentFlags().String("auth-client-id", "", "auth client ID")
+	rootCmd.PersistentFlags().String("auth-client-secret", "", "auth client secret")
+	rootCmd.PersistentFlags().StringToString("auth-scopes", nil, "auth scopes as key=value (repeatable or comma-separated)")
+	rootCmd.PersistentFlags().String("http-timeout", "", "HTTP timeout (Go duration, e.g. 30s)")
+
+	rootCmd.PersistentFlags().String("camunda8-base-url", "", "Camunda8 API base URL")
 	rootCmd.PersistentFlags().String("operate-base-url", "", "Operate API base URL")
-	rootCmd.PersistentFlags().String("operate-token", "", "Operate API bearer token")
 	rootCmd.PersistentFlags().String("tasklist-base-url", "", "Tasklist API base URL")
-	rootCmd.PersistentFlags().String("tasklist-token", "", "Tasklist API bearer token")
-	rootCmd.PersistentFlags().Duration("timeout", 0, "HTTP timeout (e.g. 10s, 1m)")
+
 	rootCmd.PersistentFlags().BoolVarP(&isQuiet, "quiet", "q", false, "suppress output, use exit code only")
 
-	// Bind flags to viper keys
-	// Resolve precedence: flags > env > config file > defaults
-	_ = v.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
-	_ = v.BindPFlag("camunda8_api.base_url", rootCmd.PersistentFlags().Lookup("camunda8-base-url"))
-	_ = v.BindPFlag("camunda8_api.token", rootCmd.PersistentFlags().Lookup("camunda8-token"))
-	_ = v.BindPFlag("operate_api.base_url", rootCmd.PersistentFlags().Lookup("operate-base-url"))
-	_ = v.BindPFlag("operate_api.token", rootCmd.PersistentFlags().Lookup("operate-token"))
-	_ = v.BindPFlag("tasklist_api.base_url", rootCmd.PersistentFlags().Lookup("tasklist-base-url"))
-	_ = v.BindPFlag("tasklist_api.token", rootCmd.PersistentFlags().Lookup("tasklist-token"))
-	_ = v.BindPFlag("http.timeout", rootCmd.PersistentFlags().Lookup("timeout"))
+	rootCmd.PersistentFlags().BoolVar(&showConfig, "show-config", false, "print effective config (secrets redacted)")
 }
 
-func initConfig() (config.Config, error) {
-	// Define defaults
-	v.SetDefault("camunda8_api.base_url", "http://localhost:8086/v2")
-	v.SetDefault("operate_api.base_url", "http://localhost:8081/v1")
-	v.SetDefault("tasklist_api.base_url", "http://localhost:8082/v1")
-	v.SetDefault("http.timeout", "10s")
+func initViper(v *viper.Viper, cmd *cobra.Command) error {
+	// Resolve precedence: flags > env > config file > defaults
 
-	// Environment variables
-	v.SetEnvPrefix("CAMUNDER")
-	v.AutomaticEnv()                                             // read in environment variables that match
-	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_")) // support nested env vars (e.g. CAMUNDER_API_BASE_URL)
+	// Bind scalar flags directly to config keys
+	_ = v.BindPFlag("config", cmd.Flags().Lookup("config"))
+	_ = v.BindPFlag("auth.token_url", cmd.Flags().Lookup("auth-token-url"))
+	_ = v.BindPFlag("auth.client_id", cmd.Flags().Lookup("auth-client-id"))
+	_ = v.BindPFlag("auth.client_secret", cmd.Flags().Lookup("auth-client-secret"))
+	_ = v.BindPFlag("http.timeout", cmd.Flags().Lookup("http-timeout"))
 
-	// Config file
+	_ = v.BindPFlag("apis.camunda8_api.base_url", cmd.Flags().Lookup("camunda8-base-url"))
+	_ = v.BindPFlag("apis.operate_api.base_url", cmd.Flags().Lookup("operate-base-url"))
+	_ = v.BindPFlag("apis.tasklist_api.base_url", cmd.Flags().Lookup("tasklist-base-url"))
+
+	// Bind map flag to a tmp key so we can merge later
+	_ = v.BindPFlag("tmp.auth_scopes", cmd.Flags().Lookup("auth-scopes"))
+
+	// Force hardcoded keys
+	v.Set("apis.camunda8_api.key", config.Camunda8ApiKeyConst)
+	v.Set("apis.operate_api.key", config.OperateApiKeyConst)
+	v.Set("apis.tasklist_api.key", config.TasklistApiKeyConst)
+
+	// Defaults
+	v.SetDefault("http.timeout", "30s")
+
+	// Config file discovery
 	if cfgFile := v.GetString("config"); cfgFile != "" {
 		v.SetConfigFile(cfgFile)
 	} else {
-		v.AddConfigPath(".")
-		v.AddConfigPath("$HOME/.camunder")
-		v.SetConfigType("yaml")
 		v.SetConfigName("config")
-	}
-	if err := v.ReadInConfig(); err == nil {
-		_, _ = fmt.Fprintln(os.Stderr, "Using config file:", v.ConfigFileUsed())
+		v.SetConfigType("yaml")
+
+		// Search config paths (in order):
+		// Look in the current dir (./config.yaml)
+		// Then $XDG_CONFIG_HOME/camunder/config.yaml
+		// Then $HOME/.config/camunder/config.yaml
+		// Finally fallback to $HOME/.camunder/config.yaml
+		v.AddConfigPath(".")
+		if xdg, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok && xdg != "" {
+			v.AddConfigPath(filepath.Join(xdg, "camunder"))
+		} else if home, err := os.UserHomeDir(); err == nil {
+			v.AddConfigPath(filepath.Join(home, ".config", "camunder"))
+		}
+		if home, err := os.UserHomeDir(); err == nil {
+			v.AddConfigPath(filepath.Join(home, ".camunder"))
+		}
 	}
 
-	var cfg config.Config
-	if err := v.Unmarshal(&cfg); err != nil {
-		return config.Config{}, fmt.Errorf("failed to unmarshal config: %w", err)
+	// ENV: CAMUNDER_AUTH_CLIENT_ID, etc.
+	v.SetEnvPrefix("CAMUNDER")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
+
+	// Read config (ignore "not found")
+	if err := v.ReadInConfig(); err != nil {
+		var nf viper.ConfigFileNotFoundError
+		if !errors.As(err, &nf) {
+			return fmt.Errorf("read config: %w", err)
+		}
+	} else {
+		if !isQuiet {
+			cmd.Println("using config file:", v.ConfigFileUsed())
+		}
 	}
-	return cfg, nil
+	return nil
+}
+
+func retrieveConfig(v *viper.Viper, validate bool) (*config.Config, error) {
+	var cfg config.Config
+
+	if err := v.Unmarshal(&cfg); err != nil {
+		return nil, fmt.Errorf("unmarshal config: %w", err)
+	}
+
+	if tmpScopes := v.GetStringMapString("tmp.auth_scopes"); len(tmpScopes) > 0 {
+		if cfg.Auth.Scopes == nil {
+			cfg.Auth.Scopes = make(map[string]string, len(tmpScopes))
+		}
+		for k, scope := range tmpScopes {
+			cfg.Auth.Scopes[strings.TrimSpace(k)] = strings.TrimSpace(scope)
+		}
+	}
+
+	if validate {
+		if err := cfg.Validate(); err != nil {
+			return nil, fmt.Errorf("validate config\n%w", err)
+		}
+	}
+	return &cfg, nil
 }

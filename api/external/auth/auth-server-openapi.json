@@ -1,0 +1,223 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OAuth 2.0 / OpenID Connect Token API",
+    "version": "1.0.0",
+    "description": "Generic OAuth 2.0 and OpenID Connect Token endpoint.\nSupports client credentials and authorization code grants.\nClient authentication is provided via form parameters (client_id and client_secret) only; HTTP Basic is not used."
+  },
+  "servers": [
+    {
+      "url": "https://auth.example.com/oauth2",
+      "description": "Replace with your IdP's base URL (the token endpoint will be /token)"
+    }
+  ],
+  "paths": {
+    "/token": {
+      "post": {
+        "summary": "Request OAuth 2.0 Access Token",
+        "operationId": "requestToken",
+        "description": "Obtain an access token (and optionally an ID token) from a standards-compliant OAuth 2.0 / OpenID Connect identity provider.\nSupports the `client_credentials` and `authorization_code` grants.\n\nClient authentication is sent in the form body (client_id, client_secret).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": ["grant_type", "client_id", "client_secret"],
+                    "properties": {
+                      "grant_type": {
+                        "type": "string",
+                        "enum": ["client_credentials"],
+                        "description": "OAuth 2.0 grant type"
+                      },
+                      "client_id": {
+                        "type": "string",
+                        "description": "OAuth client ID",
+                        "example": "my-client-id"
+                      },
+                      "client_secret": {
+                        "type": "string",
+                        "description": "OAuth client secret",
+                        "example": "my-client-secret"
+                      },
+                      "scope": {
+                        "type": "string",
+                        "description": "Optional space-separated list of scopes",
+                        "example": "openid profile email"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": ["grant_type", "code", "redirect_uri", "client_id"],
+                    "properties": {
+                      "grant_type": {
+                        "type": "string",
+                        "enum": ["authorization_code"],
+                        "description": "OAuth 2.0 grant type"
+                      },
+                      "code": {
+                        "type": "string",
+                        "description": "Authorization code from the /authorize step"
+                      },
+                      "redirect_uri": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Redirect URI used during authorization",
+                        "example": "https://myapp.example.com/callback"
+                      },
+                      "client_id": {
+                        "type": "string",
+                        "description": "OAuth client ID (required for public and confidential clients)",
+                        "example": "my-client-id"
+                      },
+                      "client_secret": {
+                        "type": "string",
+                        "description": "OAuth client secret (often required for confidential clients)"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully issued token(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["access_token", "token_type", "expires_in"],
+                  "properties": {
+                    "access_token": {
+                      "type": "string",
+                      "description": "Access token (often a JWT)"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "description": "Token type, usually \"Bearer\"",
+                      "example": "Bearer"
+                    },
+                    "expires_in": {
+                      "type": "integer",
+                      "description": "Time until expiration in seconds",
+                      "example": 3600
+                    },
+                    "refresh_token": {
+                      "type": "string",
+                      "description": "Refresh token (optional)"
+                    },
+                    "id_token": {
+                      "type": "string",
+                      "description": "ID token (returned if `openid` scope was requested)"
+                    },
+                    "scope": {
+                      "type": "string",
+                      "description": "Granted scopes"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request — missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OAuth2Error" },
+                "examples": {
+                  "invalid_request": {
+                    "summary": "Missing grant_type",
+                    "value": {
+                      "error": "invalid_request",
+                      "error_description": "Required parameter 'grant_type' is missing."
+                    }
+                  },
+                  "invalid_scope": {
+                    "summary": "Invalid scope value",
+                    "value": {
+                      "error": "invalid_scope",
+                      "error_description": "The requested scope is invalid, unknown, or malformed."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — invalid client authentication",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OAuth2Error" },
+                "examples": {
+                  "invalid_client": {
+                    "summary": "Bad client credentials",
+                    "value": {
+                      "error": "invalid_client",
+                      "error_description": "Client authentication failed (e.g., unknown client, no client authentication included, or unsupported authentication method)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden — client not authorized to perform the request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OAuth2Error" },
+                "examples": {
+                  "unauthorized_client": {
+                    "summary": "Client not allowed for this grant",
+                    "value": {
+                      "error": "unauthorized_client",
+                      "error_description": "The authenticated client is not authorized to use this authorization grant type."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Token endpoint not found" },
+          "500": { "description": "Server error at identity provider" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OAuth2Error": {
+        "description": "RFC 6749 Section 5.2 error response",
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error code",
+            "enum": [
+              "invalid_request",
+              "invalid_client",
+              "invalid_grant",
+              "unauthorized_client",
+              "unsupported_grant_type",
+              "invalid_scope"
+            ]
+          },
+          "error_description": {
+            "type": "string",
+            "description": "Human-readable ASCII text providing additional information"
+          },
+          "error_uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "URI identifying a human-readable web page with information about the error"
+          }
+        }
+      }
+    }
+  }
+}

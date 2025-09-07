@@ -8,22 +8,30 @@ import (
 	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/editors"
+	"github.com/grafvonb/camunder/internal/services/auth"
 )
 
 type Service struct {
-	c *c87operatev1.ClientWithResponses
+	c       *c87operatev1.ClientWithResponses
+	auth    *auth.Service
+	cfg     *config.Config
+	isQuiet bool
 }
 
-func New(cfg config.Config, httpClient *http.Client) (*Service, error) {
+func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuiet bool) (*Service, error) {
 	c, err := c87operatev1.NewClientWithResponses(
-		cfg.OperateAPI.BaseURL,
+		cfg.APIs.Operate.BaseURL,
 		c87operatev1.WithHTTPClient(httpClient),
-		c87operatev1.WithRequestEditorFn(editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](cfg.OperateAPI.Token)),
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &Service{c: c}, nil
+	return &Service{
+		c:       c,
+		cfg:     cfg,
+		auth:    auth,
+		isQuiet: isQuiet,
+	}, nil
 }
 
 func (s *Service) SearchForProcessDefinitions(ctx context.Context) (*c87operatev1.ProcessDefinitionSearchResponse, error) {
@@ -32,7 +40,12 @@ func (s *Service) SearchForProcessDefinitions(ctx context.Context) (*c87operatev
 		Filter: &c87operatev1.ProcessDefinitionFilter{},
 		Size:   &size,
 	}
-	resp, err := s.c.SearchForProcessDefinitionsWithResponse(ctx, body)
+	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving operate token: %w", err)
+	}
+	resp, err := s.c.SearchForProcessDefinitionsWithResponse(ctx, body,
+		editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token))
 	if err != nil {
 		return nil, err
 	}

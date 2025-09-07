@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
 	"github.com/grafvonb/camunder/internal/config"
+	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/internal/services/common"
 	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 	"github.com/spf13/cobra"
@@ -40,9 +42,14 @@ var deleteCmd = &cobra.Command{
 		httpClient := &http.Client{
 			Timeout: timeout,
 		}
+		auth, err := auth.FromContext(cmd.Context())
+		if err != nil {
+			fmt.Printf("Error retrieving auth from context: %v\n", err)
+			return
+		}
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(cfg, httpClient, isQuiet)
+			svc, err := processinstance.New(cfg, httpClient, auth, isQuiet)
 			if err != nil {
 				cmd.PrintErrf("Error creating process instance service: %v\n", err)
 				return

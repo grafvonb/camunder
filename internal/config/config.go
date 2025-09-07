@@ -1,52 +1,85 @@
 package config
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 )
 
 var (
-	ErrNoBaseURL = errors.New("no base_url provided in api configuration")
-	ErrNoToken   = errors.New("no token provided in api configuration")
+	ErrNoBaseURL      = errors.New("no base_url provided in api configuration")
+	ErrNoTokenURL     = errors.New("no token_url provided in auth configuration")
+	ErrNoClientID     = errors.New("no client_id provided in auth configuration")
+	ErrNoClientSecret = errors.New("no client_secret provided in auth configuration")
+
+	ErrNoConfigInContext       = errors.New("no config in context")
+	ErrInvalidServiceInContext = errors.New("invalid config in context")
 )
 
 type Config struct {
-	Config      string `mapstructure:"config"`
-	Camunda8API API    `mapstructure:"camunda8_api"`
-	OperateAPI  API    `mapstructure:"operate_api"`
-	TasklistAPI API    `mapstructure:"tasklist_api"`
-	HTTP        HTTP   `mapstructure:"http"`
+	Config string `mapstructure:"config"`
+
+	Auth Authentication `mapstructure:"auth"`
+	APIs APIs           `mapstructure:"apis"`
+	HTTP HTTP           `mapstructure:"http"`
 }
 
-func (c Config) Validate() error {
-	if err := c.Camunda8API.Validate(); err != nil {
-		return fmt.Errorf("camunda8 API: %w", err)
+func (c *Config) String() string {
+	var alias Config
+	alias.Config = c.Config
+	alias.HTTP = c.HTTP
+	alias.APIs.Camunda8.Key = c.APIs.Camunda8.Key
+	alias.APIs.Camunda8.BaseURL = c.APIs.Camunda8.BaseURL
+	alias.APIs.Operate.Key = c.APIs.Operate.Key
+	alias.APIs.Operate.BaseURL = c.APIs.Operate.BaseURL
+	alias.APIs.Tasklist.Key = c.APIs.Tasklist.Key
+	alias.APIs.Tasklist.BaseURL = c.APIs.Tasklist.BaseURL
+
+	alias.Auth.TokenURL = c.Auth.TokenURL
+	alias.Auth.ClientID = "******"
+	alias.Auth.ClientSecret = "******"
+	alias.Auth.Scopes = maps.Clone(c.Auth.Scopes) // Go ≥1.21
+
+	b, err := json.MarshalIndent(alias, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("error marshaling config: %v", err)
 	}
-	if err := c.OperateAPI.Validate(); err != nil {
-		return fmt.Errorf("operate API: %w", err)
-	}
-	if err := c.TasklistAPI.Validate(); err != nil {
-		return fmt.Errorf("tasklist API: %w", err)
-	}
-	return nil
+	return string(b)
 }
 
-type API struct {
-	BaseURL string `mapstructure:"base_url"`
-	Token   string `mapstructure:"token"`
+// Validate checks all nested sections and aggregates errors.
+func (c *Config) Validate() error {
+	var errs []error
+
+	if err := c.Auth.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("auth:\n%w", err))
+	}
+	if err := c.APIs.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("apis:\n%w", err))
+	}
+	if err := c.HTTP.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("http:\n%w", err))
+	}
+
+	return errors.Join(errs...)
 }
 
-func (a API) Validate() error {
-	if a.BaseURL == "" {
-		return ErrNoBaseURL
-	}
-	if a.Token == "" {
-		return ErrNoToken
-	}
+type ctxConfigKey struct{}
 
-	return nil
+func (c *Config) ToContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, ctxConfigKey{}, c)
 }
 
-type HTTP struct {
-	Timeout string `mapstructure:"timeout"`
+func FromContext(ctx context.Context) (*Config, error) {
+	v := ctx.Value(ctxConfigKey{})
+	if v == nil {
+		return nil, ErrNoConfigInContext
+	}
+	c, ok := v.(*Config)
+	if !ok || c == nil {
+		return nil, ErrInvalidServiceInContext
+	}
+	return c, nil
 }
