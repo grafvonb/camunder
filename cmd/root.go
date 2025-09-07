@@ -154,10 +154,6 @@ func initViper(v *viper.Viper, cmd *cobra.Command) error {
 		if !errors.As(err, &nf) {
 			return fmt.Errorf("read config: %w", err)
 		}
-	} else {
-		if !isQuiet {
-			cmd.Println("using config file:", v.ConfigFileUsed())
-		}
 	}
 	return nil
 }

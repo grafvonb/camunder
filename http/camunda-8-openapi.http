@@ -18,7 +18,12 @@ POST {{operate_base_url}}/v1/process-instances/search
 Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
-{"size":1000}
+{
+  "filter": {
+    "state": "CANCELED"
+  },
+  "size":1000
+}
 
 ### Get process instance
 @processInstanceKey=2251799813685301

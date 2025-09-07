@@ -19,7 +19,10 @@ var supportedResourcesForGet = common.ResourceTypes{
 	"pi": "process-instance",
 }
 
-var bpmnProcessId string
+var (
+	bpmnProcessId string
+	state         string
+)
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
@@ -78,7 +81,12 @@ var getCmd = &cobra.Command{
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
 			}
-			pisr, err := svc.SearchForProcessInstances(cmd.Context(), bpmnProcessId)
+			piStateFilter, err := processinstance.PIStateFilterFromString(state)
+			if err != nil {
+				cmd.PrintErrf("error parsing state filter: %v\n", err)
+				return
+			}
+			pisr, err := svc.SearchForProcessInstances(cmd.Context(), bpmnProcessId, piStateFilter)
 			if err != nil {
 				cmd.PrintErrf("error fetching process instances: %v\n", err)
 				return
@@ -95,4 +103,5 @@ func init() {
 	rootCmd.AddCommand(getCmd)
 
 	getCmd.Flags().StringVarP(&bpmnProcessId, "bpmn-process-id", "b", "", "BPMN process ID to filter process instances")
+	getCmd.Flags().StringVarP(&state, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
 }

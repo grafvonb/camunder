@@ -42,11 +42,12 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuie
 	}, nil
 }
 
-func (s *Service) SearchForProcessInstances(ctx context.Context, bpmnProcessId string) (*c87operatev1.ProcessInstanceSearchResponse, error) {
+func (s *Service) SearchForProcessInstances(ctx context.Context, bpmnProcessId string, state PIStateFilter) (*c87operatev1.ProcessInstanceSearchResponse, error) {
 	size := int32(1000)
 	body := c87operatev1.ProcessInstanceSearchRequest{
 		Filter: &c87operatev1.ProcessInstanceFilter{
 			BpmnProcessId: &bpmnProcessId,
+			State:         state.Ptr(),
 		},
 		Size: &size,
 	}
