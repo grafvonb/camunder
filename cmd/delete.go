@@ -74,8 +74,8 @@ var deleteCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(deleteCmd)
 
-	deleteCmd.Flags().StringVar(&deletePIKey, "key", "", "process instance key to delete")
-	deleteCmd.MarkFlagRequired("key")
+	deleteCmd.Flags().StringVarP(&deletePIKey, "pi-key", "k", "", "process instance key to delete")
+	_ = deleteCmd.MarkFlagRequired("pi-key")
 
 	deleteCmd.Flags().BoolVarP(&deleteWithCancel, "cancel", "c", false, "tries to cancel the process instance before deleting it (if not in the state COMPLETED or CANCELED)")
 }

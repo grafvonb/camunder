@@ -42,6 +42,22 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuie
 	}, nil
 }
 
+func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (*c87operatev1.ProcessInstanceItem, error) {
+	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving operate token: %w", err)
+	}
+	resp, err := s.co.GetProcessInstanceByKeyWithResponse(ctx, key,
+		editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token))
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+	}
+	return resp.JSON200, nil
+}
+
 func (s *Service) SearchForProcessInstances(ctx context.Context, bpmnProcessId string, state PIStateFilter) (*c87operatev1.ProcessInstanceSearchResponse, error) {
 	size := int32(1000)
 	body := c87operatev1.ProcessInstanceSearchRequest{
@@ -118,6 +134,9 @@ func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key strin
 	}
 	resp, err := s.co.DeleteProcessInstanceAndDependantDataByKeyWithResponse(ctx, key,
 		editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token))
+	if err != nil {
+		return nil, err
+	}
 	if resp.StatusCode() == http.StatusBadRequest &&
 		resp.ApplicationproblemJSON400 != nil &&
 		*resp.ApplicationproblemJSON400.Message == "process instances needs to be in one of the states [COMPLETED, CANCELED]" {

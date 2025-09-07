@@ -1,0 +1,61 @@
+{
+  "paths": {
+    "/process-instances/{key}": {
+      "get": {
+        "summary": "Get process instance by key",
+        "description": "Return a single process instance by its key.",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "description": "Key of process instance",
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProcessInstanceItem" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/Problem" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/Problem" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/Problem" }
+              }
+            }
+          },
+          "500": {
+            "description": "API application error",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/Problem" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
