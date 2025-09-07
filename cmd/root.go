@@ -90,7 +90,7 @@ func init() {
 	rootCmd.PersistentFlags().String("operate-base-url", "", "Operate API base URL")
 	rootCmd.PersistentFlags().String("tasklist-base-url", "", "Tasklist API base URL")
 
-	rootCmd.PersistentFlags().BoolVarP(&isQuiet, "quiet", "q", false, "suppress output, use exit code only")
+	rootCmd.PersistentFlags().BoolVar(&isQuiet, "quiet", false, "suppress output, use exit code only")
 
 	rootCmd.PersistentFlags().BoolVar(&showConfig, "show-config", false, "print effective config (secrets redacted)")
 }

@@ -3,6 +3,7 @@ package cmd
 import (
 	"strings"
 
+	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/internal/services/cluster"
@@ -22,6 +23,7 @@ var supportedResourcesForGet = common.ResourceTypes{
 var (
 	bpmnProcessId string
 	state         string
+	quick         bool
 )
 
 // getCmd represents the get command
@@ -70,6 +72,15 @@ var getCmd = &cobra.Command{
 				cmd.PrintErrf("error fetching process definitions: %v\n", err)
 				return
 			}
+			if quick {
+				keys := common.KeysFromItems(pdsr.Items, func(it c87operatev1.ProcessDefinitionItem) int64 {
+					return *it.Key
+				})
+				for _, k := range keys {
+					cmd.Println(k)
+				}
+				return
+			}
 			cmd.Println(ToJSONString(pdsr))
 		case "process-instance", "pi":
 			if bpmnProcessId == "" {
@@ -91,6 +102,15 @@ var getCmd = &cobra.Command{
 				cmd.PrintErrf("error fetching process instances: %v\n", err)
 				return
 			}
+			if quick {
+				keys := common.KeysFromItems(pisr.Items, func(it c87operatev1.ProcessInstanceItem) int64 {
+					return *it.Key
+				})
+				for _, k := range keys {
+					cmd.Println(k)
+				}
+				return
+			}
 			cmd.Println(ToJSONString(pisr))
 		default:
 			cmd.PrintErrf("unknown resource type: %s\n", rn)
@@ -104,4 +124,5 @@ func init() {
 
 	getCmd.Flags().StringVarP(&bpmnProcessId, "bpmn-process-id", "b", "", "BPMN process ID to filter process instances")
 	getCmd.Flags().StringVarP(&state, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
+	getCmd.Flags().BoolVarP(&quick, "quick", "q", false, "quick output (only keys for process definitions/instances)")
 }
