@@ -52,7 +52,7 @@ func New(cfg *config.Config, httpClient *http.Client, isQuiet bool) (*Service, e
 }
 
 func (s *Service) Warmup(ctx context.Context) error {
-	_, err := s.retrieveTokensForAPIs(ctx, "camunda8", "operate", "tasklist")
+	_, err := s.retrieveTokensForAPIs(ctx, config.ValidAPIKeys...)
 	return err
 }
 

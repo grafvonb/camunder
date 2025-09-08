@@ -12,6 +12,12 @@ const (
 	TasklistApiKeyConst = "tasklist_api"
 )
 
+var ValidAPIKeys = []string{
+	Camunda8ApiKeyConst,
+	OperateApiKeyConst,
+	TasklistApiKeyConst,
+}
+
 type APIs struct {
 	Camunda8 API `mapstructure:"camunda8_api"`
 	Operate  API `mapstructure:"operate_api"`
