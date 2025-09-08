@@ -23,7 +23,7 @@ Authorization: Bearer {{access_token}}
     "bpmnProcessId": "",
     "state": "CANCELED"
   },
-  "size":1000
+  "size":0
 }
 
 ### Get process instance

@@ -59,14 +59,15 @@ func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (*c87o
 	return resp.JSON200, nil
 }
 
-func (s *Service) SearchForProcessInstances(ctx context.Context, bpmnProcessId string, state PIState) (*c87operatev1.ProcessInstanceSearchResponse, error) {
-	size := int32(1000)
+func (s *Service) SearchForProcessInstances(ctx context.Context, filter GetCmdFilterOpts, size int32) (*c87operatev1.ProcessInstanceSearchResponse, error) {
+	f := c87operatev1.ProcessInstanceFilter{
+		TenantId:      &s.cfg.App.Tenant,
+		BpmnProcessId: &filter.BpmnProcessId,
+		State:         filter.State.Ptr(),
+	}
 	body := c87operatev1.ProcessInstanceSearchRequest{
-		Filter: &c87operatev1.ProcessInstanceFilter{
-			BpmnProcessId: &bpmnProcessId,
-			State:         state.Ptr(),
-		},
-		Size: &size,
+		Filter: &f,
+		Size:   &size,
 	}
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
 	if err != nil {

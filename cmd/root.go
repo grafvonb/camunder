@@ -14,9 +14,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	FlagKeyOnlyName = "key-only"
+)
+
 var (
 	isQuiet    bool // quiet mode, suppress output, use exit code only
 	showConfig bool // show effective config and exit
+	isKeyOnly  bool // show only keys in output (where applicable)
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -80,18 +85,24 @@ func Execute() {
 
 func init() {
 	pf := rootCmd.PersistentFlags()
+
 	pf.String("config", "", "path to config file")
+
+	pf.String("tenant", "", "default tenant ID (where applicable)")
+
 	pf.String("auth-token-url", "", "auth token URL")
 	pf.String("auth-client-id", "", "auth client ID")
 	pf.String("auth-client-secret", "", "auth client secret")
 	pf.StringToString("auth-scopes", nil, "auth scopes as key=value (repeatable or comma-separated)")
+
 	pf.String("http-timeout", "", "HTTP timeout (Go duration, e.g. 30s)")
 
 	pf.String("camunda8-base-url", "", "Camunda8 API base URL")
 	pf.String("operate-base-url", "", "Operate API base URL")
-	pf.String("tasklist-base-url", "", "Tasklist API base URL")
+	pf.String("taskli	st-base-url", "", "Tasklist API base URL")
 
 	pf.BoolVar(&isQuiet, "quiet", false, "suppress output, use exit code only")
+	pf.Bool(FlagKeyOnlyName, false, "show only keys in output (where applicable)")
 
 	pf.BoolVar(&showConfig, "show-config", false, "print effective config (secrets redacted)")
 }
@@ -100,6 +111,7 @@ func initViper(v *viper.Viper, cmd *cobra.Command) error {
 	// Resolve precedence: flags > env > config file > defaults
 
 	// Bind scalar flags directly to config keys
+	_ = v.BindPFlag("app.tenant", cmd.Flags().Lookup("tenant"))
 	_ = v.BindPFlag("config", cmd.Flags().Lookup("config"))
 	_ = v.BindPFlag("auth.token_url", cmd.Flags().Lookup("auth-token-url"))
 	_ = v.BindPFlag("auth.client_id", cmd.Flags().Lookup("auth-client-id"))
