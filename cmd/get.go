@@ -32,6 +32,10 @@ var (
 	flagParentKey         int64
 )
 
+var (
+	flagWithChildren bool
+)
+
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get [resource type]",
@@ -106,6 +110,25 @@ var getCmd = &cobra.Command{
 					return
 				}
 				cmd.Println(ToJSONString(pi))
+				if flagWithChildren {
+					searchFilterOpts.ParentKey = searchFilterOpts.Key
+					searchFilterOpts.Key = nil
+					pisr, err := svc.SearchForProcessInstances(cmd.Context(), searchFilterOpts, maxSearchSize)
+					if err != nil {
+						cmd.PrintErrf("error fetching process instances: %v\n", err)
+						return
+					}
+					if flagKeysOnly {
+						keys := common.KeysFromItems(pisr.Items, func(it c87operatev1.ProcessInstanceItem) int64 {
+							return *it.Key
+						})
+						for _, k := range keys {
+							cmd.Println(k)
+						}
+						return
+					}
+					cmd.Println(ToJSONString(pisr))
+				}
 			} else {
 				state, err := processinstance.PIStateFilterFromString(flagState)
 				if err != nil {
@@ -149,6 +172,8 @@ func init() {
 	fs.StringVar(&flagProcessVersionTag, "process-version-tag", "", "process definition version tag")
 	fs.Int64Var(&flagParentKey, "parent-key", 0, "parent process instance key")
 	fs.StringVarP(&flagState, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
+
+	fs.BoolVar(&flagWithChildren, "with-children", false, "when fetching process instances, also fetch child instances (non-recursive, first level only)")
 }
 
 func populatePISearchFilterOpts() processinstance.SearchFilterOpts {
