@@ -77,8 +77,8 @@ func init() {
 
 	common.AddBackoffFlagsAndBindings(deleteCmd, viper.GetViper())
 
-	deleteCmd.Flags().StringVarP(&deletePIKey, "pi-key", "k", "", "process instance key to delete")
-	_ = deleteCmd.MarkFlagRequired("pi-key")
+	deleteCmd.Flags().StringVarP(&deletePIKey, "key", "k", "", "process instance key to delete")
+	_ = deleteCmd.MarkFlagRequired("key")
 
 	deleteCmd.Flags().BoolVarP(&deleteWithCancel, "cancel", "c", false, "tries to cancel the process instance before deleting it (if not in the state COMPLETED or CANCELED)")
 }

@@ -93,7 +93,7 @@ var getCmd = &cobra.Command{
 			}
 			if getPIKey == "" {
 				if bpmnProcessId == "" {
-					cmd.PrintErrln("please provide a process ID to filter process instances using the --bpmn-process-id flag")
+					cmd.PrintErrln("please provide a process ID to filter process instances using the --bpmn-process-id (-b) flag")
 					return
 				}
 				piStateFilter, err := processinstance.PIStateFilterFromString(state)
