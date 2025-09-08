@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	c87camunda8v2 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda8/v2"
 	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
@@ -12,6 +11,8 @@ import (
 	"github.com/grafvonb/camunder/internal/editors"
 	"github.com/grafvonb/camunder/internal/services/auth"
 )
+
+const wrongStateMessage400 = "Process instances needs to be in one of the states [COMPLETED, CANCELED]"
 
 type Service struct {
 	co      *c87operatev1.ClientWithResponses
@@ -128,18 +129,18 @@ func (s *Service) DeleteProcessInstance(ctx context.Context, key string) (*c87op
 }
 
 func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key string) (*c87operatev1.ProcessInstanceDeleteResponse, error) {
+	if !s.isQuiet {
+		fmt.Printf("trying to delete process instance with key %s...\n", key)
+	}
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.Camunda8ApiKeyConst)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving camunda8 token: %w", err)
 	}
 	resp, err := s.co.DeleteProcessInstanceAndDependantDataByKeyWithResponse(ctx, key,
 		editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token))
-	if err != nil {
-		return nil, err
-	}
 	if resp.StatusCode() == http.StatusBadRequest &&
 		resp.ApplicationproblemJSON400 != nil &&
-		*resp.ApplicationproblemJSON400.Message == "process instances needs to be in one of the states [COMPLETED, CANCELED]" {
+		*resp.ApplicationproblemJSON400.Message == wrongStateMessage400 {
 
 		if !s.isQuiet {
 			fmt.Printf("process instance with key %s not in state COMPLETED or CANCELED, cancelling it first...\n", key)
@@ -149,11 +150,13 @@ func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key strin
 			return nil, fmt.Errorf("error cancelling process instance with key %s: %w", key, err)
 		}
 
-		// TODO implement retry with backoff
 		if !s.isQuiet {
 			fmt.Printf("waiting for process instance with key %s to be cancelled by workflow engine...\n", key)
 		}
-		time.Sleep(10 * time.Second)
+		if err = s.WaitForProcessInstanceState(ctx, key, &PIState{e: stateCanceled}); err != nil {
+			return nil, fmt.Errorf("waiting for canceled state failed for %s: %w", key, err)
+		}
+
 		resp, err = s.co.DeleteProcessInstanceAndDependantDataByKeyWithResponse(ctx, key,
 			editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token))
 	}
@@ -162,6 +165,9 @@ func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key strin
 	}
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+	}
+	if !s.isQuiet {
+		fmt.Printf("process instance with key %s was successfully deleted\n", key)
 	}
 	return resp.JSON200, nil
 }
