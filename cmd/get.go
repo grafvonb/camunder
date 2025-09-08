@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"strconv"
 	"strings"
 
 	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
@@ -25,10 +24,15 @@ var supportedResourcesForGet = common.ResourceTypes{
 }
 
 var (
-	cliKey     string
-	cliState   string
-	filterOpts processinstance.GetCmdFilterOpts
+	flagKey               int64
+	flagBpmnProcessID     string
+	flagProcessVersion    int32
+	flagProcessVersionTag string
+	flagState             string
+	flagParentKey         int64
 )
+
+var searchFilterOpts processinstance.SearchFilterOpts
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
@@ -37,14 +41,7 @@ var getCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
-		if cliKey != "" {
-			key, err := strconv.ParseInt(cliKey, 10, 64)
-			if err != nil {
-				cmd.PrintErrf("error parsing key %q as int64: %v\n", cliKey, err)
-				return
-			}
-			filterOpts.Key = &key
-		}
+		searchFilterOpts = populateSearchFilterOpts()
 		ko, err := cmd.Flags().GetBool(FlagKeyOnlyName)
 		if err != nil {
 			cmd.PrintErrf("error reading flag --%s: %v\n", FlagKeyOnlyName, err)
@@ -108,20 +105,21 @@ var getCmd = &cobra.Command{
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
 			}
-			if filterOpts.Key != nil {
-				pi, err := svc.GetProcessInstanceByKey(cmd.Context(), *filterOpts.Key)
+			if searchFilterOpts.Key != nil {
+				pi, err := svc.GetProcessInstanceByKey(cmd.Context(), *searchFilterOpts.Key)
 				if err != nil {
-					cmd.PrintErrf("error fetching process instance by key %d: %v\n", *filterOpts.Key, err)
+					cmd.PrintErrf("error fetching process instance by key %d: %v\n", *searchFilterOpts.Key, err)
 					return
 				}
 				cmd.Println(ToJSONString(pi))
 			} else {
-				filterOpts.State, err = processinstance.PIStateFilterFromString(cliState)
+				state, err := processinstance.PIStateFilterFromString(flagState)
 				if err != nil {
-					cmd.PrintErrf("error parsing state filter: %v\n", err)
+					cmd.PrintErrf("error parsing state %q filter: %v\n", flagState, err)
 					return
 				}
-				pisr, err := svc.SearchForProcessInstances(cmd.Context(), filterOpts, maxSearchSize)
+				searchFilterOpts.State = state
+				pisr, err := svc.SearchForProcessInstances(cmd.Context(), searchFilterOpts, maxSearchSize)
 				if err != nil {
 					cmd.PrintErrf("error fetching process instances: %v\n", err)
 					return
@@ -150,7 +148,31 @@ func init() {
 
 	common.AddBackoffFlagsAndBindings(getCmd, viper.GetViper())
 
-	getCmd.Flags().StringVarP(&cliKey, "key", "k", "", "resource key (e.g. process instance) to fetch (if provided, --bpmn-process-id and --state are ignored)")
-	getCmd.Flags().StringVarP(&filterOpts.BpmnProcessId, "bpmn-process-id", "b", "", "BPMN process ID to filter process instances")
-	getCmd.Flags().StringVarP(&cliState, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
+	fs := getCmd.Flags()
+	fs.Int64VarP(&flagKey, "key", "k", 0, "resource key (e.g. process instance) to fetch")
+	fs.StringVarP(&flagBpmnProcessID, "bpmn-process-id", "b", "", "BPMN process ID to filter process instances")
+	fs.Int32VarP(&flagProcessVersion, "process-version", "v", 0, "process definition version")
+	fs.StringVar(&flagProcessVersionTag, "process-version-tag", "", "process definition version tag")
+	fs.Int64Var(&flagParentKey, "parent-key", 0, "parent process instance key")
+	fs.StringVarP(&flagState, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
+}
+
+func populateSearchFilterOpts() processinstance.SearchFilterOpts {
+	var opts processinstance.SearchFilterOpts
+	if flagKey != 0 {
+		opts.Key = &flagKey
+	}
+	if flagParentKey != 0 {
+		opts.ParentKey = &flagParentKey
+	}
+	if flagBpmnProcessID != "" {
+		opts.BpmnProcessId = &flagBpmnProcessID
+	}
+	if flagProcessVersion != 0 {
+		opts.ProcessVersion = &flagProcessVersion
+	}
+	if flagProcessVersionTag != "" {
+		opts.ProcessVersionTag = &flagProcessVersionTag
+	}
+	return opts
 }

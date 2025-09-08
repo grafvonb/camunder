@@ -1,7 +1,10 @@
 package processinstance
 
-type GetCmdFilterOpts struct {
-	BpmnProcessId string
-	State         PIState
-	Key           *int64
+type SearchFilterOpts struct {
+	Key               *int64
+	BpmnProcessId     *string
+	ProcessVersion    *int32
+	ProcessVersionTag *string
+	State             PIState
+	ParentKey         *int64
 }
