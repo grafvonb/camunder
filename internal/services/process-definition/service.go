@@ -34,11 +34,14 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuie
 	}, nil
 }
 
-func (s *Service) SearchForProcessDefinitions(ctx context.Context) (*c87operatev1.ProcessDefinitionSearchResponse, error) {
-	size := int32(1000)
+func (s *Service) SearchForProcessDefinitions(ctx context.Context, filter SearchFilterOpts, size int32) (*c87operatev1.ProcessDefinitionSearchResponse, error) {
 	body := c87operatev1.ProcessDefinitionSearchRequest{
-		Filter: &c87operatev1.ProcessDefinitionFilter{},
-		Size:   &size,
+		Filter: &c87operatev1.ProcessDefinitionFilter{
+			BpmnProcessId: filter.BpmnProcessId,
+			Version:       filter.Version,
+			VersionTag:    filter.VersionTag,
+		},
+		Size: &size,
 	}
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
 	if err != nil {

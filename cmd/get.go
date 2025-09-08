@@ -32,8 +32,6 @@ var (
 	flagParentKey         int64
 )
 
-var searchFilterOpts processinstance.SearchFilterOpts
-
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get [resource type]",
@@ -41,7 +39,6 @@ var getCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
-		searchFilterOpts = populateSearchFilterOpts()
 		cfg, err := config.FromContext(cmd.Context())
 		if err != nil {
 			cmd.PrintErrf("error retrieving config from context: %v\n", err)
@@ -74,11 +71,12 @@ var getCmd = &cobra.Command{
 
 		case "process-definition", "pd":
 			svc, err := processdefinition.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
+			searchFilterOpts := populatePDSearchFilterOpts()
 			if err != nil {
 				cmd.PrintErrf("error creating process definition service: %v\n", err)
 				return
 			}
-			pdsr, err := svc.SearchForProcessDefinitions(cmd.Context())
+			pdsr, err := svc.SearchForProcessDefinitions(cmd.Context(), searchFilterOpts, maxSearchSize)
 			if err != nil {
 				cmd.PrintErrf("error fetching process definitions: %v\n", err)
 				return
@@ -100,6 +98,7 @@ var getCmd = &cobra.Command{
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
 			}
+			searchFilterOpts := populatePISearchFilterOpts()
 			if searchFilterOpts.Key != nil {
 				pi, err := svc.GetProcessInstanceByKey(cmd.Context(), *searchFilterOpts.Key)
 				if err != nil {
@@ -152,7 +151,7 @@ func init() {
 	fs.StringVarP(&flagState, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
 }
 
-func populateSearchFilterOpts() processinstance.SearchFilterOpts {
+func populatePISearchFilterOpts() processinstance.SearchFilterOpts {
 	var opts processinstance.SearchFilterOpts
 	if flagKey != 0 {
 		opts.Key = &flagKey
@@ -168,6 +167,23 @@ func populateSearchFilterOpts() processinstance.SearchFilterOpts {
 	}
 	if flagProcessVersionTag != "" {
 		opts.ProcessVersionTag = &flagProcessVersionTag
+	}
+	return opts
+}
+
+func populatePDSearchFilterOpts() processdefinition.SearchFilterOpts {
+	var opts processdefinition.SearchFilterOpts
+	if flagKey != 0 {
+		opts.Key = &flagKey
+	}
+	if flagBpmnProcessID != "" {
+		opts.BpmnProcessId = &flagBpmnProcessID
+	}
+	if flagProcessVersion != 0 {
+		opts.Version = &flagProcessVersion
+	}
+	if flagProcessVersionTag != "" {
+		opts.VersionTag = &flagProcessVersionTag
 	}
 	return opts
 }
