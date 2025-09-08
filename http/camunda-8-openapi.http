@@ -20,6 +20,7 @@ Authorization: Bearer {{access_token}}
 
 {
   "filter": {
+    "bpmnProcessId": "",
     "state": "CANCELED"
   },
   "size":1000
