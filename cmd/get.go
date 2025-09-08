@@ -42,11 +42,6 @@ var getCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
 		searchFilterOpts = populateSearchFilterOpts()
-		ko, err := cmd.Flags().GetBool(FlagKeyOnlyName)
-		if err != nil {
-			cmd.PrintErrf("error reading flag --%s: %v\n", FlagKeyOnlyName, err)
-			return
-		}
 		cfg, err := config.FromContext(cmd.Context())
 		if err != nil {
 			cmd.PrintErrf("error retrieving config from context: %v\n", err)
@@ -65,7 +60,7 @@ var getCmd = &cobra.Command{
 
 		switch rn {
 		case "cluster-topology", "ct":
-			svc, err := cluster.New(cfg, httpSvc.Client(), authSvc, isQuiet)
+			svc, err := cluster.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating cluster service: %v\n", err)
 				return
@@ -78,7 +73,7 @@ var getCmd = &cobra.Command{
 			cmd.Println(ToJSONString(topology))
 
 		case "process-definition", "pd":
-			svc, err := processdefinition.New(cfg, httpSvc.Client(), authSvc, isQuiet)
+			svc, err := processdefinition.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process definition service: %v\n", err)
 				return
@@ -88,7 +83,7 @@ var getCmd = &cobra.Command{
 				cmd.PrintErrf("error fetching process definitions: %v\n", err)
 				return
 			}
-			if ko {
+			if flagKeysOnly {
 				keys := common.KeysFromItems(pdsr.Items, func(it c87operatev1.ProcessDefinitionItem) int64 {
 					return *it.Key
 				})
@@ -100,7 +95,7 @@ var getCmd = &cobra.Command{
 			cmd.Println(ToJSONString(pdsr))
 
 		case "process-instance", "pi":
-			svc, err := processinstance.New(cfg, httpSvc.Client(), authSvc, isQuiet)
+			svc, err := processinstance.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
@@ -124,7 +119,7 @@ var getCmd = &cobra.Command{
 					cmd.PrintErrf("error fetching process instances: %v\n", err)
 					return
 				}
-				if ko {
+				if flagKeysOnly {
 					keys := common.KeysFromItems(pisr.Items, func(it c87operatev1.ProcessInstanceItem) int64 {
 						return *it.Key
 					})

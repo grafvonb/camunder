@@ -12,14 +12,16 @@ var (
 	date    = "unknown"
 )
 
-var asJSON bool
+var (
+	flagAsJSON bool
+)
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print version information",
 	Run: func(cmd *cobra.Command, args []string) {
-		if asJSON {
+		if flagAsJSON {
 			out := map[string]string{
 				"version": version,
 				"commit":  commit,
@@ -35,5 +37,5 @@ var versionCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(versionCmd)
 
-	versionCmd.Flags().BoolVarP(&asJSON, "json", "j", false, "output as json")
+	versionCmd.Flags().BoolVarP(&flagAsJSON, "json", "j", false, "output as json")
 }

@@ -19,8 +19,10 @@ var supportedResourcesForDelete = common.ResourceTypes{
 	"pi": "process-instance",
 }
 
-var deletePIKey string
-var deleteWithCancel bool
+var (
+	flagDeleteKey        string
+	flagDeleteWithCancel bool
+)
 
 // deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
@@ -49,19 +51,19 @@ var deleteCmd = &cobra.Command{
 		}
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(cfg, httpClient, auth, isQuiet)
+			svc, err := processinstance.New(cfg, httpClient, auth, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("Error creating process instance service: %v\n", err)
 				return
 			}
 			var pidr *c87operatev1.ProcessInstanceDeleteResponse
-			if deleteWithCancel {
-				pidr, err = svc.DeleteProcessInstanceWithCancel(cmd.Context(), deletePIKey)
+			if flagDeleteWithCancel {
+				pidr, err = svc.DeleteProcessInstanceWithCancel(cmd.Context(), flagDeleteKey)
 			} else {
-				pidr, err = svc.DeleteProcessInstance(cmd.Context(), deletePIKey)
+				pidr, err = svc.DeleteProcessInstance(cmd.Context(), flagDeleteKey)
 			}
 			if err != nil {
-				cmd.PrintErrf("Error deleting process instance with key %s: %v\n", deletePIKey, err)
+				cmd.PrintErrf("Error deleting process instance with key %s: %v\n", flagDeleteKey, err)
 				return
 			}
 			cmd.Println(ToJSONString(pidr))
@@ -77,8 +79,8 @@ func init() {
 
 	common.AddBackoffFlagsAndBindings(deleteCmd, viper.GetViper())
 
-	deleteCmd.Flags().StringVarP(&deletePIKey, "key", "k", "", "resource key (e.g. process instance) to delete")
+	deleteCmd.Flags().StringVarP(&flagDeleteKey, "key", "k", "", "resource key (e.g. process instance) to delete")
 	_ = deleteCmd.MarkFlagRequired("key")
 
-	deleteCmd.Flags().BoolVarP(&deleteWithCancel, "cancel", "c", false, "tries to cancel the process instance before deleting it (if not in the state COMPLETED or CANCELED)")
+	deleteCmd.Flags().BoolVarP(&flagDeleteWithCancel, "cancel", "c", false, "tries to cancel the process instance before deleting it (if not in the state COMPLETED or CANCELED)")
 }

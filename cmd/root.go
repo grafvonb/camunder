@@ -14,14 +14,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	FlagKeyOnlyName = "key-only"
-)
-
 var (
-	isQuiet    bool // quiet mode, suppress output, use exit code only
-	showConfig bool // show effective config and exit
-	isKeyOnly  bool // show only keys in output (where applicable)
+	flagQuiet      bool // quiet mode, suppress output, use exit code only
+	flagShowConfig bool // show effective config and exit
+	flagKeysOnly   bool // show only keys in output (where applicable)
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -41,21 +37,21 @@ var rootCmd = &cobra.Command{
 		if err := initViper(v, cmd); err != nil {
 			return err
 		}
-		cfg, err := retrieveConfig(v, !showConfig)
+		cfg, err := retrieveConfig(v, !flagShowConfig)
 		if err != nil {
 			return err
 		}
 		cmd.SetContext(cfg.ToContext(cmd.Context()))
-		if showConfig {
+		if flagShowConfig {
 			cmd.Println(cfg.String())
 			os.Exit(0)
 		}
-		httpSvc, err := httpc.New(cfg, isQuiet)
+		httpSvc, err := httpc.New(cfg, flagQuiet)
 		if err != nil {
 			return fmt.Errorf("create http service: %w", err)
 		}
 		cmd.SetContext(httpSvc.ToContext(cmd.Context()))
-		authSvc, err := auth.New(cfg, httpSvc.Client(), isQuiet)
+		authSvc, err := auth.New(cfg, httpSvc.Client(), flagQuiet)
 		if err != nil {
 			return fmt.Errorf("create auth service: %w", err)
 		}
@@ -101,10 +97,13 @@ func init() {
 	pf.String("operate-base-url", "", "Operate API base URL")
 	pf.String("taskli	st-base-url", "", "Tasklist API base URL")
 
-	pf.BoolVar(&isQuiet, "quiet", false, "suppress output, use exit code only")
-	pf.Bool(FlagKeyOnlyName, false, "show only keys in output (where applicable)")
+	pf.BoolVar(&flagQuiet, "quiet", false, "suppress output, use exit code only")
+	pf.BoolVar(&flagKeysOnly, "keys-only", false, "show only keys in output (where applicable)")
 
-	pf.BoolVar(&showConfig, "show-config", false, "print effective config (secrets redacted)")
+	// TODO show-config flag should be in a "config" subcommand
+	pf.BoolVar(&flagShowConfig, "show-config", false, "print effective config (secrets redacted)")
+
+	// TODO add --dry-run flag to commands that perform actions
 }
 
 func initViper(v *viper.Viper, cmd *cobra.Command) error {

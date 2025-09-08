@@ -16,7 +16,9 @@ var supportedResourcesForCancel = common.ResourceTypes{
 	"pi": "process-instance",
 }
 
-var cancelPIKey string
+var (
+	flagCancelKey string
+)
 
 // cancelCmd represents the cancel command
 var cancelCmd = &cobra.Command{
@@ -41,12 +43,12 @@ var cancelCmd = &cobra.Command{
 		}
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(cfg, httpSvc.Client(), authSvc, isQuiet)
+			svc, err := processinstance.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
 			}
-			_, err = svc.CancelProcessInstance(cmd.Context(), cancelPIKey)
+			_, err = svc.CancelProcessInstance(cmd.Context(), flagCancelKey)
 			if err != nil {
 				cmd.PrintErrf("error cancelling process instance: %v\n", err)
 				return
@@ -63,6 +65,6 @@ func init() {
 
 	common.AddBackoffFlagsAndBindings(cancelCmd, viper.GetViper())
 
-	cancelCmd.Flags().StringVarP(&cancelPIKey, "key", "k", "", "resource key (e.g. process instance) to cancel")
+	cancelCmd.Flags().StringVarP(&flagCancelKey, "key", "k", "", "resource key (e.g. process instance) to cancel")
 	_ = cancelCmd.MarkFlagRequired("key")
 }
