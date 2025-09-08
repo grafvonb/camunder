@@ -144,5 +144,5 @@ func init() {
 	getCmd.Flags().StringVarP(&bpmnProcessId, "bpmn-process-id", "b", "", "BPMN process ID to filter process instances")
 	getCmd.Flags().StringVarP(&state, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
 	getCmd.Flags().BoolVarP(&quick, "quick", "q", false, "quick output (only keys for process definitions/instances)")
-	getCmd.Flags().StringVarP(&getPIKey, "key", "k", "", "process instance key to fetch (if provided, --bpmn-process-id and --state are ignored)")
+	getCmd.Flags().StringVarP(&getPIKey, "key", "k", "", "resource key (e.g. process instance) to fetch (if provided, --bpmn-process-id and --state are ignored)")
 }

@@ -63,6 +63,6 @@ func init() {
 
 	common.AddBackoffFlagsAndBindings(cancelCmd, viper.GetViper())
 
-	cancelCmd.Flags().StringVar(&cancelPIKey, "key", "", "process instance key to cancel")
+	cancelCmd.Flags().StringVarP(&cancelPIKey, "key", "k", "", "resource key (e.g. process instance) to cancel")
 	_ = cancelCmd.MarkFlagRequired("key")
 }
