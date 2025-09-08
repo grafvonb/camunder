@@ -58,7 +58,7 @@ func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (*c87o
 	return resp.JSON200, nil
 }
 
-func (s *Service) SearchForProcessInstances(ctx context.Context, bpmnProcessId string, state PIStateFilter) (*c87operatev1.ProcessInstanceSearchResponse, error) {
+func (s *Service) SearchForProcessInstances(ctx context.Context, bpmnProcessId string, state PIState) (*c87operatev1.ProcessInstanceSearchResponse, error) {
 	size := int32(1000)
 	body := c87operatev1.ProcessInstanceSearchRequest{
 		Filter: &c87operatev1.ProcessInstanceFilter{
