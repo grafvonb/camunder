@@ -13,6 +13,7 @@ import (
 	processdefinition "github.com/grafvonb/camunder/internal/services/process-definition"
 	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var supportedResourcesForGet = common.ResourceTypes{
@@ -137,6 +138,8 @@ var getCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(getCmd)
+
+	common.AddBackoffFlagsAndBindings(getCmd, viper.GetViper())
 
 	getCmd.Flags().StringVarP(&bpmnProcessId, "bpmn-process-id", "b", "", "BPMN process ID to filter process instances")
 	getCmd.Flags().StringVarP(&state, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")

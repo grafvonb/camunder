@@ -79,20 +79,21 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().String("config", "", "path to config file")
-	rootCmd.PersistentFlags().String("auth-token-url", "", "auth token URL")
-	rootCmd.PersistentFlags().String("auth-client-id", "", "auth client ID")
-	rootCmd.PersistentFlags().String("auth-client-secret", "", "auth client secret")
-	rootCmd.PersistentFlags().StringToString("auth-scopes", nil, "auth scopes as key=value (repeatable or comma-separated)")
-	rootCmd.PersistentFlags().String("http-timeout", "", "HTTP timeout (Go duration, e.g. 30s)")
+	pf := rootCmd.PersistentFlags()
+	pf.String("config", "", "path to config file")
+	pf.String("auth-token-url", "", "auth token URL")
+	pf.String("auth-client-id", "", "auth client ID")
+	pf.String("auth-client-secret", "", "auth client secret")
+	pf.StringToString("auth-scopes", nil, "auth scopes as key=value (repeatable or comma-separated)")
+	pf.String("http-timeout", "", "HTTP timeout (Go duration, e.g. 30s)")
 
-	rootCmd.PersistentFlags().String("camunda8-base-url", "", "Camunda8 API base URL")
-	rootCmd.PersistentFlags().String("operate-base-url", "", "Operate API base URL")
-	rootCmd.PersistentFlags().String("tasklist-base-url", "", "Tasklist API base URL")
+	pf.String("camunda8-base-url", "", "Camunda8 API base URL")
+	pf.String("operate-base-url", "", "Operate API base URL")
+	pf.String("tasklist-base-url", "", "Tasklist API base URL")
 
-	rootCmd.PersistentFlags().BoolVar(&isQuiet, "quiet", false, "suppress output, use exit code only")
+	pf.BoolVar(&isQuiet, "quiet", false, "suppress output, use exit code only")
 
-	rootCmd.PersistentFlags().BoolVar(&showConfig, "show-config", false, "print effective config (secrets redacted)")
+	pf.BoolVar(&showConfig, "show-config", false, "print effective config (secrets redacted)")
 }
 
 func initViper(v *viper.Viper, cmd *cobra.Command) error {

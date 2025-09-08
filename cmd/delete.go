@@ -12,6 +12,7 @@ import (
 	"github.com/grafvonb/camunder/internal/services/common"
 	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var supportedResourcesForDelete = common.ResourceTypes{
@@ -73,6 +74,8 @@ var deleteCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(deleteCmd)
+
+	common.AddBackoffFlagsAndBindings(deleteCmd, viper.GetViper())
 
 	deleteCmd.Flags().StringVarP(&deletePIKey, "pi-key", "k", "", "process instance key to delete")
 	_ = deleteCmd.MarkFlagRequired("pi-key")

@@ -21,6 +21,7 @@ var (
 type Config struct {
 	Config string `mapstructure:"config"`
 
+	App  App            `mapstructure:"app"`
 	Auth Authentication `mapstructure:"auth"`
 	APIs APIs           `mapstructure:"apis"`
 	HTTP HTTP           `mapstructure:"http"`
@@ -29,6 +30,7 @@ type Config struct {
 func (c *Config) String() string {
 	var alias Config
 	alias.Config = c.Config
+	alias.App = c.App
 	alias.HTTP = c.HTTP
 	alias.APIs.Camunda8.Key = c.APIs.Camunda8.Key
 	alias.APIs.Camunda8.BaseURL = c.APIs.Camunda8.BaseURL
@@ -36,11 +38,10 @@ func (c *Config) String() string {
 	alias.APIs.Operate.BaseURL = c.APIs.Operate.BaseURL
 	alias.APIs.Tasklist.Key = c.APIs.Tasklist.Key
 	alias.APIs.Tasklist.BaseURL = c.APIs.Tasklist.BaseURL
-
 	alias.Auth.TokenURL = c.Auth.TokenURL
 	alias.Auth.ClientID = "******"
 	alias.Auth.ClientSecret = "******"
-	alias.Auth.Scopes = maps.Clone(c.Auth.Scopes) // Go ≥1.21
+	alias.Auth.Scopes = maps.Clone(c.Auth.Scopes)
 
 	b, err := json.MarshalIndent(alias, "", "  ")
 	if err != nil {

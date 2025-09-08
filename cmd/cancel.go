@@ -9,6 +9,7 @@ import (
 	"github.com/grafvonb/camunder/internal/services/httpc"
 	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var supportedResourcesForCancel = common.ResourceTypes{
@@ -60,6 +61,8 @@ var cancelCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(cancelCmd)
 
+	common.AddBackoffFlagsAndBindings(cancelCmd, viper.GetViper())
+
 	cancelCmd.Flags().StringVar(&cancelPIKey, "key", "", "process instance key to cancel")
-	cancelCmd.MarkFlagRequired("key")
+	_ = cancelCmd.MarkFlagRequired("key")
 }

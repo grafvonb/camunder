@@ -1,3 +1,12 @@
+app:
+  backoff:
+    strategy: exponential
+    initial_delay: 500ms
+    max_delay: 8s
+    max_retries: 0
+    multiplier: 2.0
+    timeout: 2m
+
 auth:
   # OAuth token endpoint
   token_url: "http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect"
