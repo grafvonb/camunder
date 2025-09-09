@@ -20,23 +20,17 @@ While they offer comprehensive features, there are scenarios where a CLI tool ca
 especially for automation, scripting, and quick interactions.
 
 Camunder aims to fill this gap by providing alongside simple commands like `get`, `cancel` or `delete` 
-also bulk operations to manage multiple resources at once and composed commands to chain multiple operations together 
-like cancelling prior to deleting process instances.
+also specialized commands to simplify common tasks related to Camunda 8.
 
-## Features implemented
+## Highlights
 
-- get process instances for a process definition id: `$ camunder get process-instance --bpmn-process-id <id>`
-- get process definitions: `$ camunder get process-definition`
-- get cluster topology: `$ camunder get cluster-topology`
-- delete single process instance with cancel option: `$ camunder delete process-instance --key <key>`
-- cancel single process instance: `$ camunder cancel process-instance --key <key>`
-
-## Features planned
-
-- run process instances (bulk)
-- cancel process instance (bulk)
-- delete process instance (bulk)
-- ...and more to come!
+Camunder simplifies various tasks related to Camunda 8, including these special use cases:
+- deleting active process instances by cancelling them first,
+- finding process instances with orphan parent process instances,
+- listing process instances and process definitions as json, list or key-only format,
+- bulk cancelling or deleting process instances (not implemented yet),
+- recursive search and deletion of process instances with parent-child relationships (not implemented yet),
+- and more to come...
 
 ## Supported Camunda 8 APIs
 
