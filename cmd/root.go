@@ -42,6 +42,11 @@ var rootCmd = &cobra.Command{
 		}
 		cmd.SetContext(cfg.ToContext(cmd.Context()))
 		if flagShowConfig {
+			cfgpath := v.ConfigFileUsed()
+			if cfgpath == "" {
+				cfgpath = "(none)"
+			}
+			cmd.Println("config loaded: "+cfgpath, v.ConfigFileUsed())
 			cmd.Println(cfg.String())
 			os.Exit(0)
 		}
