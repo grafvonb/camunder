@@ -77,7 +77,7 @@ var deleteCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(deleteCmd)
 
-	common.AddBackoffFlagsAndBindings(deleteCmd, viper.GetViper())
+	AddBackoffFlagsAndBindings(deleteCmd, viper.GetViper())
 
 	deleteCmd.Flags().StringVarP(&flagDeleteKey, "key", "k", "", "resource key (e.g. process instance) to delete")
 	_ = deleteCmd.MarkFlagRequired("key")

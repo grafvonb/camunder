@@ -23,6 +23,7 @@ var supportedResourcesForGet = common.ResourceTypes{
 	"pi": "process-instance",
 }
 
+// filter options
 var (
 	flagKey               int64
 	flagBpmnProcessID     string
@@ -32,8 +33,15 @@ var (
 	flagParentKey         int64
 )
 
+// command options
 var (
 	flagWithChildren bool
+)
+
+// view options
+var (
+	flagKeysOnly bool
+	flagOneLine  bool
 )
 
 // getCmd represents the get command
@@ -109,7 +117,11 @@ var getCmd = &cobra.Command{
 					cmd.PrintErrf("error fetching process instance by key %d: %v\n", *searchFilterOpts.Key, err)
 					return
 				}
-				cmd.Println(ToJSONString(pi))
+				err = KeyOnlyItemView(cmd, pi)
+				if err != nil {
+					cmd.PrintErrf("error rendering key-only view: %v\n", err)
+					return
+				}
 				if flagWithChildren {
 					searchFilterOpts.ParentKey = searchFilterOpts.Key
 					searchFilterOpts.Key = nil
@@ -119,15 +131,16 @@ var getCmd = &cobra.Command{
 						return
 					}
 					if flagKeysOnly {
-						keys := common.KeysFromItems(pisr.Items, func(it c87operatev1.ProcessInstanceItem) int64 {
-							return *it.Key
-						})
-						for _, k := range keys {
-							cmd.Println(k)
+						err = ListKeyOnlyItemsView(cmd, pisr)
+						if err != nil {
+							cmd.PrintErrf("error rendering keys-only view: %v\n", err)
 						}
 						return
 					}
-					cmd.Println(ToJSONString(pisr))
+					err = ListItemsView(cmd, pisr)
+					if err != nil {
+						cmd.PrintErrf("error rendering items view: %v\n", err)
+					}
 				}
 			} else {
 				state, err := processinstance.PIStateFilterFromString(flagState)
@@ -142,15 +155,16 @@ var getCmd = &cobra.Command{
 					return
 				}
 				if flagKeysOnly {
-					keys := common.KeysFromItems(pisr.Items, func(it c87operatev1.ProcessInstanceItem) int64 {
-						return *it.Key
-					})
-					for _, k := range keys {
-						cmd.Println(k)
+					err = ListKeyOnlyItemsView(cmd, pisr)
+					if err != nil {
+						cmd.PrintErrf("error rendering keys-only view: %v\n", err)
 					}
 					return
 				}
-				cmd.Println(ToJSONString(pisr))
+				err = ListItemsView(cmd, pisr)
+				if err != nil {
+					cmd.PrintErrf("error rendering items view: %v\n", err)
+				}
 			}
 
 		default:
@@ -163,7 +177,7 @@ var getCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(getCmd)
 
-	common.AddBackoffFlagsAndBindings(getCmd, viper.GetViper())
+	AddBackoffFlagsAndBindings(getCmd, viper.GetViper())
 
 	fs := getCmd.Flags()
 	fs.Int64VarP(&flagKey, "key", "k", 0, "resource key (e.g. process instance) to fetch")
@@ -173,7 +187,12 @@ func init() {
 	fs.Int64Var(&flagParentKey, "parent-key", 0, "parent process instance key")
 	fs.StringVarP(&flagState, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
 
+	// when used together with --key for process instances, fetches the child instances of the given instance key
 	fs.BoolVar(&flagWithChildren, "with-children", false, "when fetching process instances, also fetch child instances (non-recursive, first level only)")
+	fs.BoolVar(&flagKeysOnly, "keys-only", false, "show only keys in output (where applicable)")
+
+	// view options
+	fs.BoolVar(&flagOneLine, "one-line", false, "output one line per item (where applicable)")
 }
 
 func populatePISearchFilterOpts() processinstance.SearchFilterOpts {

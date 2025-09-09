@@ -1,4 +1,4 @@
-package common
+package cmd
 
 import (
 	"time"
@@ -18,6 +18,14 @@ var (
 	defaultBackoffMaxRetries   = 0 // 0 = unlimited
 	defaultBackoffTimeout      = 2 * time.Minute
 )
+
+func AddApiCommandsFlagsAndBindings(cmd *cobra.Command, v *viper.Viper) {
+	// fs := cmd.PersistentFlags()
+
+	// fs.String("api-url", "", "Base URL of the Camunda 8 API (e.g. https://operate.camunda.io/your-cluster-id)")
+	// _ = v.BindPFlag("app.api.url", fs.Lookup("api-url"))
+	// v.SetDefault("app.api.url", "")
+}
 
 func AddBackoffFlagsAndBindings(cmd *cobra.Command, v *viper.Viper) {
 	fs := cmd.PersistentFlags()

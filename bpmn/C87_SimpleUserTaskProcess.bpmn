@@ -2,7 +2,7 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0ty5i8n" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.38.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.7.0">
   <bpmn:process id="C87SimpleUserTask_Process" name="C87 Simple User Task" isExecutable="true">
     <bpmn:extensionElements>
-      <zeebe:versionTag value="v1.0.0" />
+      <zeebe:versionTag value="v1.0.1" />
     </bpmn:extensionElements>
     <bpmn:startEvent id="SimpleUserTaskRequested_StartEvent" name="Simple User Task requested">
       <bpmn:outgoing>Flow_1b6a1ym</bpmn:outgoing>

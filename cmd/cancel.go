@@ -63,7 +63,7 @@ var cancelCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(cancelCmd)
 
-	common.AddBackoffFlagsAndBindings(cancelCmd, viper.GetViper())
+	AddBackoffFlagsAndBindings(cancelCmd, viper.GetViper())
 
 	cancelCmd.Flags().StringVarP(&flagCancelKey, "key", "k", "", "resource key (e.g. process instance) to cancel")
 	_ = cancelCmd.MarkFlagRequired("key")

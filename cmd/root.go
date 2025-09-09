@@ -17,7 +17,6 @@ import (
 var (
 	flagQuiet      bool // quiet mode, suppress output, use exit code only
 	flagShowConfig bool // show effective config and exit
-	flagKeysOnly   bool // show only keys in output (where applicable)
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -98,7 +97,6 @@ func init() {
 	pf.String("taskli	st-base-url", "", "Tasklist API base URL")
 
 	pf.BoolVar(&flagQuiet, "quiet", false, "suppress output, use exit code only")
-	pf.BoolVar(&flagKeysOnly, "keys-only", false, "show only keys in output (where applicable)")
 
 	// TODO show-config flag should be in a "config" subcommand
 	pf.BoolVar(&flagShowConfig, "show-config", false, "print effective config (secrets redacted)")
