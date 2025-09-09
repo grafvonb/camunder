@@ -34,7 +34,8 @@ var (
 
 // command options
 var (
-	flagChildrenOnly bool
+	flagChildrenOnly      bool
+	flagWithOrphanParents bool
 )
 
 // view options
@@ -146,6 +147,15 @@ var getCmd = &cobra.Command{
 				if flagChildrenOnly {
 					pisr = pisr.FilterChildrenOnly()
 				}
+				if flagWithOrphanParents {
+					pisr.Items, err = svc.FilterProcessInstanceWithOrphanParent(cmd.Context(), pisr.Items)
+					if err != nil {
+						cmd.PrintErrf("error filtering process instances with orphan parents: %v\n", err)
+						return
+					}
+					nt := int64(len(*pisr.Items))
+					pisr.Total = &nt
+				}
 				if flagKeysOnly {
 					err = ListKeyOnlyProcessInstancesView(cmd, pisr)
 					if err != nil {
@@ -179,10 +189,12 @@ func init() {
 	fs.Int64Var(&flagParentKey, "parent-key", 0, "parent process instance key")
 	fs.StringVarP(&flagState, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
 
+	// command options
 	fs.BoolVar(&flagChildrenOnly, "children-only", false, "when fetching process instances, show only child instances")
-	fs.BoolVar(&flagKeysOnly, "keys-only", false, "show only keys in output")
+	fs.BoolVar(&flagWithOrphanParents, "with-orphan-parents", false, "when fetching process instances, show only child instances whose parent does not exist")
 
 	// view options
+	fs.BoolVar(&flagKeysOnly, "keys-only", false, "show only keys in output")
 	fs.BoolVar(&flagOneLine, "one-line", false, "output one line per item")
 }
 

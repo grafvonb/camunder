@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	c87camunda8v2 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda8/v2"
 	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
@@ -41,6 +42,25 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuie
 		isQuiet: isQuiet,
 		cfg:     cfg,
 	}, nil
+}
+
+func (s *Service) FilterProcessInstanceWithOrphanParent(ctx context.Context, items *[]c87operatev1.ProcessInstanceItem) (*[]c87operatev1.ProcessInstanceItem, error) {
+	if items == nil {
+		return nil, nil
+	}
+	var result []c87operatev1.ProcessInstanceItem
+	for _, it := range *items {
+		if it.ParentKey == nil {
+			continue
+		}
+		_, err := s.GetProcessInstanceByKey(ctx, *it.ParentKey)
+		if err != nil && strings.Contains(err.Error(), "status 404") {
+			result = append(result, it)
+		} else if err != nil {
+			return nil, err
+		}
+	}
+	return &result, nil
 }
 
 func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (*c87operatev1.ProcessInstanceItem, error) {
