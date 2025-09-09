@@ -6,9 +6,6 @@
 
 Camunder is a CLI tool to interact with [Camunda 8](https://camunda.com/platform/).
 
-> **Disclaimer:** This project is currently in an **early development stage**.  
-> Features, APIs, and behavior may change without notice. Use at your own risk.
-
 ## Overview & Motivation
 
 **Camunder** is a command-line interface (CLI) tool designed to interact with [Camunda 8](https://camunda.com/platform/),
