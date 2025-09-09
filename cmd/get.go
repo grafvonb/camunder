@@ -34,7 +34,7 @@ var (
 
 // command options
 var (
-	flagWithChildren bool
+	flagChildrenOnly bool
 )
 
 // view options
@@ -131,26 +131,6 @@ var getCmd = &cobra.Command{
 					cmd.PrintErrf("error rendering key-only view: %v\n", err)
 					return
 				}
-				if flagWithChildren {
-					searchFilterOpts.ParentKey = searchFilterOpts.Key
-					searchFilterOpts.Key = nil
-					pisr, err := svc.SearchForProcessInstances(cmd.Context(), searchFilterOpts, maxSearchSize)
-					if err != nil {
-						cmd.PrintErrf("error fetching process instances: %v\n", err)
-						return
-					}
-					if flagKeysOnly {
-						err = ListKeyOnlyProcessInstancesView(cmd, pisr)
-						if err != nil {
-							cmd.PrintErrf("error rendering keys-only view: %v\n", err)
-						}
-						return
-					}
-					err = ListProcessInstancesView(cmd, pisr)
-					if err != nil {
-						cmd.PrintErrf("error rendering items view: %v\n", err)
-					}
-				}
 			} else {
 				state, err := processinstance.PIStateFilterFromString(flagState)
 				if err != nil {
@@ -162,6 +142,9 @@ var getCmd = &cobra.Command{
 				if err != nil {
 					cmd.PrintErrf("error fetching process instances: %v\n", err)
 					return
+				}
+				if flagChildrenOnly {
+					pisr = pisr.FilterChildrenOnly()
 				}
 				if flagKeysOnly {
 					err = ListKeyOnlyProcessInstancesView(cmd, pisr)
@@ -196,8 +179,7 @@ func init() {
 	fs.Int64Var(&flagParentKey, "parent-key", 0, "parent process instance key")
 	fs.StringVarP(&flagState, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
 
-	// when used together with --key for process instances, fetches the child instances of the given instance key
-	fs.BoolVar(&flagWithChildren, "with-children", false, "when fetching process instances, also fetch child instances (non-recursive, first level only)")
+	fs.BoolVar(&flagChildrenOnly, "children-only", false, "when fetching process instances, show only child instances")
 	fs.BoolVar(&flagKeysOnly, "keys-only", false, "show only keys in output")
 
 	// view options
