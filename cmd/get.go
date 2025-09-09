@@ -34,6 +34,7 @@ var (
 
 // command options
 var (
+	flagParentsOnly       bool
 	flagChildrenOnly      bool
 	flagWithOrphanParents bool
 )
@@ -144,8 +145,15 @@ var getCmd = &cobra.Command{
 					cmd.PrintErrf("error fetching process instances: %v\n", err)
 					return
 				}
+				if flagChildrenOnly && flagParentsOnly {
+					cmd.PrintErrf("using both --children-only and --parents-only filters returns always no results\n")
+					return
+				}
 				if flagChildrenOnly {
 					pisr = pisr.FilterChildrenOnly()
+				}
+				if flagParentsOnly {
+					pisr = pisr.FilterParentsOnly()
 				}
 				if flagWithOrphanParents {
 					pisr.Items, err = svc.FilterProcessInstanceWithOrphanParent(cmd.Context(), pisr.Items)
@@ -190,8 +198,9 @@ func init() {
 	fs.StringVarP(&flagState, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
 
 	// command options
-	fs.BoolVar(&flagChildrenOnly, "children-only", false, "when fetching process instances, show only child instances")
-	fs.BoolVar(&flagWithOrphanParents, "with-orphan-parents", false, "when fetching process instances, show only child instances whose parent does not exist")
+	fs.BoolVar(&flagParentsOnly, "parents-only", false, "show only parent process instances, meaning instances with no parent key set")
+	fs.BoolVar(&flagChildrenOnly, "children-only", false, "show only child process instances, meaning instances that have a parent key set")
+	fs.BoolVar(&flagWithOrphanParents, "with-orphan-parents", false, "show only child instances whose parent does not exist (return 404 on get by key)")
 
 	// view options
 	fs.BoolVar(&flagKeysOnly, "keys-only", false, "show only keys in output")
