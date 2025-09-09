@@ -83,7 +83,7 @@ func init() {
 
 	pf.String("config", "", "path to config file")
 
-	pf.String("tenant", "", "default tenant ID (where applicable)")
+	pf.String("tenant", "", "default tenant ID")
 
 	pf.String("auth-token-url", "", "auth token URL")
 	pf.String("auth-client-id", "", "auth client ID")
@@ -94,7 +94,7 @@ func init() {
 
 	pf.String("camunda8-base-url", "", "Camunda8 API base URL")
 	pf.String("operate-base-url", "", "Operate API base URL")
-	pf.String("taskli	st-base-url", "", "Tasklist API base URL")
+	pf.String("tasklist-base-url", "", "Tasklist API base URL")
 
 	pf.BoolVar(&flagQuiet, "quiet", false, "suppress output, use exit code only")
 

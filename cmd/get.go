@@ -3,7 +3,6 @@ package cmd
 import (
 	"strings"
 
-	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/internal/services/cluster"
@@ -94,15 +93,15 @@ var getCmd = &cobra.Command{
 				return
 			}
 			if flagKeysOnly {
-				keys := common.KeysFromItems(pdsr.Items, func(it c87operatev1.ProcessDefinitionItem) int64 {
-					return *it.Key
-				})
-				for _, k := range keys {
-					cmd.Println(k)
+				err = ListKeyOnlyProcessDefinitionsView(cmd, pdsr)
+				if err != nil {
+					cmd.PrintErrf("error rendering keys-only view: %v\n", err)
 				}
-				return
 			}
-			cmd.Println(ToJSONString(pdsr))
+			err = ListProcessDefinitionsView(cmd, pdsr)
+			if err != nil {
+				cmd.PrintErrf("error rendering items view: %v\n", err)
+			}
 
 		case "process-instance", "pi":
 			svc, err := processinstance.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
@@ -117,7 +116,7 @@ var getCmd = &cobra.Command{
 					cmd.PrintErrf("error fetching process instance by key %d: %v\n", *searchFilterOpts.Key, err)
 					return
 				}
-				err = KeyOnlyItemView(cmd, pi)
+				err = KeyOnlyProcessInstanceView(cmd, pi)
 				if err != nil {
 					cmd.PrintErrf("error rendering key-only view: %v\n", err)
 					return
@@ -131,13 +130,13 @@ var getCmd = &cobra.Command{
 						return
 					}
 					if flagKeysOnly {
-						err = ListKeyOnlyItemsView(cmd, pisr)
+						err = ListKeyOnlyProcessInstancesView(cmd, pisr)
 						if err != nil {
 							cmd.PrintErrf("error rendering keys-only view: %v\n", err)
 						}
 						return
 					}
-					err = ListItemsView(cmd, pisr)
+					err = ListProcessInstancesView(cmd, pisr)
 					if err != nil {
 						cmd.PrintErrf("error rendering items view: %v\n", err)
 					}
@@ -155,13 +154,13 @@ var getCmd = &cobra.Command{
 					return
 				}
 				if flagKeysOnly {
-					err = ListKeyOnlyItemsView(cmd, pisr)
+					err = ListKeyOnlyProcessInstancesView(cmd, pisr)
 					if err != nil {
 						cmd.PrintErrf("error rendering keys-only view: %v\n", err)
 					}
 					return
 				}
-				err = ListItemsView(cmd, pisr)
+				err = ListProcessInstancesView(cmd, pisr)
 				if err != nil {
 					cmd.PrintErrf("error rendering items view: %v\n", err)
 				}
@@ -189,10 +188,10 @@ func init() {
 
 	// when used together with --key for process instances, fetches the child instances of the given instance key
 	fs.BoolVar(&flagWithChildren, "with-children", false, "when fetching process instances, also fetch child instances (non-recursive, first level only)")
-	fs.BoolVar(&flagKeysOnly, "keys-only", false, "show only keys in output (where applicable)")
+	fs.BoolVar(&flagKeysOnly, "keys-only", false, "show only keys in output")
 
 	// view options
-	fs.BoolVar(&flagOneLine, "one-line", false, "output one line per item (where applicable)")
+	fs.BoolVar(&flagOneLine, "one-line", false, "output one line per item")
 }
 
 func populatePISearchFilterOpts() processinstance.SearchFilterOpts {
