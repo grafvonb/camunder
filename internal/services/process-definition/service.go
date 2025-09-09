@@ -34,6 +34,22 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuie
 	}, nil
 }
 
+func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (*c87operatev1.ProcessDefinitionItem, error) {
+	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving operate token: %w", err)
+	}
+	resp, err := s.c.GetProcessDefinitionByKeyWithResponse(ctx, key,
+		editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token))
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+	}
+	return resp.JSON200, nil
+}
+
 func (s *Service) SearchForProcessDefinitions(ctx context.Context, filter SearchFilterOpts, size int32) (*c87operatev1.ProcessDefinitionSearchResponse, error) {
 	body := c87operatev1.ProcessDefinitionSearchRequest{
 		Filter: &c87operatev1.ProcessDefinitionFilter{

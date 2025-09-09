@@ -81,42 +81,52 @@ var getCmd = &cobra.Command{
 			cmd.Println(ToJSONString(topology))
 
 		case "process-definition", "pd":
-			svc, err := processdefinition.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
 			searchFilterOpts := populatePDSearchFilterOpts()
+			svc, err := processdefinition.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process definition service: %v\n", err)
 				return
 			}
-			pdsr, err := svc.SearchForProcessDefinitions(cmd.Context(), searchFilterOpts, maxSearchSize)
-			if err != nil {
-				cmd.PrintErrf("error fetching process definitions: %v\n", err)
-				return
-			}
-			if flagKeysOnly {
-				err = ListKeyOnlyProcessDefinitionsView(cmd, pdsr)
+			if searchFilterOpts.Key != nil {
+				pd, err := svc.GetProcessDefinitionByKey(cmd.Context(), *searchFilterOpts.Key)
 				if err != nil {
-					cmd.PrintErrf("error rendering keys-only view: %v\n", err)
+					cmd.PrintErrf("error fetching process definition by key %d: %v\n", *searchFilterOpts.Key, err)
+					return
 				}
-			}
-			err = ListProcessDefinitionsView(cmd, pdsr)
-			if err != nil {
-				cmd.PrintErrf("error rendering items view: %v\n", err)
+				err = ProcessDefinitionView(cmd, pd)
+			} else {
+				pdsr, err := svc.SearchForProcessDefinitions(cmd.Context(), searchFilterOpts, maxSearchSize)
+				if err != nil {
+					cmd.PrintErrf("error fetching process definitions: %v\n", err)
+					return
+				}
+				if flagKeysOnly {
+					err = ListKeyOnlyProcessDefinitionsView(cmd, pdsr)
+					if err != nil {
+						cmd.PrintErrf("error rendering keys-only view: %v\n", err)
+					}
+					return
+				}
+				err = ListProcessDefinitionsView(cmd, pdsr)
+				if err != nil {
+					cmd.PrintErrf("error rendering items view: %v\n", err)
+				}
 			}
 
 		case "process-instance", "pi":
+			searchFilterOpts := populatePISearchFilterOpts()
 			svc, err := processinstance.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
 			}
-			searchFilterOpts := populatePISearchFilterOpts()
 			if searchFilterOpts.Key != nil {
 				pi, err := svc.GetProcessInstanceByKey(cmd.Context(), *searchFilterOpts.Key)
 				if err != nil {
 					cmd.PrintErrf("error fetching process instance by key %d: %v\n", *searchFilterOpts.Key, err)
 					return
 				}
-				err = KeyOnlyProcessInstanceView(cmd, pi)
+				err = ProcessInstanceView(cmd, pi)
 				if err != nil {
 					cmd.PrintErrf("error rendering key-only view: %v\n", err)
 					return

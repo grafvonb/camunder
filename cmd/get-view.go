@@ -9,14 +9,14 @@ import (
 )
 
 func ListKeyOnlyProcessInstancesView(c *cobra.Command, resp *c87operatev1.ProcessInstanceSearchResponse) error {
-	return renderListG(c, resp, func(r *c87operatev1.ProcessInstanceSearchResponse) *[]c87operatev1.ProcessInstanceItem {
+	return renderListView(c, resp, func(r *c87operatev1.ProcessInstanceSearchResponse) *[]c87operatev1.ProcessInstanceItem {
 		return r.Items
 	}, KeyOnlyProcessInstanceView)
 }
 
 func ListProcessInstancesView(c *cobra.Command, resp *c87operatev1.ProcessInstanceSearchResponse) error {
 	if flagOneLine {
-		return renderListG(c, resp, func(r *c87operatev1.ProcessInstanceSearchResponse) *[]c87operatev1.ProcessInstanceItem {
+		return renderListView(c, resp, func(r *c87operatev1.ProcessInstanceSearchResponse) *[]c87operatev1.ProcessInstanceItem {
 			return r.Items
 		}, OneLineProcessInstanceView)
 	}
@@ -29,6 +29,16 @@ func KeyOnlyProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInst
 	}
 	c.Println(valueOr(item.Key, int64(0)))
 	return nil
+}
+
+func ProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInstanceItem) error {
+	if flagOneLine {
+		return OneLineProcessInstanceView(c, item)
+	}
+	if flagKeysOnly {
+		return KeyOnlyProcessInstanceView(c, item)
+	}
+	return listJSONView(c, item)
 }
 
 func OneLineProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInstanceItem) error {
@@ -66,14 +76,14 @@ func OneLineProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInst
 }
 
 func ListKeyOnlyProcessDefinitionsView(c *cobra.Command, resp *c87operatev1.ProcessDefinitionSearchResponse) error {
-	return renderListG(c, resp, func(r *c87operatev1.ProcessDefinitionSearchResponse) *[]c87operatev1.ProcessDefinitionItem {
+	return renderListView(c, resp, func(r *c87operatev1.ProcessDefinitionSearchResponse) *[]c87operatev1.ProcessDefinitionItem {
 		return r.Items
 	}, KeyOnlyProcessDefinitionView)
 }
 
 func ListProcessDefinitionsView(c *cobra.Command, resp *c87operatev1.ProcessDefinitionSearchResponse) error {
 	if flagOneLine {
-		return renderListG(c, resp, func(r *c87operatev1.ProcessDefinitionSearchResponse) *[]c87operatev1.ProcessDefinitionItem {
+		return renderListView(c, resp, func(r *c87operatev1.ProcessDefinitionSearchResponse) *[]c87operatev1.ProcessDefinitionItem {
 			return r.Items
 		}, OneLineProcessDefinitionView)
 	}
@@ -86,6 +96,16 @@ func KeyOnlyProcessDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDe
 	}
 	c.Println(valueOr(item.Key, int64(0)))
 	return nil
+}
+
+func ProcessDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDefinitionItem) error {
+	if flagOneLine {
+		return OneLineProcessDefinitionView(c, item)
+	}
+	if flagKeysOnly {
+		return KeyOnlyProcessDefinitionView(c, item)
+	}
+	return listJSONView(c, item)
 }
 
 func OneLineProcessDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDefinitionItem) error {
@@ -116,11 +136,25 @@ func listJSONView[Resp any](c *cobra.Command, resp *Resp) error {
 		c.Println("{}")
 		return nil
 	}
+	switch r := any(resp).(type) {
+	case *c87operatev1.ProcessInstanceSearchResponse:
+		if r.Items != nil {
+			c.Println("found:", len(*r.Items))
+		} else {
+			c.Println("found: 0")
+		}
+	case *c87operatev1.ProcessDefinitionSearchResponse:
+		if r.Items != nil {
+			c.Println("found:", len(*r.Items))
+		} else {
+			c.Println("found: 0")
+		}
+	}
 	c.Println(ToJSONString(resp))
 	return nil
 }
 
-func renderListG[Resp any, Item any](c *cobra.Command, resp *Resp, itemsOf func(*Resp) *[]Item,
+func renderListView[Resp any, Item any](c *cobra.Command, resp *Resp, itemsOf func(*Resp) *[]Item,
 	render func(*cobra.Command, *Item) error) error {
 	if resp == nil {
 		c.Println("found: 0")
