@@ -1,24 +1,43 @@
 package c87operatev1
 
-func (r *ProcessInstanceSearchResponse) FilterChildrenOnly() *ProcessInstanceSearchResponse {
-	return r.filterByParent(false)
+func (r *ProcessInstanceSearchResponse) FilterByHavingIncidents(has bool) *ProcessInstanceSearchResponse {
+	return r.filterByIncident(has)
 }
 
-func (r *ProcessInstanceSearchResponse) FilterParentsOnly() *ProcessInstanceSearchResponse {
+func (r *ProcessInstanceSearchResponse) FilterChildrenOnly() *ProcessInstanceSearchResponse {
+	// children have a parent
 	return r.filterByParent(true)
 }
 
+func (r *ProcessInstanceSearchResponse) FilterParentsOnly() *ProcessInstanceSearchResponse {
+	// parents have no parent
+	return r.filterByParent(false)
+}
+
 func (r *ProcessInstanceSearchResponse) filterByParent(hasParent bool) *ProcessInstanceSearchResponse {
+	return r.filterByBool(func(pi *ProcessInstanceItem) bool {
+		return pi.ParentKey != nil
+	}, hasParent)
+}
+
+func (r *ProcessInstanceSearchResponse) filterByIncident(hasIncident bool) *ProcessInstanceSearchResponse {
+	return r.filterByBool(func(pi *ProcessInstanceItem) bool {
+		return pi.Incident != nil && *pi.Incident
+	}, hasIncident)
+}
+
+func (r *ProcessInstanceSearchResponse) filterByBool(predicate func(*ProcessInstanceItem) bool, want bool) *ProcessInstanceSearchResponse {
 	if r == nil || r.Items == nil {
 		return r
 	}
-	for i := len(*r.Items) - 1; i >= 0; i-- {
-		pk := (*r.Items)[i].ParentKey
-		if (pk != nil) == hasParent {
-			*r.Items = append((*r.Items)[:i], (*r.Items)[i+1:]...)
+	items := *r.Items
+	for i := len(items) - 1; i >= 0; i-- {
+		if predicate(&items[i]) != want {
+			items = append(items[:i], items[i+1:]...)
 		}
 	}
-	nt := int64(len(*r.Items))
+	*r.Items = items
+	nt := int64(len(items))
 	r.Total = &nt
 	return r
 }

@@ -6,6 +6,24 @@ grant_type=client_credentials&client_secret={{client_secret}}&client_id={{client
 
 > {% client.global.set("access_token", response.body.access_token); %}
 
+### Get cluster topology over operate
+GET {{operate_base_url}}/v1/topology
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
+### Get cluster topology over tasklist
+GET {{tasklist_base_url}}/v2/topology
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
+### Get cluster topology over zeebe broker
+GET {{zeebe_broker_rest_address}}/v2/topology
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
 ### Retrieve process definitions
 POST {{operate_base_url}}/v1/process-definitions/search
 Content-Type: application/json

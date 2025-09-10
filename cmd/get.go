@@ -3,6 +3,7 @@ package cmd
 import (
 	"strings"
 
+	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/internal/services/cluster"
@@ -36,7 +37,9 @@ var (
 var (
 	flagParentsOnly       bool
 	flagChildrenOnly      bool
-	flagWithOrphanParents bool
+	flagOrphanParentsOnly bool
+	flagIncidentsOnly     bool
+	flagNoIncidentsOnly   bool
 )
 
 // view options
@@ -122,6 +125,7 @@ var getCmd = &cobra.Command{
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
 			}
+			printFilter(cmd)
 			if searchFilterOpts.Key != nil {
 				pi, err := svc.GetProcessInstanceByKey(cmd.Context(), *searchFilterOpts.Key)
 				if err != nil {
@@ -155,14 +159,14 @@ var getCmd = &cobra.Command{
 				if flagParentsOnly {
 					pisr = pisr.FilterParentsOnly()
 				}
-				if flagWithOrphanParents {
-					pisr.Items, err = svc.FilterProcessInstanceWithOrphanParent(cmd.Context(), pisr.Items)
-					if err != nil {
-						cmd.PrintErrf("error filtering process instances with orphan parents: %v\n", err)
-						return
-					}
-					nt := int64(len(*pisr.Items))
-					pisr.Total = &nt
+				if flagOrphanParentsOnly {
+					filterProcessInstanceWithOrphanParent(cmd, pisr, svc)
+				}
+				if flagIncidentsOnly {
+					pisr = pisr.FilterByHavingIncidents(true)
+				}
+				if flagNoIncidentsOnly {
+					pisr = pisr.FilterByHavingIncidents(false)
 				}
 				if flagKeysOnly {
 					err = ListKeyOnlyProcessInstancesView(cmd, pisr)
@@ -194,13 +198,15 @@ func init() {
 	fs.StringVarP(&flagBpmnProcessID, "bpmn-process-id", "b", "", "BPMN process ID to filter process instances")
 	fs.Int32VarP(&flagProcessVersion, "process-version", "v", 0, "process definition version")
 	fs.StringVar(&flagProcessVersionTag, "process-version-tag", "", "process definition version tag")
-	fs.Int64Var(&flagParentKey, "parent-key", 0, "parent process instance key")
-	fs.StringVarP(&flagState, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
 
-	// command options
+	// filtering options
+	fs.Int64Var(&flagParentKey, "parent-key", 0, "parent process instance key to filter process instances")
+	fs.StringVarP(&flagState, "state", "s", "all", "state to filter process instances: all, active, completed, canceled")
 	fs.BoolVar(&flagParentsOnly, "parents-only", false, "show only parent process instances, meaning instances with no parent key set")
 	fs.BoolVar(&flagChildrenOnly, "children-only", false, "show only child process instances, meaning instances that have a parent key set")
-	fs.BoolVar(&flagWithOrphanParents, "with-orphan-parents", false, "show only child instances whose parent does not exist (return 404 on get by key)")
+	fs.BoolVar(&flagOrphanParentsOnly, "orphan-parents-only", false, "show only child instances whose parent does not exist (return 404 on get by key)")
+	fs.BoolVar(&flagIncidentsOnly, "incidents-only", false, "show only process instances that have incidents")
+	fs.BoolVar(&flagNoIncidentsOnly, "no-incidents-only", false, "show only process instances that have no incidents")
 
 	// view options
 	fs.BoolVar(&flagKeysOnly, "keys-only", false, "show only keys in output")
@@ -242,4 +248,15 @@ func populatePDSearchFilterOpts() processdefinition.SearchFilterOpts {
 		opts.VersionTag = &flagProcessVersionTag
 	}
 	return opts
+}
+
+func filterProcessInstanceWithOrphanParent(cmd *cobra.Command, pisr *c87operatev1.ProcessInstanceSearchResponse, svc *processinstance.Service) {
+	items, err := svc.FilterProcessInstanceWithOrphanParent(cmd.Context(), pisr.Items)
+	if err != nil {
+		cmd.PrintErrf("error filtering process instances with orphan parents: %v\n", err)
+		return
+	}
+	nt := int64(len(*items))
+	pisr.Total = &nt
+	pisr.Items = items
 }

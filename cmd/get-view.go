@@ -20,7 +20,9 @@ func ListProcessInstancesView(c *cobra.Command, resp *c87operatev1.ProcessInstan
 			return r.Items
 		}, OneLineProcessInstanceView)
 	}
-	return listJSONView(c, resp)
+	return listJSONView(c, resp, func(r *c87operatev1.ProcessInstanceSearchResponse) *[]c87operatev1.ProcessInstanceItem {
+		return r.Items
+	})
 }
 
 func KeyOnlyProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInstanceItem) error {
@@ -38,7 +40,12 @@ func ProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInstanceIte
 	if flagKeysOnly {
 		return KeyOnlyProcessInstanceView(c, item)
 	}
-	return listJSONView(c, item)
+	if item == nil {
+		c.Println("{}")
+		return nil
+	}
+	c.Println(ToJSONString(item))
+	return nil
 }
 
 func OneLineProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInstanceItem) error {
@@ -55,6 +62,7 @@ func OneLineProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInst
 	start := valueOr(item.StartDate, "")
 	end := valueOr(item.EndDate, "")
 	parent := valueOr(item.ParentKey, int64(0))
+	incident := valueOr(item.Incident, false)
 
 	var pTag, eTag, vTag string
 	if parent > 0 {
@@ -68,8 +76,8 @@ func OneLineProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInst
 	}
 
 	out := fmt.Sprintf(
-		"%-16d %s %s v%d%s %s s:%s%s%s",
-		key, tenant, bpmnID, version, vTag, state, start, eTag, pTag,
+		"%-16d %s %s v%d%s %s s:%s%s%s i:%t",
+		key, tenant, bpmnID, version, vTag, state, start, eTag, pTag, incident,
 	)
 	c.Println(strings.TrimSpace(out))
 	return nil
@@ -87,7 +95,9 @@ func ListProcessDefinitionsView(c *cobra.Command, resp *c87operatev1.ProcessDefi
 			return r.Items
 		}, OneLineProcessDefinitionView)
 	}
-	return listJSONView(c, resp)
+	return listJSONView(c, resp, func(r *c87operatev1.ProcessDefinitionSearchResponse) *[]c87operatev1.ProcessDefinitionItem {
+		return r.Items
+	})
 }
 
 func KeyOnlyProcessDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDefinitionItem) error {
@@ -105,7 +115,12 @@ func ProcessDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDefinitio
 	if flagKeysOnly {
 		return KeyOnlyProcessDefinitionView(c, item)
 	}
-	return listJSONView(c, item)
+	if item == nil {
+		c.Println("{}")
+		return nil
+	}
+	c.Println(ToJSONString(item))
+	return nil
 }
 
 func OneLineProcessDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDefinitionItem) error {
@@ -131,25 +146,12 @@ func OneLineProcessDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDe
 	return nil
 }
 
-func listJSONView[Resp any](c *cobra.Command, resp *Resp) error {
+func listJSONView[Resp any, Item any](c *cobra.Command, resp *Resp, itemsOf func(*Resp) *[]Item) error {
 	if resp == nil {
 		c.Println("{}")
 		return nil
 	}
-	switch r := any(resp).(type) {
-	case *c87operatev1.ProcessInstanceSearchResponse:
-		if r.Items != nil {
-			c.Println("found:", len(*r.Items))
-		} else {
-			c.Println("found: 0")
-		}
-	case *c87operatev1.ProcessDefinitionSearchResponse:
-		if r.Items != nil {
-			c.Println("found:", len(*r.Items))
-		} else {
-			c.Println("found: 0")
-		}
-	}
+	printFound(c, itemsOf(resp))
 	c.Println(ToJSONString(resp))
 	return nil
 }
@@ -157,7 +159,6 @@ func listJSONView[Resp any](c *cobra.Command, resp *Resp) error {
 func renderListView[Resp any, Item any](c *cobra.Command, resp *Resp, itemsOf func(*Resp) *[]Item,
 	render func(*cobra.Command, *Item) error) error {
 	if resp == nil {
-		c.Println("found: 0")
 		return nil
 	}
 	itemsPtr := itemsOf(resp)
@@ -173,6 +174,40 @@ func renderListView[Resp any, Item any](c *cobra.Command, resp *Resp, itemsOf fu
 		}
 	}
 	return nil
+}
+
+func printFound[T any](c *cobra.Command, items *[]T) {
+	if items == nil {
+		c.Println("found: 0")
+		return
+	}
+	c.Println("found:", len(*items))
+}
+
+func printFilter(c *cobra.Command) {
+	var filters []string
+	if flagParentKey != 0 {
+		filters = append(filters, fmt.Sprintf("parent-key=%d", flagParentKey))
+	}
+	if flagState != "" && flagState != "all" {
+		filters = append(filters, fmt.Sprintf("state=%s", flagState))
+	}
+	if flagParentsOnly {
+		filters = append(filters, "parents-only=true")
+	}
+	if flagChildrenOnly {
+		filters = append(filters, "children-only=true")
+	}
+	if flagOrphanParentsOnly {
+		filters = append(filters, "orphan-parents-only=true")
+	}
+	if flagIncidentsOnly {
+		filters = append(filters, "incidents-only=true")
+	}
+	if flagNoIncidentsOnly {
+		filters = append(filters, "no-incidents-only=true")
+	}
+	c.Println("filter: " + strings.Join(filters, ", "))
 }
 
 func valueOr[T any](ptr *T, def T) T {
