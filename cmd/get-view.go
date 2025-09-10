@@ -207,7 +207,9 @@ func printFilter(c *cobra.Command) {
 	if flagNoIncidentsOnly {
 		filters = append(filters, "no-incidents-only=true")
 	}
-	c.Println("filter: " + strings.Join(filters, ", "))
+	if filters != nil && len(filters) > 0 {
+		c.Println("filter: " + strings.Join(filters, ", "))
+	}
 }
 
 func valueOr[T any](ptr *T, def T) T {

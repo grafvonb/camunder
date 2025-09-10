@@ -71,13 +71,22 @@ When searching for a config file, Camunder checks these paths in order and uses 
 Config files must be **YAML**. Example:
 
 ``` yaml
+app:
+  backoff:
+    strategy: exponential
+    initial_delay: 500ms
+    max_delay: 8s
+    max_retries: 0
+    multiplier: 2.0
+    timeout: 2m
+
 auth:
   # OAuth token endpoint
   token_url: "http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect"
 
   # Client credentials (use env vars if possible)
   client_id: "camunder"
-  client_secret: "*******"
+  client_secret: ""
 
   # Scopes as key:value pairs (names -> scope strings)
   # Do not define if not in use or empty
@@ -123,14 +132,21 @@ You can inspect the effective configuration (after merging defaults,
 config file, env vars, and flags) with:
 
 ```bash
-camunder --show-config
-```
-
-Example output:
-
-```json
+$ camunder --show-config
+config loaded: /Users/adam.boczek/.camunder/config.yaml
 {
   "Config": "",
+  "App": {
+    "Tenant": "",
+    "Backoff": {
+      "Strategy": "exponential",
+      "InitialDelay": 500000000,
+      "MaxDelay": 8000000000,
+      "MaxRetries": 0,
+      "Multiplier": 2,
+      "Timeout": 120000000000
+    }
+  },
   "Auth": {
     "TokenURL": "http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect",
     "ClientID": "******",
@@ -161,8 +177,11 @@ Example output:
 }
 ```
 ## Usage 
-### Help Output
-```
+
+```bash
+$ camunder --help
+Camunder is a CLI tool to interact with Camunda 8.
+
 Usage:
   camunder [flags]
   camunder [command]
@@ -185,87 +204,92 @@ Flags:
   -h, --help                         help for camunder
       --http-timeout string          HTTP timeout (Go duration, e.g. 30s)
       --operate-base-url string      Operate API base URL
-  -q, --quiet                        suppress output, use exit code only
+      --quiet                        suppress output, use exit code only
       --show-config                  print effective config (secrets redacted)
       --tasklist-base-url string     Tasklist API base URL
+      --tenant string                default tenant ID
 
 Use "camunder [command] --help" for more information about a command.
 ```
 ### Camunder in Action
-In the following example Camunder is used to list process definitions, get process instances for a specific process definition id,
-and tries to delete a process instance by its key. As the process instance is still active, the deletion fails, so the process instance is cancelled first and then deleted successfully.
-```bash
-# get process definitions
-$ camunder get pd
-{
-  "items": [
-    {
-      "bpmnProcessId": "DoSomethingUserTaskProcess2ID",
-      "key": 2251799813685251,
-      "name": "Do Something User Task Process",
-      "tenantId": "\u003cdefault\u003e",
-      "version": 1,
-      "versionTag": "v1.0.1"
-    },
-    {
-      "bpmnProcessId": "DoSomethingUserTaskProcessID",
-      "key": 2251799813685252,
-      "name": "Do Something User Task Process",
-      "tenantId": "\u003cdefault\u003e",
-      "version": 1,
-      "versionTag": "v1.0.1"
-    }
-  ],
-  "sortValues": [
-    "2251799813685252"
-  ],
-  "total": 2
-}
-# get process instances for a specific process definition id
-$ camunder get pi --bpmn-process-id=DoSomethingUserTaskProcess2ID
-{
-  "items": [
-    {
-      "bpmnProcessId": "DoSomethingUserTaskProcess2ID",
-      "incident": false,
-      "key": 2251799813685391,
-      "processDefinitionKey": 2251799813685251,
-      "processVersion": 1,
-      "processVersionTag": "v1.0.1",
-      "startDate": "2025-09-06T06:48:08.625+0000",
-      "state": "ACTIVE",
-      "tenantId": "\u003cdefault\u003e"
-    },
-    {
-      "bpmnProcessId": "DoSomethingUserTaskProcess2ID",
-      "incident": false,
-      "key": 2251799813685415,
-      "processDefinitionKey": 2251799813685251,
-      "processVersion": 1,
-      "processVersionTag": "v1.0.1",
-      "startDate": "2025-09-06T06:52:13.069+0000",
-      "state": "ACTIVE",
-      "tenantId": "\u003cdefault\u003e"
-    }
-  ],
-  "sortValues": [
-    2251799813685415
-  ],
-  "total": 2
-}
-# try to delete a process instance by its key
-$ camunder delete pi --key 2251799813685391
-Trying to delete process instance with key 2251799813685391...
-Error deleting process instance with key 2251799813685391: unexpected status 400: {"status":400,"message":"Process instances needs to be in one of the states [COMPLETED, CANCELED]","instance":"d24bb589-6c62-4985-a5cb-0712d1e31152","type":"Invalid request"}
-# as the process instance is still active, try to cancel it first and then delete it
-$ camunder delete pi --key 2251799813685391 -c
-Process instance with key 2251799813685391 not in state COMPLETED or CANCELED, cancelling it first...
-Trying to cancel process instance with key 2251799813685391...
-Process instance with key 2251799813685391 was successfully cancelled
-Waiting for process instance with key 2251799813685391 to be cancelled by workflow engine...
-{
 
-  "message": "Process instance and dependant data deleted for key '2251799813685391'"
+#### Deleting an active process instance by cancelling it first
+```bash
+$ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line
+found: 12
+2251799813685511 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:30.380+0000 i:false
+2251799813685518 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:36.618+0000 i:false
+2251799813685525 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:40.675+0000 i:false
+2251799813685532 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:44.338+0000 i:false
+2251799813685541 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:11:52.976+0000 i:false
+2251799813685548 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:13:30.653+0000 i:false
+2251799813685556 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:13:53.060+0000 i:false
+2251799813685571 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:28.190+0000 e:2025-09-10T20:36:44.990+0000 p:2251799813685566 i:false
+2251799813685582 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:33.364+0000 e:2025-09-09T20:27:55.530+0000 p:2251799813685577 i:false
+2251799813685595 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:27.621+0000 p:2251799813685590 i:false
+2251799813685606 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:33.533+0000 p:2251799813685601 i:false
+2251799813685614 dev01 C87SimpleUserTask_Process v3 ACTIVE s:2025-09-10T10:03:12.700+0000 i:false
+$ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line --state=active
+filter: state=active
+found: 10
+2251799813685511 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:30.380+0000 i:false
+2251799813685518 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:36.618+0000 i:false
+2251799813685525 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:40.675+0000 i:false
+2251799813685532 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:44.338+0000 i:false
+2251799813685541 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:11:52.976+0000 i:false
+2251799813685548 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:13:30.653+0000 i:false
+2251799813685556 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:13:53.060+0000 i:false
+2251799813685595 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:27.621+0000 p:2251799813685590 i:false
+2251799813685606 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:33.533+0000 p:2251799813685601 i:false
+2251799813685614 dev01 C87SimpleUserTask_Process v3 ACTIVE s:2025-09-10T10:03:12.700+0000 i:false
+$ camunder delete pi --key 2251799813685511
+trying to delete process instance with key 2251799813685511...
+Error deleting process instance with key 2251799813685511: unexpected status 400: {"status":400,"message":"Process instances needs to be in one of the states [COMPLETED, CANCELED]","instance":"dae2c2ce-58dd-4396-a948-4d57463168ed","type":"Invalid request"}
+$ camunder delete pi --key 2251799813685511 --cancel
+trying to delete process instance with key 2251799813685511...
+process instance with key 2251799813685511 not in state COMPLETED or CANCELED, cancelling it first...
+trying to cancel process instance with key 2251799813685511...
+process instance with key 2251799813685511 was successfully cancelled
+waiting for process instance with key 2251799813685511 to be cancelled by workflow engine...
+process instance "2251799813685511" currently in state "ACTIVE"; waiting...
+process instance "2251799813685511" currently in state "ACTIVE"; waiting...
+process instance "2251799813685511" currently in state "ACTIVE"; waiting...
+process instance "2251799813685511" currently in state "ACTIVE"; waiting...
+process instance "2251799813685511" currently in state "ACTIVE"; waiting...
+process instance "2251799813685511" reached desired state "CANCELED"
+process instance with key 2251799813685511 was successfully deleted
+{
+  "deleted": 1,
+  "message": "Process instance and dependant data deleted for key '2251799813685511'"
 }
+```
+#### Finding process instances with orphan parent process instances
+```bash
+$ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line
+found: 12
+2251799813685511 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:30.380+0000 i:false
+2251799813685518 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:36.618+0000 i:false
+2251799813685525 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:40.675+0000 i:false
+2251799813685532 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:44.338+0000 i:false
+2251799813685541 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:11:52.976+0000 i:false
+2251799813685548 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:13:30.653+0000 i:false
+2251799813685556 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:13:53.060+0000 i:false
+2251799813685571 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:28.190+0000 e:2025-09-10T20:36:44.990+0000 p:2251799813685566 i:false
+2251799813685582 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:33.364+0000 e:2025-09-09T20:27:55.530+0000 p:2251799813685577 i:false
+2251799813685595 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:27.621+0000 p:2251799813685590 i:false
+2251799813685606 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:33.533+0000 p:2251799813685601 i:false
+2251799813685614 dev01 C87SimpleUserTask_Process v3 ACTIVE s:2025-09-10T10:03:12.700+0000 i:false
+$ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line --children-only
+filter: children-only=true
+found: 4
+2251799813685571 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:28.190+0000 e:2025-09-10T20:36:44.990+0000 p:2251799813685566 i:false
+2251799813685582 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:33.364+0000 e:2025-09-09T20:27:55.530+0000 p:2251799813685577 i:false
+2251799813685595 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:27.621+0000 p:2251799813685590 i:false
+2251799813685606 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:33.533+0000 p:2251799813685601 i:false
+$ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line --orphan-parents-only
+filter: orphan-parents-only=true
+found: 2
+2251799813685571 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:28.190+0000 e:2025-09-10T20:36:44.990+0000 p:2251799813685566 i:false
+2251799813685582 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:33.364+0000 e:2025-09-09T20:27:55.530+0000 p:2251799813685577 i:false
 ```
 Copyright © 2025 Adam Bogdan Boczek | [boczek.info](https://boczek.info)
