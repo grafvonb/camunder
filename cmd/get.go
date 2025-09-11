@@ -99,6 +99,10 @@ var getCmd = &cobra.Command{
 					return
 				}
 				err = ProcessDefinitionView(cmd, pd)
+				if err != nil {
+					cmd.PrintErrf("error rendering key-only view: %v\n", err)
+					return
+				}
 			} else {
 				pdsr, err := svc.SearchForProcessDefinitions(cmd.Context(), searchFilterOpts, maxSearchSize)
 				if err != nil {

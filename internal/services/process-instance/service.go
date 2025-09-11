@@ -28,6 +28,9 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuie
 		cfg.APIs.Camunda8.BaseURL,
 		c87camunda8v2.WithHTTPClient(httpClient),
 	)
+	if err != nil {
+		return nil, err
+	}
 	co, err := c87operatev1.NewClientWithResponses(
 		cfg.APIs.Operate.BaseURL,
 		c87operatev1.WithHTTPClient(httpClient),
