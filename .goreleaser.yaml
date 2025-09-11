@@ -23,19 +23,20 @@ builds:
         -X github.com/grafvonb/camunder/cmd.builtBy=GoReleaser
 
 archives:
-  - formats: [tar.gz]
-    # this name template makes the OS and Arch compatible with the results of `uname`.
+  - format: tar.gz
     name_template: >-
-      {{ .ProjectName }}_
+      {{ .ProjectName }}_{{ .Version }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
     format_overrides:
       - goos: windows
-        formats: [zip]
+        format: zip
+
+checksum:
+  name_template: 'checksums_{{ .ProjectName }}_{{ .Version }}.txt'
 
 changelog:
   sort: asc
