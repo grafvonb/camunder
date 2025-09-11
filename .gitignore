@@ -14,6 +14,7 @@ config.yaml
 coverage.*
 *.coverprofile
 profile.cov
+/.coverage/
 
 # Dependency directories
 vendor/
@@ -43,6 +44,9 @@ build/
 # temporary generated clients
 api/**/gen/
 
-# macos
+# local build artifacts from Makefile
+/bin/
+
+# macos / windows explorer cruft
 .DS_Store
 Thumbs.db
