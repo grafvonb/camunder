@@ -4,12 +4,17 @@
 
 # Camunder – a CLI for Camunda 8
 
-**Camunder** is a CLI (command-line interface) for Camunda 8 that gives developers and operators faster, scriptable management of Camunda resources
-It complements Camunda's [Operate](https://docs.camunda.io/docs/components/operate/overview/) by enabling automation, bulk operations, and integration into existing workflows and pipelines.
+**Camunder** is a CLI (command-line interface) for Camunda 8 that gives developers and operators faster, scriptable management of Camunda resources.
+It complements Camunda's [Operate](https://docs.camunda.io/docs/components/operate/overview/) and [Tasklist](https://docs.camunda.io/docs/components/tasklist/overview/) by enabling automation, bulk operations, and integration into existing workflows and pipelines.
 
-While [Operate](https://docs.camunda.io/docs/components/operate/overview/) and [Tasklist](https://docs.camunda.io/docs/components/tasklist/overview/) cover most use cases via web interfaces, a CLI can be more efficient for automation, scripting, and quick operational tasks.  
+While Operate and Tasklist cover most use cases via web interfaces, a CLI can be more efficient for automation, scripting, and quick operational tasks.  
 
-Camunder fills this gap with commands such as `get`, `cancel`, and `delete`, as well as specialized use cases like *deleting active process instances with automatic canceling* or *finding process instances with orphan parents*, which simplify recurring administration and maintenance of Camunda 8 process instances.
+**Camunder** fills this gap with commands such as `get`, `cancel`, and `delete`, 
+as well as specialized use cases like *[deleting active process instances by canceling it first](#deleting-an-active-process-instance-by-cancelling-it-first)* 
+or *[finding process instances with orphan parent process instances](#finding-process-instances-with-orphan-parent-process-instances)*, 
+which simplify recurring administration and maintenance of Camunda 8 process instances. 
+
+See [Camunder in Action](#camunder-in-action) for more examples.
  
 ## Highlights
 
@@ -27,12 +32,12 @@ Camunder simplifies various tasks related to Camunda 8, including these special 
 
 ## Configuration
 
-Camunder uses [Viper](https://github.com/spf13/viper) under the hood.\
+Camunder uses [Viper](https://github.com/spf13/viper) under the hood.
 Configuration values can come from:
 
--   **Flags** (`--auth-client-id=...`)\
--   **Environment variables** (`CAMUNDER_AUTH_CLIENT_ID=...`)\
--   **Config file** (YAML)\
+-   **Flags** (`--auth-client-id=...`)
+-   **Environment variables** (`CAMUNDER_AUTH_CLIENT_ID=...`)
+-   **Config file** (YAML)
 -   **Defaults** (hardcoded fallbacks)
 
 ### Precedence
@@ -284,4 +289,26 @@ found: 2
 2251799813685571 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:28.190+0000 e:2025-09-10T20:36:44.990+0000 p:2251799813685566 i:false
 2251799813685582 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:33.364+0000 e:2025-09-09T20:27:55.530+0000 p:2251799813685577 i:false
 ```
+#### Listing process instances for a specific process definition (model) and its first version
+```bash
+$ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line
+found: 11
+2251799813685518 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:36.618+0000 i:false
+2251799813685525 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:40.675+0000 i:false
+2251799813685532 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:44.338+0000 i:false
+2251799813685541 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:11:52.976+0000 i:false
+2251799813685548 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:13:30.653+0000 i:false
+2251799813685556 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T16:13:53.060+0000 i:false
+2251799813685571 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:28.190+0000 e:2025-09-10T20:36:44.990+0000 p:2251799813685566 i:false
+2251799813685582 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:33.364+0000 e:2025-09-09T20:27:55.530+0000 p:2251799813685577 i:false
+2251799813685595 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:27.621+0000 p:2251799813685590 i:false
+2251799813685606 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:33.533+0000 p:2251799813685601 i:false
+2251799813685614 dev01 C87SimpleUserTask_Process v3 ACTIVE s:2025-09-10T10:03:12.700+0000 i:false
+$ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line --process-version=1
+found: 3
+2251799813685518 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:36.618+0000 i:false
+2251799813685525 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:40.675+0000 i:false
+2251799813685532 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:44.338+0000 i:false
+```
+
 Copyright © 2025 Adam Bogdan Boczek | [boczek.info](https://boczek.info)
