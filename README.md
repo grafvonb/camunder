@@ -2,23 +2,15 @@
 <img src="./docs/logo/camunder-logo-orange-background_170x170.png" alt="camunder logo" style="border-radius: 12px;" />
 </p>
 
-# Camunder
+# Camunder – a CLI for Camunda 8
 
-Camunder is a CLI tool to interact with [Camunda 8](https://camunda.com/platform/).
+**Camunder** is a command-line interface (CLI) for [Camunda 8](https://camunda.com/platform/) that gives developers and operators faster, scriptable access to process instance management. 
+It complements Camunda's [Operate](https://docs.camunda.io/docs/components/operate/overview/) by enabling automation, bulk operations, and integration into existing workflows and pipelines.
 
-## Overview & Motivation
+While [Operate](https://docs.camunda.io/docs/components/operate/overview/) and [Tasklist](https://docs.camunda.io/docs/components/tasklist/overview/) cover most use cases via web interfaces, a CLI can be more efficient for automation, scripting, and quick operational tasks.  
 
-**Camunder** is a command-line interface (CLI) tool designed to interact with [Camunda 8](https://camunda.com/platform/),
-a popular workflow and decision automation platform.
-It provides a convenient way to manage and monitor Camunda 8 resources directly from the terminal.
-
-Standard Camunda 8 tools like [Operate](https://docs.camunda.io/docs/components/operate/overview/) and [Tasklist](https://docs.camunda.io/docs/components/tasklist/overview/) are web-based applications. 
-While they offer comprehensive features, there are scenarios where a CLI tool can be more efficient, 
-especially for automation, scripting, and quick interactions.
-
-Camunder aims to fill this gap by providing alongside simple commands like `get`, `cancel` or `delete` 
-also specialized commands to simplify common tasks related to Camunda 8.
-
+Camunder fills this gap with commands such as `get`, `cancel`, and `delete`, as well as specialized use cases like *deleting active process instances with automatic canceling* or *finding process instances with orphan parents*, which simplify recurring administration and maintenance of Camunda 8 process instances.
+ 
 ## Highlights
 
 Camunder simplifies various tasks related to Camunda 8, including these special use cases:
