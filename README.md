@@ -4,7 +4,7 @@
 
 # Camunder – a CLI for Camunda 8
 
-**Camunder** is a command-line interface (CLI) for [Camunda 8](https://camunda.com/platform/) that gives developers and operators faster, scriptable access to process instance management. 
+**Camunder** is a CLI (command-line interface) for Camunda 8 that gives developers and operators faster, scriptable management of Camunda resources
 It complements Camunda's [Operate](https://docs.camunda.io/docs/components/operate/overview/) by enabling automation, bulk operations, and integration into existing workflows and pipelines.
 
 While [Operate](https://docs.camunda.io/docs/components/operate/overview/) and [Tasklist](https://docs.camunda.io/docs/components/tasklist/overview/) cover most use cases via web interfaces, a CLI can be more efficient for automation, scripting, and quick operational tasks.  
