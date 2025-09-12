@@ -9,8 +9,8 @@ import (
 	c87camunda8v2 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda8/v2"
 	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
 	"github.com/grafvonb/camunder/internal/config"
-	"github.com/grafvonb/camunder/internal/editors"
 	"github.com/grafvonb/camunder/internal/services/auth"
+	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 )
 
 var (
@@ -22,6 +22,7 @@ type Service struct {
 	cc      *c87camunda8v2.ClientWithResponses
 	auth    *auth.Service
 	cfg     *config.Config
+	piSvc   *processinstance.Service
 	isQuiet bool
 }
 
@@ -48,11 +49,16 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 	if err != nil {
 		return nil, err
 	}
+	piSvc, err := processinstance.New(cfg, httpClient, auth)
+	if err != nil {
+		return nil, fmt.Errorf("init process instance service: %w", err)
+	}
 	s := &Service{
-		co:   co,
-		cc:   cc,
-		auth: auth,
-		cfg:  cfg,
+		co:    co,
+		cc:    cc,
+		auth:  auth,
+		cfg:   cfg,
+		piSvc: piSvc,
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -80,7 +86,7 @@ func (s *Service) Ancestry(ctx context.Context, startKey int64) (rootKey int64, 
 		}
 		visited[cur] = struct{}{}
 
-		it, getErr := s.GetProcessInstanceByKey(ctx, cur)
+		it, getErr := s.piSvc.GetProcessInstanceByKey(ctx, cur)
 		if getErr != nil {
 			return 0, nil, chain, fmt.Errorf("get %d: %w", cur, getErr)
 		}
@@ -97,18 +103,63 @@ func (s *Service) Ancestry(ctx context.Context, startKey int64) (rootKey int64, 
 	}
 }
 
-func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (*c87operatev1.ProcessInstanceItem, error) {
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving operate token: %w", err)
+func (s *Service) Descendants(ctx context.Context, rootKey int64) (desc []int64, edges map[int64][]int64, chain map[int64]*c87operatev1.ProcessInstanceItem, err error) {
+	visited := make(map[int64]struct{})
+	edges = make(map[int64][]int64)
+	chain = make(map[int64]*c87operatev1.ProcessInstanceItem)
+
+	// depth-first search (DFS) to explore the tree
+	var dfs func(int64) error
+	dfs = func(parent int64) error {
+		// check for context cancellation
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		if _, seen := visited[parent]; seen {
+			// already expanded this subtree
+			return nil
+		}
+		visited[parent] = struct{}{}
+
+		desc = append(desc, parent)
+		if _, ok := chain[parent]; !ok {
+			it, getErr := s.piSvc.GetProcessInstanceByKey(ctx, parent)
+			if getErr != nil {
+				return fmt.Errorf("get %d: %w", parent, getErr)
+			}
+			chain[parent] = it
+		}
+
+		children, e := s.piSvc.GetDirectChildrenOfProcessInstance(ctx, parent)
+		if e != nil {
+			return fmt.Errorf("list children of %d: %w", parent, e)
+		}
+
+		// keep an entry even if no children (useful for tree rendering)
+		if _, ok := edges[parent]; !ok {
+			edges[parent] = nil
+		}
+
+		items := *children
+		for i := range items {
+			it := &items[i]
+			k := *it.Key
+
+			edges[parent] = append(edges[parent], k)
+			chain[k] = it
+
+			if dfsErr := dfs(k); dfsErr != nil {
+				return dfsErr
+			}
+		}
+		return nil
 	}
-	resp, err := s.co.GetProcessInstanceByKeyWithResponse(ctx, key,
-		editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token))
-	if err != nil {
-		return nil, err
+
+	if err = dfs(rootKey); err != nil {
+		return nil, nil, nil, err
 	}
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
-	}
-	return resp.JSON200, nil
+	return desc, edges, chain, nil
 }

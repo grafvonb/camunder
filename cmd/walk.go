@@ -14,13 +14,24 @@ var supportedResourcesForWalk = common.ResourceTypes{
 
 var (
 	flagStartKey int64
+	flagWalkMode string
 )
+
+var validWalkModes = map[string]bool{
+	"parent":   true,
+	"children": true,
+	"family":   true,
+}
 
 var walkCmd = &cobra.Command{
 	Use:   "walk",
 	Short: "Traverse (walk) the parent/child graph process instances.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if !validWalkModes[flagWalkMode] {
+			cmd.PrintErrf("invalid value for --walk: %q (must be parent, children, or family)", flagWalkMode)
+			return
+		}
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())
 		if err != nil {
@@ -35,12 +46,22 @@ var walkCmd = &cobra.Command{
 				cmd.PrintErrf("error creating walk service: %v\n", err)
 				return
 			}
-			_, rpath, rchain, err := svc.Ancestry(cmd.Context(), flagStartKey)
-			if err != nil {
+			var path KeysPath
+			var chain Chain
+			switch flagWalkMode {
+			case "parent":
+				_, path, chain, err = svc.Ancestry(cmd.Context(), flagStartKey)
+				if err != nil {
+					return
+				}
+			case "children":
+				path, _, chain, err = svc.Descendants(cmd.Context(), flagStartKey)
+				if err != nil {
+					return
+				}
+			default:
 				return
 			}
-			path := KeysPath(rpath)
-			chain := Chain(rchain)
 			if flagKeysOnly {
 				cmd.Println(path.KeysOnly(chain))
 				return
@@ -59,6 +80,8 @@ func init() {
 	fs := walkCmd.Flags()
 	fs.Int64VarP(&flagStartKey, "start-key", "w", 0, "start walking from this process instance key")
 	_ = walkCmd.MarkFlagRequired("start-key")
+	fs.StringVarP(&flagWalkMode, "mode", "m", "", "walk mode: parent, children, family")
+	_ = walkCmd.MarkFlagRequired("mode")
 
 	// view options
 	fs.BoolVarP(&flagKeysOnly, "keys-only", "", false, "only print the keys of the resources")

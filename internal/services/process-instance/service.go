@@ -93,6 +93,20 @@ func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (*c87o
 	return resp.JSON200, nil
 }
 
+func (s *Service) GetDirectChildrenOfProcessInstance(ctx context.Context, key int64) (*[]c87operatev1.ProcessInstanceItem, error) {
+	filter := SearchFilterOpts{
+		ParentKey: &key,
+	}
+	resp, err := s.SearchForProcessInstances(ctx, filter, 1000)
+	if err != nil {
+		return nil, fmt.Errorf("searching for children of process instance with key %d: %w", key, err)
+	}
+	if resp == nil || resp.Items == nil {
+		return nil, nil
+	}
+	return resp.Items, nil
+}
+
 func (s *Service) SearchForProcessInstances(ctx context.Context, filter SearchFilterOpts, size int32) (*c87operatev1.ProcessInstanceSearchResponse, error) {
 	f := c87operatev1.ProcessInstanceFilter{
 		TenantId:          &s.cfg.App.Tenant,
