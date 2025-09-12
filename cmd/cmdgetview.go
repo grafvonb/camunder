@@ -67,6 +67,8 @@ func oneLineProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInst
 	var pTag, eTag, vTag string
 	if parent > 0 {
 		pTag = fmt.Sprintf(" p:%d", parent)
+	} else {
+		pTag = " p:<root>"
 	}
 	if end != "" {
 		eTag = fmt.Sprintf(" e:%s", end)

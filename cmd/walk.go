@@ -35,11 +35,17 @@ var walkCmd = &cobra.Command{
 				cmd.PrintErrf("error creating walk service: %v\n", err)
 				return
 			}
-			_, path, chain, err := svc.Ancestry(cmd.Context(), flagStartKey)
+			_, rpath, rchain, err := svc.Ancestry(cmd.Context(), flagStartKey)
 			if err != nil {
 				return
 			}
-			cmd.Println(printKeys(path, chain))
+			path := KeysPath(rpath)
+			chain := Chain(rchain)
+			if flagKeysOnly {
+				cmd.Println(path.KeysOnly(chain))
+				return
+			}
+			cmd.Println(path.StandardLine(chain))
 		default:
 			cmd.PrintErrf("unknown resource type: %s\n", rn)
 			cmd.Println(supportedResourcesForWalk.PrettyString())
@@ -53,4 +59,7 @@ func init() {
 	fs := walkCmd.Flags()
 	fs.Int64VarP(&flagStartKey, "start-key", "w", 0, "start walking from this process instance key")
 	_ = walkCmd.MarkFlagRequired("start-key")
+
+	// view options
+	fs.BoolVarP(&flagKeysOnly, "keys-only", "", false, "only print the keys of the resources")
 }
