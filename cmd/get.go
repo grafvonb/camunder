@@ -87,7 +87,7 @@ var getCmd = &cobra.Command{
 					cmd.PrintErrf("error fetching process definition by key %d: %v\n", *searchFilterOpts.Key, err)
 					return
 				}
-				err = ProcessDefinitionView(cmd, pd)
+				err = processDefinitionView(cmd, pd)
 				if err != nil {
 					cmd.PrintErrf("error rendering key-only view: %v\n", err)
 					return
@@ -99,13 +99,13 @@ var getCmd = &cobra.Command{
 					return
 				}
 				if flagKeysOnly {
-					err = ListKeyOnlyProcessDefinitionsView(cmd, pdsr)
+					err = listKeyOnlyProcessDefinitionsView(cmd, pdsr)
 					if err != nil {
 						cmd.PrintErrf("error rendering keys-only view: %v\n", err)
 					}
 					return
 				}
-				err = ListProcessDefinitionsView(cmd, pdsr)
+				err = listProcessDefinitionsView(cmd, pdsr)
 				if err != nil {
 					cmd.PrintErrf("error rendering items view: %v\n", err)
 				}
@@ -126,7 +126,7 @@ var getCmd = &cobra.Command{
 					cmd.PrintErrf("error fetching process instance by key %d: %v\n", *searchFilterOpts.Key, err)
 					return
 				}
-				err = ProcessInstanceView(cmd, pi)
+				err = processInstanceView(cmd, pi)
 				if err != nil {
 					cmd.PrintErrf("error rendering key-only view: %v\n", err)
 					return
@@ -163,13 +163,13 @@ var getCmd = &cobra.Command{
 					pisr = pisr.FilterByHavingIncidents(false)
 				}
 				if flagKeysOnly {
-					err = ListKeyOnlyProcessInstancesView(cmd, pisr)
+					err = listKeyOnlyProcessInstancesView(cmd, pisr)
 					if err != nil {
 						cmd.PrintErrf("error rendering keys-only view: %v\n", err)
 					}
 					return
 				}
-				err = ListProcessInstancesView(cmd, pisr)
+				err = listProcessInstancesView(cmd, pisr)
 				if err != nil {
 					cmd.PrintErrf("error rendering items view: %v\n", err)
 				}
