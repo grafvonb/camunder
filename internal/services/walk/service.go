@@ -163,3 +163,11 @@ func (s *Service) Descendants(ctx context.Context, rootKey int64) (desc []int64,
 	}
 	return desc, edges, chain, nil
 }
+
+func (s *Service) Family(ctx context.Context, startKey int64) (fam []int64, edges map[int64][]int64, chain map[int64]*c87operatev1.ProcessInstanceItem, err error) {
+	rootKey, _, _, err := s.Ancestry(ctx, startKey)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("ancestry fetch: %w", err)
+	}
+	return s.Descendants(ctx, rootKey)
+}

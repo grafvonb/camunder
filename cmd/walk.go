@@ -59,6 +59,11 @@ var walkCmd = &cobra.Command{
 				if err != nil {
 					return
 				}
+			case "family":
+				path, _, chain, err = svc.Family(cmd.Context(), flagStartKey)
+				if err != nil {
+					return
+				}
 			default:
 				return
 			}
