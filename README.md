@@ -21,9 +21,11 @@ See [Camunder in Action](#camunder-in-action) for more examples.
 Camunder simplifies various tasks related to Camunda 8, including these special use cases:
 - deleting active process instances by cancelling them first,
 - finding process instances with orphan parent process instances,
-- listing process instances and process definitions as json, list or key-only format,
+- recursive search process instances with parent-child relationships:
+  - list all child process instances of a given process instance,
+  - list path from a given process instance to its root ancestor (top-level parent),
+  - list the entire family (parent, grandparent, ...) of a given process instance (traverse up and down the tree),
 - bulk cancelling or deleting process instances (not implemented yet),
-- recursive search and deletion of process instances with parent-child relationships (not implemented yet),
 - and more to come...
 
 ## Supported Camunda 8 APIs
@@ -190,6 +192,7 @@ Available Commands:
   get         List resources of a defined type. Supported resource types are: cluster-topology (ct), process-definition (pd), process-instance (pi)
   help        Help about any command
   version     Print version information
+  walk        Traverse (walk) the parent/child graph process instances.
 
 Flags:
       --auth-client-id string        auth client ID
