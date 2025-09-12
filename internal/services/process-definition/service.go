@@ -18,7 +18,15 @@ type Service struct {
 	isQuiet bool
 }
 
-func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuiet bool) (*Service, error) {
+type Option func(*Service)
+
+func WithQuietEnabled(enabled bool) Option {
+	return func(s *Service) {
+		s.isQuiet = enabled
+	}
+}
+
+func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
 	c, err := c87operatev1.NewClientWithResponses(
 		cfg.APIs.Operate.BaseURL,
 		c87operatev1.WithHTTPClient(httpClient),
@@ -26,12 +34,15 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuie
 	if err != nil {
 		return nil, err
 	}
-	return &Service{
-		c:       c,
-		cfg:     cfg,
-		auth:    auth,
-		isQuiet: isQuiet,
-	}, nil
+	s := &Service{
+		c:    c,
+		cfg:  cfg,
+		auth: auth,
+	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s, nil
 }
 
 func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (*c87operatev1.ProcessDefinitionItem, error) {

@@ -1,14 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-	"net/http"
 	"strings"
-	"time"
 
 	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
-	"github.com/grafvonb/camunder/internal/config"
-	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/internal/services/common"
 	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 	"github.com/spf13/cobra"
@@ -31,27 +26,15 @@ var deleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
-		cfg, err := config.FromContext(cmd.Context())
+		svcs, err := NewFromContext(cmd.Context())
 		if err != nil {
-			cmd.PrintErrf("Error retrieving config from context: %v\n", err)
-			return
-		}
-		timeout, err := time.ParseDuration(cfg.HTTP.Timeout)
-		if err != nil {
-			cmd.PrintErrf("Error parsing '%s' as timeout duration: %v\n", cfg.HTTP.Timeout, err)
-			return
-		}
-		httpClient := &http.Client{
-			Timeout: timeout,
-		}
-		auth, err := auth.FromContext(cmd.Context())
-		if err != nil {
-			fmt.Printf("Error retrieving auth from context: %v\n", err)
+			cmd.PrintErrf("%v\n", err)
 			return
 		}
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(cfg, httpClient, auth, flagQuiet)
+			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
+				processinstance.WithQuietEnabled(flagQuiet))
 			if err != nil {
 				cmd.PrintErrf("Error creating process instance service: %v\n", err)
 				return

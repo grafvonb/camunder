@@ -32,7 +32,15 @@ type Service struct {
 	isQuiet bool
 }
 
-func New(cfg *config.Config, httpClient *http.Client, isQuiet bool) (*Service, error) {
+type Option func(*Service)
+
+func WithQuietEnabled(enabled bool) Option {
+	return func(s *Service) {
+		s.isQuiet = enabled
+	}
+}
+
+func New(cfg *config.Config, httpClient *http.Client, opts ...Option) (*Service, error) {
 	if cfg == nil {
 		return nil, errors.New("cfg is nil")
 	}
@@ -43,12 +51,15 @@ func New(cfg *config.Config, httpClient *http.Client, isQuiet bool) (*Service, e
 	if err != nil {
 		return nil, fmt.Errorf("init auth client: %w", err)
 	}
-	return &Service{
-		c:       c,
-		cfg:     cfg,
-		cache:   make(map[string]string),
-		isQuiet: isQuiet,
-	}, nil
+	s := &Service{
+		c:     c,
+		cfg:   cfg,
+		cache: make(map[string]string),
+	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s, nil
 }
 
 func (s *Service) Warmup(ctx context.Context) error {

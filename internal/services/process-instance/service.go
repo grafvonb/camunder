@@ -23,7 +23,15 @@ type Service struct {
 	isQuiet bool
 }
 
-func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuiet bool) (*Service, error) {
+type Option func(*Service)
+
+func WithQuietEnabled(enabled bool) Option {
+	return func(s *Service) {
+		s.isQuiet = enabled
+	}
+}
+
+func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
 	cc, err := c87camunda8v2.NewClientWithResponses(
 		cfg.APIs.Camunda8.BaseURL,
 		c87camunda8v2.WithHTTPClient(httpClient),
@@ -38,13 +46,16 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, isQuie
 	if err != nil {
 		return nil, err
 	}
-	return &Service{
-		co:      co,
-		cc:      cc,
-		auth:    auth,
-		isQuiet: isQuiet,
-		cfg:     cfg,
-	}, nil
+	s := &Service{
+		co:   co,
+		cc:   cc,
+		auth: auth,
+		cfg:  cfg,
+	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s, nil
 }
 
 func (s *Service) FilterProcessInstanceWithOrphanParent(ctx context.Context, items *[]c87operatev1.ProcessInstanceItem) (*[]c87operatev1.ProcessInstanceItem, error) {

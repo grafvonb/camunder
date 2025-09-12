@@ -49,12 +49,12 @@ var rootCmd = &cobra.Command{
 			cmd.Println(cfg.String())
 			os.Exit(0)
 		}
-		httpSvc, err := httpc.New(cfg, flagQuiet)
+		httpSvc, err := httpc.New(cfg, httpc.WithQuietEnabled(flagQuiet))
 		if err != nil {
 			return fmt.Errorf("create http service: %w", err)
 		}
 		cmd.SetContext(httpSvc.ToContext(cmd.Context()))
-		authSvc, err := auth.New(cfg, httpSvc.Client(), flagQuiet)
+		authSvc, err := auth.New(cfg, httpSvc.Client(), auth.WithQuietEnabled(flagQuiet))
 		if err != nil {
 			return fmt.Errorf("create auth service: %w", err)
 		}

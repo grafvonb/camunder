@@ -21,7 +21,35 @@ type Service struct {
 	isQuiet bool
 }
 
-func New(cfg *config.Config, isQuiet bool) (*Service, error) {
+type Option func(*Service)
+
+func WithQuietEnabled(enabled bool) Option {
+	return func(s *Service) {
+		s.isQuiet = enabled
+	}
+}
+
+// WithTimeout sets the timeout directly.
+func WithTimeout(d time.Duration) Option {
+	return func(s *Service) {
+		s.c.Timeout = d
+	}
+}
+
+// WithTimeoutString parses a string like "5s" or "2m" and sets the timeout.
+func WithTimeoutString(v string) Option {
+	return func(s *Service) {
+		if v == "" {
+			return
+		}
+		// swallow error, if parsing fails, just don't set the timeout
+		if d, err := time.ParseDuration(v); err == nil {
+			s.c.Timeout = d
+		}
+	}
+}
+
+func New(cfg *config.Config, opts ...Option) (*Service, error) {
 	if cfg == nil {
 		return nil, errors.New("cfg is nil")
 	}
@@ -33,11 +61,14 @@ func New(cfg *config.Config, isQuiet bool) (*Service, error) {
 		Timeout: timeout,
 	}
 
-	return &Service{
-		c:       httpClient,
-		cfg:     cfg,
-		isQuiet: isQuiet,
-	}, nil
+	s := &Service{
+		c:   httpClient,
+		cfg: cfg,
+	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s, nil
 }
 
 // Client returns the underlying http client

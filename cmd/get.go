@@ -4,11 +4,8 @@ import (
 	"strings"
 
 	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
-	"github.com/grafvonb/camunder/internal/config"
-	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/internal/services/cluster"
 	"github.com/grafvonb/camunder/internal/services/common"
-	"github.com/grafvonb/camunder/internal/services/httpc"
 	processdefinition "github.com/grafvonb/camunder/internal/services/process-definition"
 	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 	"github.com/spf13/cobra"
@@ -55,25 +52,16 @@ var getCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
-		cfg, err := config.FromContext(cmd.Context())
+		svcs, err := NewFromContext(cmd.Context())
 		if err != nil {
-			cmd.PrintErrf("error retrieving config from context: %v\n", err)
-			return
-		}
-		httpSvc, err := httpc.FromContext(cmd.Context())
-		if err != nil {
-			cmd.PrintErrf("error creating http service: %v\n", err)
-			return
-		}
-		authSvc, err := auth.FromContext(cmd.Context())
-		if err != nil {
-			cmd.PrintErrf("error retrieving auth service: %v\n", err)
+			cmd.PrintErrf("%v\n", err)
 			return
 		}
 
 		switch rn {
 		case "cluster-topology", "ct":
-			svc, err := cluster.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
+			svc, err := cluster.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
+				cluster.WithQuietEnabled(flagQuiet))
 			if err != nil {
 				cmd.PrintErrf("error creating cluster service: %v\n", err)
 				return
@@ -87,7 +75,8 @@ var getCmd = &cobra.Command{
 
 		case "process-definition", "pd":
 			searchFilterOpts := populatePDSearchFilterOpts()
-			svc, err := processdefinition.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
+			svc, err := processdefinition.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
+				processdefinition.WithQuietEnabled(flagQuiet))
 			if err != nil {
 				cmd.PrintErrf("error creating process definition service: %v\n", err)
 				return
@@ -124,7 +113,8 @@ var getCmd = &cobra.Command{
 
 		case "process-instance", "pi":
 			searchFilterOpts := populatePISearchFilterOpts()
-			svc, err := processinstance.New(cfg, httpSvc.Client(), authSvc, flagQuiet)
+			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
+				processinstance.WithQuietEnabled(flagQuiet))
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
