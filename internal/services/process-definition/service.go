@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
-	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87operate"
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/editors"
 	"github.com/grafvonb/camunder/internal/services/auth"
 )
 
 type Service struct {
-	c       *c87operatev1.ClientWithResponses
+	c       *c87operate.ClientWithResponses
 	auth    *auth.Service
 	cfg     *config.Config
 	isQuiet bool
@@ -27,9 +27,9 @@ func WithQuietEnabled(enabled bool) Option {
 }
 
 func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
-	c, err := c87operatev1.NewClientWithResponses(
+	c, err := c87operate.NewClientWithResponses(
 		cfg.APIs.Operate.BaseURL,
-		c87operatev1.WithHTTPClient(httpClient),
+		c87operate.WithHTTPClient(httpClient),
 	)
 	if err != nil {
 		return nil, err
@@ -45,13 +45,13 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 	return s, nil
 }
 
-func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (*c87operatev1.ProcessDefinitionItem, error) {
+func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (*c87operate.ProcessDefinition, error) {
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving operate token: %w", err)
 	}
 	resp, err := s.c.GetProcessDefinitionByKeyWithResponse(ctx, key,
-		editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token))
+		editors.BearerTokenEditorFn[c87operate.RequestEditorFn](token))
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +61,9 @@ func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (*c8
 	return resp.JSON200, nil
 }
 
-func (s *Service) SearchForProcessDefinitions(ctx context.Context, filter SearchFilterOpts, size int32) (*c87operatev1.ProcessDefinitionSearchResponse, error) {
-	body := c87operatev1.ProcessDefinitionSearchRequest{
-		Filter: &c87operatev1.ProcessDefinitionFilter{
+func (s *Service) SearchProcessDefinitions(ctx context.Context, filter SearchFilterOpts, size int32) (*c87operate.ResultsProcessDefinition, error) {
+	body := c87operate.QueryProcessDefinition{
+		Filter: &c87operate.ProcessDefinition{
 			BpmnProcessId: filter.BpmnProcessId,
 			Version:       filter.Version,
 			VersionTag:    filter.VersionTag,
@@ -74,8 +74,8 @@ func (s *Service) SearchForProcessDefinitions(ctx context.Context, filter Search
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving operate token: %w", err)
 	}
-	resp, err := s.c.SearchForProcessDefinitionsWithResponse(ctx, body,
-		editors.BearerTokenEditorFn[c87operatev1.RequestEditorFn](token))
+	resp, err := s.c.SearchProcessDefinitionsWithResponse(ctx, body,
+		editors.BearerTokenEditorFn[c87operate.RequestEditorFn](token))
 	if err != nil {
 		return nil, err
 	}

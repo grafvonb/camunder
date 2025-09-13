@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
-	c87camunda8v2 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda8/v2"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87camunda"
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/editors"
 	"github.com/grafvonb/camunder/internal/services/auth"
 )
 
 type Service struct {
-	c       *c87camunda8v2.ClientWithResponses
+	c       *c87camunda.ClientWithResponses
 	auth    *auth.Service
 	cfg     *config.Config
 	isQuiet bool
@@ -27,9 +27,9 @@ func WithQuietEnabled(enabled bool) Option {
 }
 
 func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
-	c, err := c87camunda8v2.NewClientWithResponses(
+	c, err := c87camunda.NewClientWithResponses(
 		cfg.APIs.Camunda8.BaseURL,
-		c87camunda8v2.WithHTTPClient(httpClient),
+		c87camunda.WithHTTPClient(httpClient),
 	)
 	if err != nil {
 		return nil, err
@@ -45,13 +45,13 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 	return s, nil
 }
 
-func (s *Service) GetClusterTopology(ctx context.Context) (*c87camunda8v2.Topology, error) {
+func (s *Service) GetClusterTopology(ctx context.Context) (*c87camunda.TopologyResponse, error) {
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.Camunda8ApiKeyConst)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving camunda8 token: %w", err)
 	}
 	resp, err := s.c.GetClusterTopologyWithResponse(ctx,
-		editors.BearerTokenEditorFn[c87camunda8v2.RequestEditorFn](token))
+		editors.BearerTokenEditorFn[c87camunda.RequestEditorFn](token))
 	if err != nil {
 		return nil, err
 	}

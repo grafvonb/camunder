@@ -38,14 +38,13 @@ Authorization: Bearer {{access_token}}
 
 {
   "filter": {
-    "bpmnProcessId": "",
-    "state": "CANCELED"
+    "state": "ACTIVE"
   },
-  "size":0
+  "size":1000
 }
 
 ### Get process instance
-@processInstanceKey=2251799813685301
+@processInstanceKey=2251799813685701
 GET {{operate_base_url}}/v1/process-instances/{{processInstanceKey}}
 Content-Type: application/json
 Authorization: Bearer {{access_token}}

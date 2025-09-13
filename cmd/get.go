@@ -3,7 +3,7 @@ package cmd
 import (
 	"strings"
 
-	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87operate"
 	"github.com/grafvonb/camunder/internal/services/cluster"
 	"github.com/grafvonb/camunder/internal/services/common"
 	processdefinition "github.com/grafvonb/camunder/internal/services/process-definition"
@@ -93,7 +93,7 @@ var getCmd = &cobra.Command{
 					return
 				}
 			} else {
-				pdsr, err := svc.SearchForProcessDefinitions(cmd.Context(), searchFilterOpts, maxSearchSize)
+				pdsr, err := svc.SearchProcessDefinitions(cmd.Context(), searchFilterOpts, maxSearchSize)
 				if err != nil {
 					cmd.PrintErrf("error fetching process definitions: %v\n", err)
 					return
@@ -244,7 +244,7 @@ func populatePDSearchFilterOpts() processdefinition.SearchFilterOpts {
 	return opts
 }
 
-func filterProcessInstanceWithOrphanParent(cmd *cobra.Command, pisr *c87operatev1.ProcessInstanceSearchResponse, svc *processinstance.Service) {
+func filterProcessInstanceWithOrphanParent(cmd *cobra.Command, pisr *c87operate.ResultsProcessInstance, svc *processinstance.Service) {
 	items, err := svc.FilterProcessInstanceWithOrphanParent(cmd.Context(), pisr.Items)
 	if err != nil {
 		cmd.PrintErrf("error filtering process instances with orphan parents: %v\n", err)

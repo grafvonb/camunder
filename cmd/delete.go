@@ -3,7 +3,7 @@ package cmd
 import (
 	"strings"
 
-	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87operate"
 	"github.com/grafvonb/camunder/internal/services/common"
 	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
 	"github.com/spf13/cobra"
@@ -15,7 +15,7 @@ var supportedResourcesForDelete = common.ResourceTypes{
 }
 
 var (
-	flagDeleteKey        string
+	flagDeleteKey        int64
 	flagDeleteWithCancel bool
 )
 
@@ -36,22 +36,22 @@ var deleteCmd = &cobra.Command{
 			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
 				processinstance.WithQuietEnabled(flagQuiet))
 			if err != nil {
-				cmd.PrintErrf("Error creating process instance service: %v\n", err)
+				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
 			}
-			var pidr *c87operatev1.ProcessInstanceDeleteResponse
+			var pidr *c87operate.ChangeStatus
 			if flagDeleteWithCancel {
 				pidr, err = svc.DeleteProcessInstanceWithCancel(cmd.Context(), flagDeleteKey)
 			} else {
 				pidr, err = svc.DeleteProcessInstance(cmd.Context(), flagDeleteKey)
 			}
 			if err != nil {
-				cmd.PrintErrf("Error deleting process instance with key %s: %v\n", flagDeleteKey, err)
+				cmd.PrintErrf("error deleting process instance with key %d: %v\n", flagDeleteKey, err)
 				return
 			}
 			cmd.Println(ToJSONString(pidr))
 		default:
-			cmd.PrintErrf("Unknown resource type: %s\n", rn)
+			cmd.PrintErrf("unknown resource type: %s\n", rn)
 			cmd.Println(supportedResourcesForDelete.PrettyString())
 		}
 	},
@@ -62,7 +62,7 @@ func init() {
 
 	AddBackoffFlagsAndBindings(deleteCmd, viper.GetViper())
 
-	deleteCmd.Flags().StringVarP(&flagDeleteKey, "key", "k", "", "resource key (e.g. process instance) to delete")
+	deleteCmd.Flags().Int64VarP(&flagDeleteKey, "key", "k", 0, "resource key (e.g. process instance) to delete")
 	_ = deleteCmd.MarkFlagRequired("key")
 
 	deleteCmd.Flags().BoolVarP(&flagDeleteWithCancel, "cancel", "c", false, "tries to cancel the process instance before deleting it (if not in the state COMPLETED or CANCELED)")

@@ -4,28 +4,28 @@ import (
 	"fmt"
 	"strings"
 
-	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87operate"
 	"github.com/spf13/cobra"
 )
 
-func listKeyOnlyProcessInstancesView(c *cobra.Command, resp *c87operatev1.ProcessInstanceSearchResponse) error {
-	return renderListView(c, resp, func(r *c87operatev1.ProcessInstanceSearchResponse) *[]c87operatev1.ProcessInstanceItem {
+func listKeyOnlyProcessInstancesView(c *cobra.Command, resp *c87operate.ResultsProcessInstance) error {
+	return renderListView(c, resp, func(r *c87operate.ResultsProcessInstance) *[]c87operate.ProcessInstance {
 		return r.Items
 	}, keyOnlyProcessInstanceView)
 }
 
-func listProcessInstancesView(c *cobra.Command, resp *c87operatev1.ProcessInstanceSearchResponse) error {
+func listProcessInstancesView(c *cobra.Command, resp *c87operate.ResultsProcessInstance) error {
 	if flagOneLine {
-		return renderListView(c, resp, func(r *c87operatev1.ProcessInstanceSearchResponse) *[]c87operatev1.ProcessInstanceItem {
+		return renderListView(c, resp, func(r *c87operate.ResultsProcessInstance) *[]c87operate.ProcessInstance {
 			return r.Items
 		}, oneLineProcessInstanceView)
 	}
-	return listJSONView(c, resp, func(r *c87operatev1.ProcessInstanceSearchResponse) *[]c87operatev1.ProcessInstanceItem {
+	return listJSONView(c, resp, func(r *c87operate.ResultsProcessInstance) *[]c87operate.ProcessInstance {
 		return r.Items
 	})
 }
 
-func keyOnlyProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInstanceItem) error {
+func keyOnlyProcessInstanceView(c *cobra.Command, item *c87operate.ProcessInstance) error {
 	if item == nil {
 		return nil
 	}
@@ -33,7 +33,7 @@ func keyOnlyProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInst
 	return nil
 }
 
-func processInstanceView(c *cobra.Command, item *c87operatev1.ProcessInstanceItem) error {
+func processInstanceView(c *cobra.Command, item *c87operate.ProcessInstance) error {
 	if flagOneLine {
 		return oneLineProcessInstanceView(c, item)
 	}
@@ -48,7 +48,7 @@ func processInstanceView(c *cobra.Command, item *c87operatev1.ProcessInstanceIte
 	return nil
 }
 
-func oneLineProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInstanceItem) error {
+func oneLineProcessInstanceView(c *cobra.Command, item *c87operate.ProcessInstance) error {
 	if item == nil {
 		return nil
 	}
@@ -85,24 +85,24 @@ func oneLineProcessInstanceView(c *cobra.Command, item *c87operatev1.ProcessInst
 	return nil
 }
 
-func listKeyOnlyProcessDefinitionsView(c *cobra.Command, resp *c87operatev1.ProcessDefinitionSearchResponse) error {
-	return renderListView(c, resp, func(r *c87operatev1.ProcessDefinitionSearchResponse) *[]c87operatev1.ProcessDefinitionItem {
+func listKeyOnlyProcessDefinitionsView(c *cobra.Command, resp *c87operate.ResultsProcessDefinition) error {
+	return renderListView(c, resp, func(r *c87operate.ResultsProcessDefinition) *[]c87operate.ProcessDefinition {
 		return r.Items
 	}, keyOnlyProcessDefinitionView)
 }
 
-func listProcessDefinitionsView(c *cobra.Command, resp *c87operatev1.ProcessDefinitionSearchResponse) error {
+func listProcessDefinitionsView(c *cobra.Command, resp *c87operate.ResultsProcessDefinition) error {
 	if flagOneLine {
-		return renderListView(c, resp, func(r *c87operatev1.ProcessDefinitionSearchResponse) *[]c87operatev1.ProcessDefinitionItem {
+		return renderListView(c, resp, func(r *c87operate.ResultsProcessDefinition) *[]c87operate.ProcessDefinition {
 			return r.Items
 		}, oneLineProcessDefinitionView)
 	}
-	return listJSONView(c, resp, func(r *c87operatev1.ProcessDefinitionSearchResponse) *[]c87operatev1.ProcessDefinitionItem {
+	return listJSONView(c, resp, func(r *c87operate.ResultsProcessDefinition) *[]c87operate.ProcessDefinition {
 		return r.Items
 	})
 }
 
-func keyOnlyProcessDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDefinitionItem) error {
+func keyOnlyProcessDefinitionView(c *cobra.Command, item *c87operate.ProcessDefinition) error {
 	if item == nil {
 		return nil
 	}
@@ -110,7 +110,7 @@ func keyOnlyProcessDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDe
 	return nil
 }
 
-func processDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDefinitionItem) error {
+func processDefinitionView(c *cobra.Command, item *c87operate.ProcessDefinition) error {
 	if flagOneLine {
 		return oneLineProcessDefinitionView(c, item)
 	}
@@ -125,7 +125,7 @@ func processDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDefinitio
 	return nil
 }
 
-func oneLineProcessDefinitionView(c *cobra.Command, item *c87operatev1.ProcessDefinitionItem) error {
+func oneLineProcessDefinitionView(c *cobra.Command, item *c87operate.ProcessDefinition) error {
 	if item == nil {
 		return nil
 	}

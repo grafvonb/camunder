@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	c87operatev1 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v1"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87operate"
 )
 
 var ErrUnknownStateFilter = errors.New("is unknown (valid: all, active, canceled, completed)")
@@ -33,18 +33,18 @@ var (
 )
 
 // Ptr converts the enum to the *ProcessInstanceFilterState
-func (s PIState) Ptr() *c87operatev1.ProcessInstanceFilterState {
+func (s PIState) Ptr() *c87operate.ProcessInstanceState {
 	switch s.e {
 	case stateAll:
 		return nil
 	case stateActive:
-		v := c87operatev1.ProcessInstanceFilterStateACTIVE
+		v := c87operate.ACTIVE
 		return &v
 	case stateCompleted:
-		v := c87operatev1.ProcessInstanceFilterStateCOMPLETED
+		v := c87operate.COMPLETED
 		return &v
 	case stateCanceled:
-		v := c87operatev1.ProcessInstanceFilterStateCANCELED
+		v := c87operate.CANCELED
 		return &v
 	default:
 		return nil

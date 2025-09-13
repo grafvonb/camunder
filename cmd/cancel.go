@@ -14,7 +14,7 @@ var supportedResourcesForCancel = common.ResourceTypes{
 }
 
 var (
-	flagCancelKey string
+	flagCancelKey int64
 )
 
 // cancelCmd represents the cancel command
@@ -54,6 +54,6 @@ func init() {
 
 	AddBackoffFlagsAndBindings(cancelCmd, viper.GetViper())
 
-	cancelCmd.Flags().StringVarP(&flagCancelKey, "key", "k", "", "resource key (e.g. process instance) to cancel")
+	cancelCmd.Flags().Int64VarP(&flagCancelKey, "key", "k", 0, "resource key (e.g. process instance) to cancel")
 	_ = cancelCmd.MarkFlagRequired("key")
 }
