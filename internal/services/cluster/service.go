@@ -9,6 +9,7 @@ import (
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/editors"
 	"github.com/grafvonb/camunder/internal/services/auth"
+	"github.com/grafvonb/camunder/pkg/camunda"
 )
 
 type Service struct {
@@ -45,7 +46,7 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 	return s, nil
 }
 
-func (s *Service) GetClusterTopology(ctx context.Context) (*c87camunda.TopologyResponse, error) {
+func (s *Service) GetClusterTopology(ctx context.Context) (*camunda.Topology, error) {
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.Camunda8ApiKeyConst)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving camunda8 token: %w", err)
@@ -58,5 +59,9 @@ func (s *Service) GetClusterTopology(ctx context.Context) (*c87camunda.TopologyR
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
-	return resp.JSON200, nil
+	ret, err := resp.JSON200.ToStable()
+	if err != nil {
+		return nil, fmt.Errorf("convert to stable topology: %w", err)
+	}
+	return &ret, nil
 }
