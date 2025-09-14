@@ -32,8 +32,9 @@ func (c *Config) String() string {
 	alias.Config = c.Config
 	alias.App = c.App
 	alias.HTTP = c.HTTP
-	alias.APIs.Camunda8.Key = c.APIs.Camunda8.Key
-	alias.APIs.Camunda8.BaseURL = c.APIs.Camunda8.BaseURL
+	alias.APIs.Version = c.APIs.Version
+	alias.APIs.Camunda.Key = c.APIs.Camunda.Key
+	alias.APIs.Camunda.BaseURL = c.APIs.Camunda.BaseURL
 	alias.APIs.Operate.Key = c.APIs.Operate.Key
 	alias.APIs.Operate.BaseURL = c.APIs.Operate.BaseURL
 	alias.APIs.Tasklist.Key = c.APIs.Tasklist.Key

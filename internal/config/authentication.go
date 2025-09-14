@@ -13,8 +13,8 @@ type Authentication struct {
 	Scopes       map[string]string `mapstructure:"scopes"`
 }
 
-var allowedScopeKeys = map[string]struct{}{Camunda8ApiKeyConst: {}, OperateApiKeyConst: {}, TasklistApiKeyConst: {}}
-var allowedScopeKeysList = []string{Camunda8ApiKeyConst, OperateApiKeyConst, TasklistApiKeyConst}
+var allowedScopeKeys = map[string]struct{}{CamundaApiKeyConst: {}, OperateApiKeyConst: {}, TasklistApiKeyConst: {}}
+var allowedScopeKeysList = []string{CamundaApiKeyConst, OperateApiKeyConst, TasklistApiKeyConst}
 
 func (a *Authentication) Validate() error {
 	var errs []error

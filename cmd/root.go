@@ -10,6 +10,7 @@ import (
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/internal/services/httpc"
+	"github.com/grafvonb/camunder/pkg/camunda"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -36,11 +37,13 @@ var rootCmd = &cobra.Command{
 		if err := initViper(v, cmd); err != nil {
 			return err
 		}
+		// retrieve and validate config
 		cfg, err := retrieveConfig(v, !flagShowConfig)
 		if err != nil {
 			return err
 		}
 		cmd.SetContext(cfg.ToContext(cmd.Context()))
+
 		if flagShowConfig {
 			cfgpath := v.ConfigFileUsed()
 			if cfgpath != "" {
@@ -49,11 +52,13 @@ var rootCmd = &cobra.Command{
 			cmd.Println(cfg.String())
 			os.Exit(0)
 		}
+		// setup http service
 		httpSvc, err := httpc.New(cfg, httpc.WithQuietEnabled(flagQuiet))
 		if err != nil {
 			return fmt.Errorf("create http service: %w", err)
 		}
 		cmd.SetContext(httpSvc.ToContext(cmd.Context()))
+		// setup auth service
 		authSvc, err := auth.New(cfg, httpSvc.Client(), auth.WithQuietEnabled(flagQuiet))
 		if err != nil {
 			return fmt.Errorf("create auth service: %w", err)
@@ -96,7 +101,8 @@ func init() {
 
 	pf.String("http-timeout", "", "HTTP timeout (Go duration, e.g. 30s)")
 
-	pf.String("camunda8-base-url", "", "Camunda8 API base URL")
+	pf.StringP("camunda-apis-version", "a", string(camunda.Current), fmt.Sprintf("Camunda API version (supported: %v)", camunda.Supported()))
+	pf.String("camunda-base-url", "", "Camunda API base URL")
 	pf.String("operate-base-url", "", "Operate API base URL")
 	pf.String("tasklist-base-url", "", "Tasklist API base URL")
 
@@ -110,24 +116,23 @@ func init() {
 
 func initViper(v *viper.Viper, cmd *cobra.Command) error {
 	// Resolve precedence: flags > env > config file > defaults
+	fs := cmd.Flags()
+	_ = v.BindPFlag("config", fs.Lookup("config"))
+	_ = v.BindPFlag("app.tenant", fs.Lookup("tenant"))
+	_ = v.BindPFlag("auth.token_url", fs.Lookup("auth-token-url"))
+	_ = v.BindPFlag("auth.client_id", fs.Lookup("auth-client-id"))
+	_ = v.BindPFlag("auth.client_secret", fs.Lookup("auth-client-secret"))
+	_ = v.BindPFlag("http.timeout", fs.Lookup("http-timeout"))
 
-	// Bind scalar flags directly to config keys
-	_ = v.BindPFlag("app.tenant", cmd.Flags().Lookup("tenant"))
-	_ = v.BindPFlag("config", cmd.Flags().Lookup("config"))
-	_ = v.BindPFlag("auth.token_url", cmd.Flags().Lookup("auth-token-url"))
-	_ = v.BindPFlag("auth.client_id", cmd.Flags().Lookup("auth-client-id"))
-	_ = v.BindPFlag("auth.client_secret", cmd.Flags().Lookup("auth-client-secret"))
-	_ = v.BindPFlag("http.timeout", cmd.Flags().Lookup("http-timeout"))
+	_ = v.BindPFlag("apis.version", fs.Lookup("camunda-apis-version"))
+	_ = v.BindPFlag("apis.camunda_api.base_url", fs.Lookup("camunda-base-url"))
+	_ = v.BindPFlag("apis.operate_api.base_url", fs.Lookup("operate-base-url"))
+	_ = v.BindPFlag("apis.tasklist_api.base_url", fs.Lookup("tasklist-base-url"))
 
-	_ = v.BindPFlag("apis.camunda8_api.base_url", cmd.Flags().Lookup("camunda8-base-url"))
-	_ = v.BindPFlag("apis.operate_api.base_url", cmd.Flags().Lookup("operate-base-url"))
-	_ = v.BindPFlag("apis.tasklist_api.base_url", cmd.Flags().Lookup("tasklist-base-url"))
-
-	// Bind map flag to a tmp key so we can merge later
-	_ = v.BindPFlag("tmp.auth_scopes", cmd.Flags().Lookup("auth-scopes"))
+	_ = v.BindPFlag("tmp.auth_scopes", fs.Lookup("auth-scopes"))
 
 	// Force hardcoded keys
-	v.Set("apis.camunda8_api.key", config.Camunda8ApiKeyConst)
+	v.Set("apis.camunda_api.key", config.CamundaApiKeyConst)
 	v.Set("apis.operate_api.key", config.OperateApiKeyConst)
 	v.Set("apis.tasklist_api.key", config.TasklistApiKeyConst)
 

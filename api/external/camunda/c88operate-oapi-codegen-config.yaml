@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/refs/tags/v2.5.0/configuration-schema.json
+package: c88operate
+output: gen/client.c88operate.gen.go
+
+generate:
+  models: true
+  client: true
+  embedded-spec: true
+
+output-options:
+  skip-prune: true
+  nullable-type: true

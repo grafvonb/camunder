@@ -4,30 +4,43 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/grafvonb/camunder/pkg/camunda"
 )
 
 const (
-	Camunda8ApiKeyConst = "camunda8_api"
+	CamundaApiKeyConst  = "camunda_api"
 	OperateApiKeyConst  = "operate_api"
 	TasklistApiKeyConst = "tasklist_api"
 )
 
 var ValidAPIKeys = []string{
-	Camunda8ApiKeyConst,
+	CamundaApiKeyConst,
 	OperateApiKeyConst,
 	TasklistApiKeyConst,
 }
 
 type APIs struct {
-	Camunda8 API `mapstructure:"camunda8_api"`
-	Operate  API `mapstructure:"operate_api"`
-	Tasklist API `mapstructure:"tasklist_api"`
+	Version  camunda.APIVersion `mapstructure:"version"`
+	Camunda  API                `mapstructure:"camunda_api"`
+	Operate  API                `mapstructure:"operate_api"`
+	Tasklist API                `mapstructure:"tasklist_api"`
 }
 
 func (a *APIs) Validate() error {
 	var errs []error
-	if err := a.Camunda8.Validate(); err != nil {
-		errs = append(errs, fmt.Errorf("camunda8: %w", err))
+	switch {
+	case a.Version == "":
+		a.Version = camunda.Current
+	default:
+		if v, err := camunda.Normalize(string(a.Version)); err != nil {
+			errs = append(errs, fmt.Errorf("version: %w", err))
+		} else {
+			a.Version = v
+		}
+	}
+	if err := a.Camunda.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("camunda: %w", err))
 	}
 	if err := a.Operate.Validate(); err != nil {
 		errs = append(errs, fmt.Errorf("operate: %w", err))

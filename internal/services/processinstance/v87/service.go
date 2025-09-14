@@ -10,6 +10,7 @@ import (
 	"github.com/grafvonb/camunder/internal/api/convert"
 	camundav87 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda/v87"
 	operatev87 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
+	"github.com/grafvonb/camunder/pkg/camunda"
 	"github.com/grafvonb/camunder/pkg/camunda/procesinstance"
 
 	"github.com/grafvonb/camunder/internal/config"
@@ -37,7 +38,7 @@ func WithQuietEnabled(enabled bool) Option {
 
 func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
 	cc, err := camundav87.NewClientWithResponses(
-		cfg.APIs.Camunda8.BaseURL,
+		cfg.APIs.Camunda.BaseURL,
 		camundav87.WithHTTPClient(httpClient),
 	)
 	if err != nil {
@@ -60,6 +61,12 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 		opt(s)
 	}
 	return s, nil
+}
+
+func (s *Service) Capabilities(ctx context.Context) camunda.Capabilities {
+	return camunda.Capabilities{
+		APIVersion: camunda.V87,
+	}
 }
 
 func (s *Service) FilterProcessInstanceWithOrphanParent(ctx context.Context, items *[]operatev87.ProcessInstance) (*[]operatev87.ProcessInstance, error) {
@@ -140,13 +147,13 @@ func (s *Service) SearchForProcessInstances(ctx context.Context, filter processi
 	return resp.JSON200, nil
 }
 
-func (s *Service) CancelProcessInstance(ctx context.Context, key int64) (*camundav87.CancelProcessInstanceResponse, error) {
+func (s *Service) CancelProcessInstance(ctx context.Context, key int64) (*processinstance.CancelResponse, error) {
 	if !s.isQuiet {
 		fmt.Printf("trying to cancel process instance with key %d...\n", key)
 	}
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.Camunda8ApiKeyConst)
+	token, err := s.auth.RetrieveTokenForAPI(ctx, config.CamundaApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving camunda8 token: %w", err)
+		return nil, fmt.Errorf("error retrieving camunda token: %w", err)
 	}
 	resp, err := s.cc.CancelProcessInstanceWithResponse(ctx, strconv.Itoa(int(key)),
 		camundav87.CancelProcessInstanceJSONRequestBody{},
@@ -160,16 +167,20 @@ func (s *Service) CancelProcessInstance(ctx context.Context, key int64) (*camund
 	if !s.isQuiet {
 		fmt.Printf("process instance with key %d was successfully cancelled\n", key)
 	}
-	return resp, nil
+	ret, err := resp.ToStable()
+	if err != nil {
+		return nil, fmt.Errorf("convert to stable cancel response: %w", err)
+	}
+	return &ret, nil
 }
 
 func (s *Service) DeleteProcessInstance(ctx context.Context, key int64) (*operatev87.ChangeStatus, error) {
 	if !s.isQuiet {
 		fmt.Printf("trying to delete process instance with key %d...\n", key)
 	}
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.Camunda8ApiKeyConst)
+	token, err := s.auth.RetrieveTokenForAPI(ctx, config.CamundaApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving camunda8 token: %w", err)
+		return nil, fmt.Errorf("error retrieving camunda token: %w", err)
 	}
 	resp, err := s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key,
 		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
@@ -189,9 +200,9 @@ func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key int64
 	if !s.isQuiet {
 		fmt.Printf("trying to delete process instance with key %d...\n", key)
 	}
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.Camunda8ApiKeyConst)
+	token, err := s.auth.RetrieveTokenForAPI(ctx, config.CamundaApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving camunda8 token: %w", err)
+		return nil, fmt.Errorf("error retrieving camunda token: %w", err)
 	}
 	resp, err := s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key,
 		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))

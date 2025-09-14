@@ -1,9 +1,23 @@
 package processinstance
 
 import (
+	"context"
 	"fmt"
 	"strings"
+
+	"github.com/grafvonb/camunder/pkg/camunda"
 )
+
+type API interface {
+	camunda.Base
+	CancelProcessInstance(ctx context.Context, key int64) (*CancelResponse, error)
+	WaitForProcessInstanceState(ctx context.Context, key string, desiredState string) error
+}
+
+type CancelResponse struct {
+	StatusCode int
+	Status     string
+}
 
 type SearchFilterOpts struct {
 	Key               int64

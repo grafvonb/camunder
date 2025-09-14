@@ -32,7 +32,7 @@ func WithQuietEnabled(enabled bool) Option {
 
 func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
 	cc, err := camundav87.NewClientWithResponses(
-		cfg.APIs.Camunda8.BaseURL,
+		cfg.APIs.Camunda.BaseURL,
 		camundav87.WithHTTPClient(httpClient),
 	)
 	if err != nil {

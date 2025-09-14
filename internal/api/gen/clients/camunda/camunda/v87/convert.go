@@ -3,7 +3,15 @@ package v87
 import (
 	"github.com/grafvonb/camunder/internal/api/convert"
 	"github.com/grafvonb/camunder/pkg/camunda/cluster"
+	processinstance "github.com/grafvonb/camunder/pkg/camunda/procesinstance"
 )
+
+func (src CancelProcessInstanceResponse) ToStable() (processinstance.CancelResponse, error) {
+	return processinstance.CancelResponse{
+		StatusCode: src.StatusCode(),
+		Status:     src.Status(),
+	}, nil
+}
 
 func (src TopologyResponse) ToStable() (cluster.Topology, error) {
 	br, err := convert.MapNullableSlice(src.Brokers, func(b BrokerInfo) cluster.Broker { return b.ToStable() })

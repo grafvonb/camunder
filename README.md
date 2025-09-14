@@ -90,7 +90,7 @@ auth:
   # Scopes as key:value pairs (names -> scope strings)
   # Do not define if not in use or empty
   scopes:
-    camunda8_api: "profile"
+    camunda_api: "profile"
     operate_api: "profile"
     tasklist_api: "profile"
 
@@ -100,7 +100,7 @@ http:
 
 apis:
   # Base URLs for your endpoints
-  camunda8_api:
+  camunda_api:
     base_url: "http://localhost:8080/v2"
   operate_api:
     base_url: "http://localhost:8081/v1"
@@ -151,14 +151,14 @@ config loaded: /Users/adam.boczek/.camunder/config.yaml
     "ClientID": "******",
     "ClientSecret": "******",
     "Scopes": {
-      "camunda8_api": "profile",
+      "camunda_api": "profile",
       "operate_api": "profile",
       "tasklist_api": "profile"
     }
   },
   "APIs": {
-    "Camunda8": {
-      "Key": "camunda8_api",
+    "Camunda": {
+      "Key": "camunda_api",
       "BaseURL": "http://localhost:8086/v2"
     },
     "Operate": {
@@ -199,7 +199,7 @@ Flags:
       --auth-client-secret string    auth client secret
       --auth-scopes stringToString   auth scopes as key=value (repeatable or comma-separated) (default [])
       --auth-token-url string        auth token URL
-      --camunda8-base-url string     Camunda8 API base URL
+      --camunda-base-url string     Camunda8 API base URL
       --config string                path to config file
   -h, --help                         help for camunder
       --http-timeout string          HTTP timeout (Go duration, e.g. 30s)

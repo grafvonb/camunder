@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
-	v88 "github.com/grafvonb/camunder/internal/services/cluster/v87"
+	"github.com/grafvonb/camunder/internal/services/cluster"
 	"github.com/grafvonb/camunder/internal/services/common"
 	v89 "github.com/grafvonb/camunder/internal/services/processdefinition/v87"
 	processinstancev "github.com/grafvonb/camunder/internal/services/processinstance/v87"
@@ -62,8 +62,7 @@ var getCmd = &cobra.Command{
 
 		switch rn {
 		case "cluster-topology", "ct":
-			svc, err := v88.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
-				v88.WithQuietEnabled(flagQuiet))
+			svc, err := cluster.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating cluster service: %v\n", err)
 				return
