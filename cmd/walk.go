@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/grafvonb/camunder/internal/services/common"
-	"github.com/grafvonb/camunder/internal/services/walk"
+	walkv87 "github.com/grafvonb/camunder/internal/services/walk/v87"
 	"github.com/spf13/cobra"
 )
 
@@ -40,8 +40,8 @@ var walkCmd = &cobra.Command{
 		}
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := walk.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
-				walk.WithQuietEnabled(flagQuiet))
+			svc, err := walkv87.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
+				walkv87.WithQuietEnabled(flagQuiet))
 			if err != nil {
 				cmd.PrintErrf("error creating walk service: %v\n", err)
 				return

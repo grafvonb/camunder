@@ -1,4 +1,4 @@
-package c87operate
+package v87
 
 func (r *ResultsProcessInstance) FilterByHavingIncidents(has bool) *ResultsProcessInstance {
 	return r.filterByIncident(has)

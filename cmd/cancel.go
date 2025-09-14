@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/grafvonb/camunder/internal/services/common"
-	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
+	"github.com/grafvonb/camunder/internal/services/processinstance/v87"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -31,8 +31,8 @@ var cancelCmd = &cobra.Command{
 
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
-				processinstance.WithQuietEnabled(flagQuiet))
+			svc, err := v87.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
+				v87.WithQuietEnabled(flagQuiet))
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return

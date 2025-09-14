@@ -3,9 +3,9 @@ package cmd
 import (
 	"strings"
 
-	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87operate"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
 	"github.com/grafvonb/camunder/internal/services/common"
-	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
+	v88 "github.com/grafvonb/camunder/internal/services/processinstance/v87"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -33,13 +33,13 @@ var deleteCmd = &cobra.Command{
 		}
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
-				processinstance.WithQuietEnabled(flagQuiet))
+			svc, err := v88.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
+				v88.WithQuietEnabled(flagQuiet))
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
 			}
-			var pidr *c87operate.ChangeStatus
+			var pidr *v87.ChangeStatus
 			if flagDeleteWithCancel {
 				pidr, err = svc.DeleteProcessInstanceWithCancel(cmd.Context(), flagDeleteKey)
 			} else {

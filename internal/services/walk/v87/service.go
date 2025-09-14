@@ -1,28 +1,24 @@
-package walk
+package walkv87
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87camunda"
-	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87operate"
+	camundav87 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda/v87"
+	operatev87 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/auth"
-	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
-)
-
-var (
-	ErrCycleDetected = errors.New("cycle detected in process instance ancestry")
+	"github.com/grafvonb/camunder/internal/services/processinstance/v87"
+	"github.com/grafvonb/camunder/pkg/camunda"
 )
 
 type Service struct {
-	co      *c87operate.ClientWithResponses
-	cc      *c87camunda.ClientWithResponses
+	oc      *operatev87.ClientWithResponses
+	cc      *camundav87.ClientWithResponses
 	auth    *auth.Service
 	cfg     *config.Config
-	piSvc   *processinstance.Service
+	piSvc   *v87.Service
 	isQuiet bool
 }
 
@@ -35,26 +31,26 @@ func WithQuietEnabled(enabled bool) Option {
 }
 
 func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
-	cc, err := c87camunda.NewClientWithResponses(
+	cc, err := camundav87.NewClientWithResponses(
 		cfg.APIs.Camunda8.BaseURL,
-		c87camunda.WithHTTPClient(httpClient),
+		camundav87.WithHTTPClient(httpClient),
 	)
 	if err != nil {
 		return nil, err
 	}
-	co, err := c87operate.NewClientWithResponses(
+	co, err := operatev87.NewClientWithResponses(
 		cfg.APIs.Operate.BaseURL,
-		c87operate.WithHTTPClient(httpClient),
+		operatev87.WithHTTPClient(httpClient),
 	)
 	if err != nil {
 		return nil, err
 	}
-	piSvc, err := processinstance.New(cfg, httpClient, auth)
+	piSvc, err := v87.New(cfg, httpClient, auth)
 	if err != nil {
 		return nil, fmt.Errorf("init process instance service: %w", err)
 	}
 	s := &Service{
-		co:    co,
+		oc:    co,
 		cc:    cc,
 		auth:  auth,
 		cfg:   cfg,
@@ -66,11 +62,11 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 	return s, nil
 }
 
-func (s *Service) Ancestry(ctx context.Context, startKey int64) (rootKey int64, path []int64, chain map[int64]*c87operate.ProcessInstance, err error) {
+func (s *Service) Ancestry(ctx context.Context, startKey int64) (rootKey int64, path []int64, chain map[int64]*operatev87.ProcessInstance, err error) {
 	// visited keeps track of visited nodes to detect cycles
 	// well-know pattern to have fast lookups, no duplicates, clear semantic and low memory usage with visited[cur] = struct{}{} below
 	visited := make(map[int64]struct{})
-	chain = make(map[int64]*c87operate.ProcessInstance)
+	chain = make(map[int64]*operatev87.ProcessInstance)
 
 	cur := startKey
 	for {
@@ -82,7 +78,7 @@ func (s *Service) Ancestry(ctx context.Context, startKey int64) (rootKey int64, 
 		}
 
 		if _, seen := visited[cur]; seen {
-			return 0, nil, chain, fmt.Errorf("%w for this key %d", ErrCycleDetected, cur)
+			return 0, nil, chain, fmt.Errorf("%w for this key %d", camunda.ErrCycleDetected, cur)
 		}
 		visited[cur] = struct{}{}
 
@@ -103,10 +99,10 @@ func (s *Service) Ancestry(ctx context.Context, startKey int64) (rootKey int64, 
 	}
 }
 
-func (s *Service) Descendants(ctx context.Context, rootKey int64) (desc []int64, edges map[int64][]int64, chain map[int64]*c87operate.ProcessInstance, err error) {
+func (s *Service) Descendants(ctx context.Context, rootKey int64) (desc []int64, edges map[int64][]int64, chain map[int64]*operatev87.ProcessInstance, err error) {
 	visited := make(map[int64]struct{})
 	edges = make(map[int64][]int64)
-	chain = make(map[int64]*c87operate.ProcessInstance)
+	chain = make(map[int64]*operatev87.ProcessInstance)
 
 	// depth-first search (DFS) to explore the tree
 	var dfs func(int64) error
@@ -164,7 +160,7 @@ func (s *Service) Descendants(ctx context.Context, rootKey int64) (desc []int64,
 	return desc, edges, chain, nil
 }
 
-func (s *Service) Family(ctx context.Context, startKey int64) (fam []int64, edges map[int64][]int64, chain map[int64]*c87operate.ProcessInstance, err error) {
+func (s *Service) Family(ctx context.Context, startKey int64) (fam []int64, edges map[int64][]int64, chain map[int64]*operatev87.ProcessInstance, err error) {
 	rootKey, _, _, err := s.Ancestry(ctx, startKey)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("ancestry fetch: %w", err)

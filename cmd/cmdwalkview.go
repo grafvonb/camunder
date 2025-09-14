@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87operate"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
 )
 
-type Chain map[int64]*c87operate.ProcessInstance
+type Chain map[int64]*v87.ProcessInstance
 type KeysPath []int64
 
-type Label func(*c87operate.ProcessInstance) string
+type Label func(*v87.ProcessInstance) string
 
 func (p KeysPath) KeysOnly(c Chain) string {
-	return p.join(c, func(it *c87operate.ProcessInstance) string {
+	return p.join(c, func(it *v87.ProcessInstance) string {
 		return fmt.Sprint(*it.Key)
 	}, "\n")
 }
 
 func (p KeysPath) StandardLine(c Chain) string {
-	return p.join(c, func(it *c87operate.ProcessInstance) string {
+	return p.join(c, func(it *v87.ProcessInstance) string {
 		key := valueOr(it.Key, int64(0))
 		tenant := valueOr(it.TenantId, "")
 		bpmnID := valueOr(it.BpmnProcessId, "")
@@ -52,7 +52,7 @@ func (p KeysPath) StandardLine(c Chain) string {
 }
 
 func (p KeysPath) PrettyLine(c Chain) string {
-	return p.join(c, func(it *c87operate.ProcessInstance) string {
+	return p.join(c, func(it *v87.ProcessInstance) string {
 		return fmt.Sprintf("%d (%s)", *it.Key, valueOr(it.BpmnProcessId, "undefined"))
 	}, " → ")
 }
@@ -62,7 +62,7 @@ func (p KeysPath) join(c Chain, label Label, sep string) string {
 		return ""
 	}
 	if label == nil {
-		label = func(it *c87operate.ProcessInstance) string {
+		label = func(it *v87.ProcessInstance) string {
 			return fmt.Sprintf("%d (%s)", *it.Key, valueOr(it.BpmnProcessId, "undefined"))
 		}
 	}

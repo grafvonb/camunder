@@ -3,11 +3,13 @@ package cmd
 import (
 	"strings"
 
-	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/c87operate"
-	"github.com/grafvonb/camunder/internal/services/cluster"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
+	v88 "github.com/grafvonb/camunder/internal/services/cluster/v87"
 	"github.com/grafvonb/camunder/internal/services/common"
-	processdefinition "github.com/grafvonb/camunder/internal/services/process-definition"
-	processinstance "github.com/grafvonb/camunder/internal/services/process-instance"
+	v89 "github.com/grafvonb/camunder/internal/services/processdefinition/v87"
+	processinstancev "github.com/grafvonb/camunder/internal/services/processinstance/v87"
+	processinstance2 "github.com/grafvonb/camunder/pkg/camunda/procesinstance"
+	"github.com/grafvonb/camunder/pkg/camunda/processdefinition"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -60,8 +62,8 @@ var getCmd = &cobra.Command{
 
 		switch rn {
 		case "cluster-topology", "ct":
-			svc, err := cluster.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
-				cluster.WithQuietEnabled(flagQuiet))
+			svc, err := v88.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
+				v88.WithQuietEnabled(flagQuiet))
 			if err != nil {
 				cmd.PrintErrf("error creating cluster service: %v\n", err)
 				return
@@ -75,16 +77,16 @@ var getCmd = &cobra.Command{
 
 		case "process-definition", "pd":
 			searchFilterOpts := populatePDSearchFilterOpts()
-			svc, err := processdefinition.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
-				processdefinition.WithQuietEnabled(flagQuiet))
+			svc, err := v89.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
+				v89.WithQuietEnabled(flagQuiet))
 			if err != nil {
 				cmd.PrintErrf("error creating process definition service: %v\n", err)
 				return
 			}
-			if searchFilterOpts.Key != nil {
-				pd, err := svc.GetProcessDefinitionByKey(cmd.Context(), *searchFilterOpts.Key)
+			if searchFilterOpts.Key > 0 {
+				pd, err := svc.GetProcessDefinitionByKey(cmd.Context(), searchFilterOpts.Key)
 				if err != nil {
-					cmd.PrintErrf("error fetching process definition by key %d: %v\n", *searchFilterOpts.Key, err)
+					cmd.PrintErrf("error fetching process definition by key %d: %v\n", searchFilterOpts.Key, err)
 					return
 				}
 				err = processDefinitionView(cmd, pd)
@@ -113,17 +115,17 @@ var getCmd = &cobra.Command{
 
 		case "process-instance", "pi":
 			searchFilterOpts := populatePISearchFilterOpts()
-			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
-				processinstance.WithQuietEnabled(flagQuiet))
+			svc, err := processinstancev.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
+				processinstancev.WithQuietEnabled(flagQuiet))
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
 			}
 			printFilter(cmd)
-			if searchFilterOpts.Key != nil {
-				pi, err := svc.GetProcessInstanceByKey(cmd.Context(), *searchFilterOpts.Key)
+			if searchFilterOpts.Key > 0 {
+				pi, err := svc.GetProcessInstanceByKey(cmd.Context(), searchFilterOpts.Key)
 				if err != nil {
-					cmd.PrintErrf("error fetching process instance by key %d: %v\n", *searchFilterOpts.Key, err)
+					cmd.PrintErrf("error fetching process instance by key %d: %v\n", searchFilterOpts.Key, err)
 					return
 				}
 				err = processInstanceView(cmd, pi)
@@ -132,12 +134,6 @@ var getCmd = &cobra.Command{
 					return
 				}
 			} else {
-				state, err := processinstance.PIStateFilterFromString(flagState)
-				if err != nil {
-					cmd.PrintErrf("error parsing state %q filter: %v\n", flagState, err)
-					return
-				}
-				searchFilterOpts.State = state
 				pisr, err := svc.SearchForProcessInstances(cmd.Context(), searchFilterOpts, maxSearchSize)
 				if err != nil {
 					cmd.PrintErrf("error fetching process instances: %v\n", err)
@@ -207,22 +203,28 @@ func init() {
 	fs.BoolVar(&flagOneLine, "one-line", false, "output one line per item")
 }
 
-func populatePISearchFilterOpts() processinstance.SearchFilterOpts {
-	var opts processinstance.SearchFilterOpts
+func populatePISearchFilterOpts() processinstance2.SearchFilterOpts {
+	var opts processinstance2.SearchFilterOpts
 	if flagKey != 0 {
-		opts.Key = &flagKey
+		opts.Key = flagKey
 	}
 	if flagParentKey != 0 {
-		opts.ParentKey = &flagParentKey
+		opts.ParentKey = flagParentKey
 	}
 	if flagBpmnProcessID != "" {
-		opts.BpmnProcessId = &flagBpmnProcessID
+		opts.BpmnProcessId = flagBpmnProcessID
 	}
 	if flagProcessVersion != 0 {
-		opts.ProcessVersion = &flagProcessVersion
+		opts.ProcessVersion = flagProcessVersion
 	}
 	if flagProcessVersionTag != "" {
-		opts.ProcessVersionTag = &flagProcessVersionTag
+		opts.ProcessVersionTag = flagProcessVersionTag
+	}
+	if flagState != "" && flagState != "all" {
+		state, err := processinstance2.ParseState(flagState)
+		if err == nil {
+			opts.State = state
+		}
 	}
 	return opts
 }
@@ -230,21 +232,21 @@ func populatePISearchFilterOpts() processinstance.SearchFilterOpts {
 func populatePDSearchFilterOpts() processdefinition.SearchFilterOpts {
 	var opts processdefinition.SearchFilterOpts
 	if flagKey != 0 {
-		opts.Key = &flagKey
+		opts.Key = flagKey
 	}
 	if flagBpmnProcessID != "" {
-		opts.BpmnProcessId = &flagBpmnProcessID
+		opts.BpmnProcessId = flagBpmnProcessID
 	}
 	if flagProcessVersion != 0 {
-		opts.Version = &flagProcessVersion
+		opts.Version = flagProcessVersion
 	}
 	if flagProcessVersionTag != "" {
-		opts.VersionTag = &flagProcessVersionTag
+		opts.VersionTag = flagProcessVersionTag
 	}
 	return opts
 }
 
-func filterProcessInstanceWithOrphanParent(cmd *cobra.Command, pisr *c87operate.ResultsProcessInstance, svc *processinstance.Service) {
+func filterProcessInstanceWithOrphanParent(cmd *cobra.Command, pisr *v87.ResultsProcessInstance, svc *processinstancev.Service) {
 	items, err := svc.FilterProcessInstanceWithOrphanParent(cmd.Context(), pisr.Items)
 	if err != nil {
 		cmd.PrintErrf("error filtering process instances with orphan parents: %v\n", err)
