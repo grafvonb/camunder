@@ -19,14 +19,76 @@ See [Camunder in Action](#camunder-in-action) for more examples.
 ## Highlights
 
 Camunder simplifies various tasks related to Camunda 8, including these special use cases:
-- deleting active process instances by cancelling them first,
-- finding process instances with orphan parent process instances,
-- recursive search process instances with parent-child relationships:
-  - list all child process instances of a given process instance,
-  - list path from a given process instance to its root ancestor (top-level parent),
-  - list the entire family (parent, grandparent, ...) of a given process instance (traverse up and down the tree),
-- bulk cancelling or deleting process instances (not implemented yet),
-- and more to come...
+
+- **Delete active process instances by cancelling them first**
+  ```bash
+  camunder delete pi --key <process-instance-key> --cancel
+  ```
+
+- **List process instances that are children (sub-processes) of other process instances**
+  ```bash
+  camunder get pi --bpmn-process-id=<bpmn-process-id> --children-only
+  ```
+
+- **List process instances that are parents of other process instances**
+  ```bash
+  camunder get pi --bpmn-process-id=<bpmn-process-id> --parents-only
+  ```
+
+- **List process instances that are children of orphan parent process instances**  
+  (i.e., their parent process instance no longer exists)
+  ```bash
+  camunder get pi --bpmn-process-id=<bpmn-process-id> --orphan-parents-only
+  ```
+
+- **List process instances for a specific process definition (model) and its first version**
+  ```bash
+  camunder get pi --bpmn-process-id=<bpmn-process-id> --process-version=1
+  ```
+
+- **List process instances with incidents**
+  ```bash
+  camunder get pi --incidents-only
+  ```
+
+- **List process instances without incidents**
+  ```bash
+  camunder get pi --no-incidents-only
+  ```
+
+- **Recursive search (walk) process instances with parent–child relationships**
+    - List all child process instances of a given process instance
+      ```bash
+      camunder walk pi --mode children --start-key <process-instance-key>
+      ```
+    - List path from a given process instance to its root ancestor (top-level parent)
+      ```bash
+      camunder walk pi --mode parent --start-key <process-instance-key>
+      ```
+    - List the entire family (parent, grandparent, …) of a given process instance (traverse up and down the tree)
+      ```bash
+      camunder walk pi --mode family --start-key <process-instance-key>
+      ```
+
+- **List process instances in one line per instance (suitable for scripting)**  
+  Works with all `get` commands.
+  ```bash
+  camunder get pi --one-line
+  ```
+
+- **List process instances just by their keys (suitable for scripting)**  
+  Works with all `get` commands.
+  ```bash
+  camunder get pi --keys-only
+  ```
+
+- …and more to come!
+
+
+## Upcoming features
+
+- bulk operations (e.g., delete multiple process instances by filter)
+- multiple Camunda 8 API versions support (currently 8.7, 8.8 to come)
 
 ## Supported Camunda 8 APIs
 
