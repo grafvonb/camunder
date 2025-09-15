@@ -19,8 +19,10 @@ var (
 
 // cancelCmd represents the cancel command
 var cancelCmd = &cobra.Command{
-	Use:   "cancel [resource name] [key]",
-	Short: "Cancel a resource of a given type by its key. " + supportedResourcesForCancel.PrettyString(),
+	Use:     "cancel [resource name] [key]",
+	Short:   "Cancel a resource of a given type by its key. " + supportedResourcesForCancel.PrettyString(),
+	Args:    cobra.ExactArgs(1),
+	Aliases: []string{"c", "cn", "stop", "abort"},
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())

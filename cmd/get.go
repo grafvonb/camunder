@@ -49,9 +49,10 @@ var (
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
-	Use:   "get [resource type]",
-	Short: "List resources of a defined type. " + supportedResourcesForGet.PrettyString(),
-	Args:  cobra.ExactArgs(1),
+	Use:     "get [resource type]",
+	Short:   "List resources of a resource type. " + supportedResourcesForGet.PrettyString(),
+	Args:    cobra.ExactArgs(1),
+	Aliases: []string{"g", "list", "ls", "g"},
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())

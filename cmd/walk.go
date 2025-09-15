@@ -24,9 +24,10 @@ var validWalkModes = map[string]bool{
 }
 
 var walkCmd = &cobra.Command{
-	Use:   "walk",
-	Short: "Traverse (walk) the parent/child graph process instances.",
-	Args:  cobra.ExactArgs(1),
+	Use:     "walk [resource type]",
+	Short:   "Traverse (walk) the parent/child graph of resource type. " + supportedResourcesForWalk.PrettyString(),
+	Args:    cobra.ExactArgs(1),
+	Aliases: []string{"w", "traverse"},
 	Run: func(cmd *cobra.Command, args []string) {
 		if !validWalkModes[flagWalkMode] {
 			cmd.PrintErrf("invalid value for --walk: %q (must be parent, children, or family)", flagWalkMode)

@@ -21,9 +21,10 @@ var (
 
 // deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
-	Use:   "delete [resource name] [key]",
-	Short: "Delete a resource of a given type by its key. " + supportedResourcesForDelete.PrettyString(),
-	Args:  cobra.ExactArgs(1),
+	Use:     "delete [resource name] [key]",
+	Short:   "Delete a resource of a given type by its key. " + supportedResourcesForDelete.PrettyString(),
+	Args:    cobra.ExactArgs(1),
+	Aliases: []string{"d", "del", "remove", "rm"},
 	Run: func(cmd *cobra.Command, args []string) {
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())
