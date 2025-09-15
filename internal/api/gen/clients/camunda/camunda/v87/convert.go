@@ -6,11 +6,11 @@ import (
 	processinstance "github.com/grafvonb/camunder/pkg/camunda/procesinstance"
 )
 
-func (src CancelProcessInstanceResponse) ToStable() (processinstance.CancelResponse, error) {
+func (src CancelProcessInstanceResponse) ToStable() processinstance.CancelResponse {
 	return processinstance.CancelResponse{
 		StatusCode: src.StatusCode(),
 		Status:     src.Status(),
-	}, nil
+	}
 }
 
 func (src TopologyResponse) ToStable() (cluster.Topology, error) {

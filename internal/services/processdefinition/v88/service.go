@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/grafvonb/camunder/internal/api/convert"
-	operatev87 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
+	operatev88 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v88"
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/editors"
 	"github.com/grafvonb/camunder/internal/services/auth"
@@ -15,7 +15,7 @@ import (
 )
 
 type Service struct {
-	c       *operatev87.ClientWithResponses
+	c       *operatev88.ClientWithResponses
 	auth    *auth.Service
 	cfg     *config.Config
 	isQuiet bool
@@ -30,9 +30,9 @@ func WithQuietEnabled(enabled bool) Option {
 }
 
 func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
-	c, err := operatev87.NewClientWithResponses(
+	c, err := operatev88.NewClientWithResponses(
 		cfg.APIs.Operate.BaseURL,
-		operatev87.WithHTTPClient(httpClient),
+		operatev88.WithHTTPClient(httpClient),
 	)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 }
 
 func (s *Service) Capabilities(ctx context.Context) camunda.Capabilities {
-	panic("not implemented for v88")
+	panic("not implemented for v87")
 }
 
 func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (*processdefinition.ProcessDefinition, error) {
@@ -58,7 +58,7 @@ func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (*pr
 		return nil, fmt.Errorf("error retrieving operate token: %w", err)
 	}
 	resp, err := s.c.GetProcessDefinitionByKeyWithResponse(ctx, key,
-		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
+		editors.BearerTokenEditorFn[operatev88.RequestEditorFn](token))
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +70,8 @@ func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (*pr
 }
 
 func (s *Service) SearchProcessDefinitions(ctx context.Context, filter processdefinition.SearchFilterOpts, size int32) (*processdefinition.ResultsProcessDefinition, error) {
-	body := operatev87.QueryProcessDefinition{
-		Filter: &operatev87.ProcessDefinition{
+	body := operatev88.QueryProcessDefinition{
+		Filter: &operatev88.ProcessDefinition{
 			BpmnProcessId: &filter.BpmnProcessId,
 			Version:       convert.PtrIfNonZero(filter.Version),
 			VersionTag:    &filter.VersionTag,
@@ -83,7 +83,7 @@ func (s *Service) SearchProcessDefinitions(ctx context.Context, filter processde
 		return nil, fmt.Errorf("error retrieving operate token: %w", err)
 	}
 	resp, err := s.c.SearchProcessDefinitionsWithResponse(ctx, body,
-		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
+		editors.BearerTokenEditorFn[operatev88.RequestEditorFn](token))
 	if err != nil {
 		return nil, err
 	}

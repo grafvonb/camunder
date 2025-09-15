@@ -167,10 +167,7 @@ func (s *Service) CancelProcessInstance(ctx context.Context, key int64) (*proces
 	if !s.isQuiet {
 		fmt.Printf("process instance with key %d was successfully cancelled\n", key)
 	}
-	ret, err := resp.ToStable()
-	if err != nil {
-		return nil, fmt.Errorf("convert to stable cancel response: %w", err)
-	}
+	ret := resp.ToStable()
 	return &ret, nil
 }
 

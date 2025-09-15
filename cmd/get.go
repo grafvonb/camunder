@@ -6,10 +6,10 @@ import (
 	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
 	"github.com/grafvonb/camunder/internal/services/cluster"
 	"github.com/grafvonb/camunder/internal/services/common"
-	v89 "github.com/grafvonb/camunder/internal/services/processdefinition/v87"
+	"github.com/grafvonb/camunder/internal/services/processdefinition"
 	processinstancev "github.com/grafvonb/camunder/internal/services/processinstance/v87"
-	processinstance2 "github.com/grafvonb/camunder/pkg/camunda/procesinstance"
-	"github.com/grafvonb/camunder/pkg/camunda/processdefinition"
+	piapi "github.com/grafvonb/camunder/pkg/camunda/procesinstance"
+	pdapi "github.com/grafvonb/camunder/pkg/camunda/processdefinition"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -76,8 +76,7 @@ var getCmd = &cobra.Command{
 
 		case "process-definition", "pd":
 			searchFilterOpts := populatePDSearchFilterOpts()
-			svc, err := v89.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
-				v89.WithQuietEnabled(flagQuiet))
+			svc, err := processdefinition.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process definition service: %v\n", err)
 				return
@@ -202,8 +201,8 @@ func init() {
 	fs.BoolVar(&flagOneLine, "one-line", false, "output one line per item")
 }
 
-func populatePISearchFilterOpts() processinstance2.SearchFilterOpts {
-	var opts processinstance2.SearchFilterOpts
+func populatePISearchFilterOpts() piapi.SearchFilterOpts {
+	var opts piapi.SearchFilterOpts
 	if flagKey != 0 {
 		opts.Key = flagKey
 	}
@@ -220,7 +219,7 @@ func populatePISearchFilterOpts() processinstance2.SearchFilterOpts {
 		opts.ProcessVersionTag = flagProcessVersionTag
 	}
 	if flagState != "" && flagState != "all" {
-		state, err := processinstance2.ParseState(flagState)
+		state, err := piapi.ParseState(flagState)
 		if err == nil {
 			opts.State = state
 		}
@@ -228,8 +227,8 @@ func populatePISearchFilterOpts() processinstance2.SearchFilterOpts {
 	return opts
 }
 
-func populatePDSearchFilterOpts() processdefinition.SearchFilterOpts {
-	var opts processdefinition.SearchFilterOpts
+func populatePDSearchFilterOpts() pdapi.SearchFilterOpts {
+	var opts pdapi.SearchFilterOpts
 	if flagKey != 0 {
 		opts.Key = flagKey
 	}

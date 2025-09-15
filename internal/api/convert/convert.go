@@ -135,3 +135,38 @@ func DerefMap[S any, D any](p *S, f func(S) D, def D) D {
 	}
 	return f(*p)
 }
+
+// DerefSlicePtrE maps *[]S -> []D using f(S) (D, error).
+// Returns nil, nil if p is nil.
+func DerefSlicePtrE[S any, D any](p *[]S, f func(S) (D, error)) ([]D, error) {
+	if p == nil {
+		return nil, nil
+	}
+	in := *p
+	out := make([]D, len(in))
+	for i := range in {
+		d, err := f(in[i])
+		if err != nil {
+			return nil, err
+		}
+		out[i] = d
+	}
+	return out, nil
+}
+
+// DerefSlicePtrEP is the pointer-to-slice variant: *[]S -> *[]D.
+func DerefSlicePtrEP[S any, D any](p *[]S, f func(S) (D, error)) (*[]D, error) {
+	if p == nil {
+		return nil, nil
+	}
+	in := *p
+	out := make([]D, len(in))
+	for i := range in {
+		d, err := f(in[i])
+		if err != nil {
+			return nil, err
+		}
+		out[i] = d
+	}
+	return &out, nil
+}

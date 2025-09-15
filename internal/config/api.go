@@ -29,11 +29,12 @@ type APIs struct {
 
 func (a *APIs) Validate() error {
 	var errs []error
-	switch {
-	case a.Version == "":
+	switch a.Version {
+	case "":
 		a.Version = camunda.Current
 	default:
-		if v, err := camunda.Normalize(string(a.Version)); err != nil {
+		v, err := camunda.Normalize(string(a.Version))
+		if err != nil {
 			errs = append(errs, fmt.Errorf("version: %w", err))
 		} else {
 			a.Version = v

@@ -14,6 +14,25 @@ type API interface {
 	WaitForProcessInstanceState(ctx context.Context, key string, desiredState string) error
 }
 
+type ProcessInstance struct {
+	BpmnProcessId             string               `json:"bpmnProcessId,omitempty"`
+	EndDate                   string               `json:"endDate,omitempty"`
+	Incident                  bool                 `json:"incident,omitempty"`
+	Key                       int64                `json:"key,omitempty"`
+	ParentFlowNodeInstanceKey int64                `json:"parentFlowNodeInstanceKey,omitempty"`
+	ParentKey                 int64                `json:"parentKey,omitempty"`
+	ParentProcessInstanceKey  *ProcessInstance     `json:"parentProcessInstanceKey,omitempty"`
+	ProcessDefinitionKey      int64                `json:"processDefinitionKey,omitempty"`
+	ProcessVersion            int32                `json:"processVersion,omitempty"`
+	ProcessVersionTag         string               `json:"processVersionTag,omitempty"`
+	StartDate                 string               `json:"startDate,omitempty"`
+	State                     ProcessInstanceState `json:"state,omitempty"`
+	TenantId                  string               `json:"tenantId,omitempty"`
+}
+
+// ProcessInstanceState defines model for ProcessInstance.State.
+type ProcessInstanceState string
+
 type CancelResponse struct {
 	StatusCode int
 	Status     string

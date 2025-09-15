@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
+	"github.com/grafvonb/camunder/pkg/camunda/processdefinition"
 	"github.com/spf13/cobra"
 )
 
@@ -85,32 +86,32 @@ func oneLineProcessInstanceView(c *cobra.Command, item *v87.ProcessInstance) err
 	return nil
 }
 
-func listKeyOnlyProcessDefinitionsView(c *cobra.Command, resp *v87.ResultsProcessDefinition) error {
-	return renderListView(c, resp, func(r *v87.ResultsProcessDefinition) *[]v87.ProcessDefinition {
-		return r.Items
+func listKeyOnlyProcessDefinitionsView(c *cobra.Command, resp *processdefinition.ResultsProcessDefinition) error {
+	return renderListView(c, resp, func(r *processdefinition.ResultsProcessDefinition) *[]processdefinition.ProcessDefinition {
+		return &r.Items
 	}, keyOnlyProcessDefinitionView)
 }
 
-func listProcessDefinitionsView(c *cobra.Command, resp *v87.ResultsProcessDefinition) error {
+func listProcessDefinitionsView(c *cobra.Command, resp *processdefinition.ResultsProcessDefinition) error {
 	if flagOneLine {
-		return renderListView(c, resp, func(r *v87.ResultsProcessDefinition) *[]v87.ProcessDefinition {
-			return r.Items
+		return renderListView(c, resp, func(r *processdefinition.ResultsProcessDefinition) *[]processdefinition.ProcessDefinition {
+			return &r.Items
 		}, oneLineProcessDefinitionView)
 	}
-	return listJSONView(c, resp, func(r *v87.ResultsProcessDefinition) *[]v87.ProcessDefinition {
-		return r.Items
+	return listJSONView(c, resp, func(r *processdefinition.ResultsProcessDefinition) *[]processdefinition.ProcessDefinition {
+		return &r.Items
 	})
 }
 
-func keyOnlyProcessDefinitionView(c *cobra.Command, item *v87.ProcessDefinition) error {
+func keyOnlyProcessDefinitionView(c *cobra.Command, item *processdefinition.ProcessDefinition) error {
 	if item == nil {
 		return nil
 	}
-	c.Println(valueOr(item.Key, int64(0)))
+	c.Println(item.Key)
 	return nil
 }
 
-func processDefinitionView(c *cobra.Command, item *v87.ProcessDefinition) error {
+func processDefinitionView(c *cobra.Command, item *processdefinition.ProcessDefinition) error {
 	if flagOneLine {
 		return oneLineProcessDefinitionView(c, item)
 	}
@@ -125,24 +126,18 @@ func processDefinitionView(c *cobra.Command, item *v87.ProcessDefinition) error 
 	return nil
 }
 
-func oneLineProcessDefinitionView(c *cobra.Command, item *v87.ProcessDefinition) error {
+func oneLineProcessDefinitionView(c *cobra.Command, item *processdefinition.ProcessDefinition) error {
 	if item == nil {
 		return nil
 	}
 
-	key := valueOr(item.Key, int64(0))
-	tenant := valueOr(item.TenantId, "")
-	bpmnID := valueOr(item.BpmnProcessId, "")
-	version := valueOr(item.Version, int32(0))
-	versionTag := valueOr(item.VersionTag, "")
-
 	vTag := ""
-	if versionTag != "" {
-		vTag = "/" + versionTag
+	if item.VersionTag != "" {
+		vTag = "/" + item.VersionTag
 	}
 
-	out := fmt.Sprintf("%-16d %s %s v%d%s",
-		key, tenant, bpmnID, version, vTag,
+	out := fmt.Sprintf("%-16d %s %s v%s%s",
+		item.Key, item.TenantId, item.BpmnProcessId, version, vTag,
 	)
 	c.Println(strings.TrimSpace(out))
 	return nil
