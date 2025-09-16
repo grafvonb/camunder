@@ -3,7 +3,7 @@ package v87
 import (
 	"github.com/grafvonb/camunder/internal/api/convert"
 	"github.com/grafvonb/camunder/pkg/camunda/cluster"
-	processinstance "github.com/grafvonb/camunder/pkg/camunda/procesinstance"
+	processinstance "github.com/grafvonb/camunder/pkg/camunda/processinstance"
 )
 
 func (src CancelProcessInstanceResponse) ToStable() processinstance.CancelResponse {
@@ -45,20 +45,20 @@ func (src TopologyResponse) ToStable() (cluster.Topology, error) {
 	}, nil
 }
 
-func (b BrokerInfo) ToStable() cluster.Broker {
+func (src BrokerInfo) ToStable() cluster.Broker {
 	return cluster.Broker{
-		Host:       convert.Deref(b.Host, ""),  // *string -> string
-		NodeId:     convert.Deref(b.NodeId, 0), // *int32 -> int32
-		Partitions: convert.DerefSlicePtr(b.Partitions, func(p Partition) cluster.Partition { return p.ToStable() }),
-		Port:       convert.Deref(b.Port, 0),
-		Version:    convert.Deref(b.Version, ""),
+		Host:       convert.Deref(src.Host, ""),  // *string -> string
+		NodeId:     convert.Deref(src.NodeId, 0), // *int32 -> int32
+		Partitions: convert.DerefSlicePtr(src.Partitions, func(p Partition) cluster.Partition { return p.ToStable() }),
+		Port:       convert.Deref(src.Port, 0),
+		Version:    convert.Deref(src.Version, ""),
 	}
 }
 
-func (p Partition) ToStable() cluster.Partition {
+func (src Partition) ToStable() cluster.Partition {
 	return cluster.Partition{
-		Health:      convert.DerefMap(p.Health, func(h PartitionHealth) cluster.PartitionHealth { return cluster.PartitionHealth(h) }, cluster.PartitionHealth("")),
-		PartitionId: convert.Deref(p.PartitionId, 0),
-		Role:        convert.DerefMap(p.Role, func(r PartitionRole) cluster.PartitionRole { return cluster.PartitionRole(r) }, cluster.PartitionRole("")),
+		Health:      convert.DerefMap(src.Health, func(h PartitionHealth) cluster.PartitionHealth { return cluster.PartitionHealth(h) }, cluster.PartitionHealth("")),
+		PartitionId: convert.Deref(src.PartitionId, 0),
+		Role:        convert.DerefMap(src.Role, func(r PartitionRole) cluster.PartitionRole { return cluster.PartitionRole(r) }, cluster.PartitionRole("")),
 	}
 }

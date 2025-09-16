@@ -4,7 +4,8 @@ import (
 	"strings"
 
 	"github.com/grafvonb/camunder/internal/services/common"
-	walkv87 "github.com/grafvonb/camunder/internal/services/walk/v87"
+	"github.com/grafvonb/camunder/internal/services/processinstance"
+	piapi "github.com/grafvonb/camunder/pkg/camunda/processinstance"
 	"github.com/spf13/cobra"
 )
 
@@ -41,27 +42,32 @@ var walkCmd = &cobra.Command{
 		}
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := walkv87.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
-				walkv87.WithQuietEnabled(flagQuiet))
+			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating walk service: %v\n", err)
 				return
 			}
+			walkerSvc, ok := svc.(piapi.Walker)
+			if !ok {
+				cmd.PrintErrf("walk command not supported by this API version %s\n", svcs.Config.APIs.Version)
+				return
+			}
+
 			var path KeysPath
 			var chain Chain
 			switch flagWalkMode {
 			case "parent":
-				_, path, chain, err = svc.Ancestry(cmd.Context(), flagStartKey)
+				_, path, chain, err = walkerSvc.Ancestry(cmd.Context(), flagStartKey)
 				if err != nil {
 					return
 				}
 			case "children":
-				path, _, chain, err = svc.Descendants(cmd.Context(), flagStartKey)
+				path, _, chain, err = walkerSvc.Descendants(cmd.Context(), flagStartKey)
 				if err != nil {
 					return
 				}
 			case "family":
-				path, _, chain, err = svc.Family(cmd.Context(), flagStartKey)
+				path, _, chain, err = walkerSvc.Family(cmd.Context(), flagStartKey)
 				if err != nil {
 					return
 				}

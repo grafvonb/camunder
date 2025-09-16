@@ -8,7 +8,7 @@ import (
 
 type API interface {
 	camunda.Base
-	GetClusterTopology(ctx context.Context) (*Topology, error)
+	GetClusterTopology(ctx context.Context) (Topology, error)
 }
 
 type Topology struct {

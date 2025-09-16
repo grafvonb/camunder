@@ -47,24 +47,24 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 	return s, nil
 }
 
-func (s *Service) GetClusterTopology(ctx context.Context) (*cluster.Topology, error) {
+func (s *Service) GetClusterTopology(ctx context.Context) (cluster.Topology, error) {
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.CamundaApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving camunda token: %w", err)
+		return cluster.Topology{}, fmt.Errorf("error retrieving camunda token: %w", err)
 	}
 	resp, err := s.c.GetClusterTopologyWithResponse(ctx,
 		editors.BearerTokenEditorFn[camundav88.RequestEditorFn](token))
 	if err != nil {
-		return nil, err
+		return cluster.Topology{}, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+		return cluster.Topology{}, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
 	ret, err := resp.JSON200.ToStable()
 	if err != nil {
-		return nil, fmt.Errorf("convert to stable topology: %w", err)
+		return cluster.Topology{}, fmt.Errorf("convert to stable topology: %w", err)
 	}
-	return &ret, nil
+	return ret, nil
 }
 
 func (s *Service) Capabilities(ctx context.Context) camunda.Capabilities {

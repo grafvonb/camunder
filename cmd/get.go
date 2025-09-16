@@ -3,13 +3,12 @@ package cmd
 import (
 	"strings"
 
-	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
 	"github.com/grafvonb/camunder/internal/services/cluster"
 	"github.com/grafvonb/camunder/internal/services/common"
 	"github.com/grafvonb/camunder/internal/services/processdefinition"
-	processinstancev "github.com/grafvonb/camunder/internal/services/processinstance/v87"
-	piapi "github.com/grafvonb/camunder/pkg/camunda/procesinstance"
+	"github.com/grafvonb/camunder/internal/services/processinstance"
 	pdapi "github.com/grafvonb/camunder/pkg/camunda/processdefinition"
+	piapi "github.com/grafvonb/camunder/pkg/camunda/processinstance"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -114,8 +113,7 @@ var getCmd = &cobra.Command{
 
 		case "process-instance", "pi":
 			searchFilterOpts := populatePISearchFilterOpts()
-			svc, err := processinstancev.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth,
-				processinstancev.WithQuietEnabled(flagQuiet))
+			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return
@@ -149,7 +147,7 @@ var getCmd = &cobra.Command{
 					pisr = pisr.FilterParentsOnly()
 				}
 				if flagOrphanParentsOnly {
-					filterProcessInstanceWithOrphanParent(cmd, pisr, svc)
+					pisr.Items, err = svc.FilterProcessInstanceWithOrphanParent(cmd.Context(), pisr.Items)
 				}
 				if flagIncidentsOnly {
 					pisr = pisr.FilterByHavingIncidents(true)
@@ -243,15 +241,4 @@ func populatePDSearchFilterOpts() pdapi.SearchFilterOpts {
 		opts.VersionTag = flagProcessVersionTag
 	}
 	return opts
-}
-
-func filterProcessInstanceWithOrphanParent(cmd *cobra.Command, pisr *v87.ResultsProcessInstance, svc *processinstancev.Service) {
-	items, err := svc.FilterProcessInstanceWithOrphanParent(cmd.Context(), pisr.Items)
-	if err != nil {
-		cmd.PrintErrf("error filtering process instances with orphan parents: %v\n", err)
-		return
-	}
-	nt := int64(len(*items))
-	pisr.Total = &nt
-	pisr.Items = items
 }

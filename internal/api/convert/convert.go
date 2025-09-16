@@ -13,6 +13,19 @@ func PtrIfNonZero[T ~int | ~int32 | ~int64](v T) *T {
 	return &v
 }
 
+// PtrIf returns a pointer to v if v != zero, otherwise nil.
+// T must be comparable (e.g. not slices, maps, funcs).
+// Examples:
+// PtrIf("", "")         -> nil
+// PtrIf("x", "")        -> *"x"
+// PtrIf(int64(0), int64(0)) -> nil
+func PtrIf[T comparable](v, zero T) *T {
+	if v == zero {
+		return nil
+	}
+	return &v
+}
+
 // MapSlice maps []S -> []D using f.
 func MapSlice[S any, D any](in []S, f func(S) D) []D {
 	if in == nil {
@@ -23,16 +36,6 @@ func MapSlice[S any, D any](in []S, f func(S) D) []D {
 		out[i] = f(in[i])
 	}
 	return out
-}
-
-// PtrSlice returns *[]T with a copied backing array from a value slice.
-func PtrSlice[T any](in []T) *[]T {
-	if in == nil {
-		return nil
-	}
-	out := make([]T, len(in))
-	copy(out, in)
-	return &out
 }
 
 // MapNullable maps a nullable.Nullable[T] to *U using f.
@@ -48,6 +51,34 @@ func MapNullable[T, U any](n nullable.Nullable[T], f func(T) U) (*U, error) {
 	}
 	u := f(v)
 	return &u, nil
+}
+
+// MapNullableV maps a nullable field to a value using f; returns def for unspecified or null.
+func MapNullableV[T, U any](n nullable.Nullable[T], f func(T) U, def U) (U, error) {
+	if !n.IsSpecified() || n.IsNull() {
+		return def, nil
+	}
+	v, err := n.Get()
+	if err != nil {
+		return def, err
+	}
+	return f(v), nil
+}
+
+// MapNullableSliceV maps a nullable slice to a []D; returns nil (or empty) for unspecified/null.
+func MapNullableSliceV[S, D any](n nullable.Nullable[[]S], f func(S) D) ([]D, error) {
+	if !n.IsSpecified() || n.IsNull() {
+		return []D{}, nil
+	}
+	in, err := n.Get()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]D, len(in))
+	for i := range in {
+		out[i] = f(in[i])
+	}
+	return out, nil
 }
 
 // MapNullableSlice maps a nullable.Nullable[[]S] to *[]D using f for elements.
@@ -83,19 +114,6 @@ func MapPtr[S, D any](p *S, f func(S) D) *D {
 	}
 	v := f(*p)
 	return &v
-}
-
-// MapPtrSlice maps *[]S -> *[]D (nil-safe, deep copy).
-func MapPtrSlice[S, D any](p *[]S, f func(S) D) *[]D {
-	if p == nil {
-		return nil
-	}
-	in := *p
-	out := make([]D, len(in))
-	for i := range in {
-		out[i] = f(in[i])
-	}
-	return &out
 }
 
 // Deref returns the value pointed to by p, or def if p is nil.
@@ -152,21 +170,4 @@ func DerefSlicePtrE[S any, D any](p *[]S, f func(S) (D, error)) ([]D, error) {
 		out[i] = d
 	}
 	return out, nil
-}
-
-// DerefSlicePtrEP is the pointer-to-slice variant: *[]S -> *[]D.
-func DerefSlicePtrEP[S any, D any](p *[]S, f func(S) (D, error)) (*[]D, error) {
-	if p == nil {
-		return nil, nil
-	}
-	in := *p
-	out := make([]D, len(in))
-	for i := range in {
-		d, err := f(in[i])
-		if err != nil {
-			return nil, err
-		}
-		out[i] = d
-	}
-	return &out, nil
 }

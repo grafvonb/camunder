@@ -52,24 +52,24 @@ func (s *Service) Capabilities(ctx context.Context) camunda.Capabilities {
 	panic("not implemented for v87")
 }
 
-func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (*processdefinition.ProcessDefinition, error) {
+func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (processdefinition.ProcessDefinition, error) {
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving operate token: %w", err)
+		return processdefinition.ProcessDefinition{}, fmt.Errorf("error retrieving operate token: %w", err)
 	}
 	resp, err := s.c.GetProcessDefinitionByKeyWithResponse(ctx, key,
 		editors.BearerTokenEditorFn[operatev88.RequestEditorFn](token))
 	if err != nil {
-		return nil, err
+		return processdefinition.ProcessDefinition{}, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+		return processdefinition.ProcessDefinition{}, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
 	ret := resp.JSON200.ToStable()
-	return &ret, nil
+	return ret, nil
 }
 
-func (s *Service) SearchProcessDefinitions(ctx context.Context, filter processdefinition.SearchFilterOpts, size int32) (*processdefinition.ResultsProcessDefinition, error) {
+func (s *Service) SearchProcessDefinitions(ctx context.Context, filter processdefinition.SearchFilterOpts, size int32) (processdefinition.ProcessDefinitions, error) {
 	body := operatev88.QueryProcessDefinition{
 		Filter: &operatev88.ProcessDefinition{
 			BpmnProcessId: &filter.BpmnProcessId,
@@ -80,15 +80,15 @@ func (s *Service) SearchProcessDefinitions(ctx context.Context, filter processde
 	}
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving operate token: %w", err)
+		return processdefinition.ProcessDefinitions{}, fmt.Errorf("error retrieving operate token: %w", err)
 	}
 	resp, err := s.c.SearchProcessDefinitionsWithResponse(ctx, body,
 		editors.BearerTokenEditorFn[operatev88.RequestEditorFn](token))
 	if err != nil {
-		return nil, err
+		return processdefinition.ProcessDefinitions{}, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+		return processdefinition.ProcessDefinitions{}, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
 	return resp.JSON200.ToStable(), nil
 }

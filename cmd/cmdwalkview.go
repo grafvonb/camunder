@@ -4,56 +4,45 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
+	"github.com/grafvonb/camunder/pkg/camunda/processinstance"
 )
 
-type Chain map[int64]*v87.ProcessInstance
+type Chain map[int64]processinstance.ProcessInstance
 type KeysPath []int64
 
-type Label func(*v87.ProcessInstance) string
+type Label func(processinstance.ProcessInstance) string
 
 func (p KeysPath) KeysOnly(c Chain) string {
-	return p.join(c, func(it *v87.ProcessInstance) string {
-		return fmt.Sprint(*it.Key)
+	return p.join(c, func(item processinstance.ProcessInstance) string {
+		return fmt.Sprint(item.Key)
 	}, "\n")
 }
 
 func (p KeysPath) StandardLine(c Chain) string {
-	return p.join(c, func(it *v87.ProcessInstance) string {
-		key := valueOr(it.Key, int64(0))
-		tenant := valueOr(it.TenantId, "")
-		bpmnID := valueOr(it.BpmnProcessId, "")
-		version := valueOr(it.ProcessVersion, int32(0))
-		versionTag := valueOr(it.ProcessVersionTag, "")
-		state := valueOr(it.State, "")
-		start := valueOr(it.StartDate, "")
-		end := valueOr(it.EndDate, "")
-		parent := valueOr(it.ParentKey, int64(0))
-		incident := valueOr(it.Incident, false)
-
+	return p.join(c, func(item processinstance.ProcessInstance) string {
 		var pTag, eTag, vTag string
-		if parent > 0 {
-			pTag = fmt.Sprintf(" p:%d", parent)
+		if item.ProcessVersion > 0 {
+			pTag = fmt.Sprintf(" p:%d", item.ParentKey)
 		} else {
 			pTag = " p:<root>"
 		}
-		if end != "" {
-			eTag = fmt.Sprintf(" e:%s", end)
+		if item.EndDate != "" {
+			eTag = fmt.Sprintf(" e:%s", item.EndDate)
 		}
-		if versionTag != "" {
-			vTag = "/" + versionTag
+		if item.ProcessVersionTag != "" {
+			vTag = "/" + item.ProcessVersionTag
 		}
 
 		return fmt.Sprintf(
-			"%-16d %s %s v%d%s %s s:%s%s%s i:%t",
-			key, tenant, bpmnID, version, vTag, state, start, eTag, pTag, incident,
+			"%-16d %s %s v%s%s %s s:%s%s%s i:%t",
+			item.Key, item.TenantId, item.BpmnProcessId, version, vTag, item.State, item.StartDate, eTag, pTag, item.Incident,
 		)
 	}, "\n")
 }
 
 func (p KeysPath) PrettyLine(c Chain) string {
-	return p.join(c, func(it *v87.ProcessInstance) string {
-		return fmt.Sprintf("%d (%s)", *it.Key, valueOr(it.BpmnProcessId, "undefined"))
+	return p.join(c, func(it processinstance.ProcessInstance) string {
+		return fmt.Sprintf("%d (%s)", it.Key, it.BpmnProcessId)
 	}, " → ")
 }
 
@@ -62,17 +51,13 @@ func (p KeysPath) join(c Chain, label Label, sep string) string {
 		return ""
 	}
 	if label == nil {
-		label = func(it *v87.ProcessInstance) string {
-			return fmt.Sprintf("%d (%s)", *it.Key, valueOr(it.BpmnProcessId, "undefined"))
+		label = func(it processinstance.ProcessInstance) string {
+			return fmt.Sprintf("%d (%s)", it.Key, it.BpmnProcessId)
 		}
 	}
 	out := make([]string, 0, len(p))
 	for _, k := range p {
-		if it := c[k]; it != nil {
-			out = append(out, label(it))
-		} else {
-			out = append(out, fmt.Sprint(k)) // fallback if chain missing
-		}
+		out = append(out, label(c[k]))
 	}
 	return strings.Join(out, sep)
 }

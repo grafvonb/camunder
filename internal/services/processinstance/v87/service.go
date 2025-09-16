@@ -11,7 +11,7 @@ import (
 	camundav87 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda/v87"
 	operatev87 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
 	"github.com/grafvonb/camunder/pkg/camunda"
-	"github.com/grafvonb/camunder/pkg/camunda/procesinstance"
+	"github.com/grafvonb/camunder/pkg/camunda/processinstance"
 
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/editors"
@@ -69,56 +69,54 @@ func (s *Service) Capabilities(ctx context.Context) camunda.Capabilities {
 	}
 }
 
-func (s *Service) FilterProcessInstanceWithOrphanParent(ctx context.Context, items *[]operatev87.ProcessInstance) (*[]operatev87.ProcessInstance, error) {
+func (s *Service) FilterProcessInstanceWithOrphanParent(ctx context.Context, items []processinstance.ProcessInstance) ([]processinstance.ProcessInstance, error) {
 	if items == nil {
 		return nil, nil
 	}
-	var result []operatev87.ProcessInstance
-	for _, it := range *items {
-		if it.ParentKey == nil {
+	var result []processinstance.ProcessInstance
+	for _, it := range items {
+		if it.ParentKey == 0 {
 			continue
 		}
-		_, err := s.GetProcessInstanceByKey(ctx, *it.ParentKey)
+		_, err := s.GetProcessInstanceByKey(ctx, it.ParentKey)
 		if err != nil && strings.Contains(err.Error(), "status 404") {
 			result = append(result, it)
 		} else if err != nil {
 			return nil, err
 		}
 	}
-	return &result, nil
+	return result, nil
 }
 
-func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (*operatev87.ProcessInstance, error) {
+func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (processinstance.ProcessInstance, error) {
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving operate token: %w", err)
+		return processinstance.ProcessInstance{}, fmt.Errorf("error retrieving operate token: %w", err)
 	}
 	resp, err := s.oc.GetProcessInstanceByKeyWithResponse(ctx, key,
 		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
 	if err != nil {
-		return nil, err
+		return processinstance.ProcessInstance{}, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+		return processinstance.ProcessInstance{}, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
-	return resp.JSON200, nil
+	ret := resp.JSON200.ToStable()
+	return ret, nil
 }
 
-func (s *Service) GetDirectChildrenOfProcessInstance(ctx context.Context, key int64) (*[]operatev87.ProcessInstance, error) {
+func (s *Service) GetDirectChildrenOfProcessInstance(ctx context.Context, key int64) (processinstance.ProcessInstances, error) {
 	filter := processinstance.SearchFilterOpts{
 		ParentKey: key,
 	}
 	resp, err := s.SearchForProcessInstances(ctx, filter, 1000)
 	if err != nil {
-		return nil, fmt.Errorf("searching for children of process instance with key %d: %w", key, err)
+		return processinstance.ProcessInstances{}, fmt.Errorf("searching for children of process instance with key %d: %w", key, err)
 	}
-	if resp == nil || resp.Items == nil {
-		return nil, nil
-	}
-	return resp.Items, nil
+	return resp, nil
 }
 
-func (s *Service) SearchForProcessInstances(ctx context.Context, filter processinstance.SearchFilterOpts, size int32) (*operatev87.ResultsProcessInstance, error) {
+func (s *Service) SearchForProcessInstances(ctx context.Context, filter processinstance.SearchFilterOpts, size int32) (processinstance.ProcessInstances, error) {
 	st := StateOrNil(filter.State)
 	f := operatev87.ProcessInstance{
 		TenantId:          &s.cfg.App.Tenant,
@@ -134,72 +132,72 @@ func (s *Service) SearchForProcessInstances(ctx context.Context, filter processi
 	}
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving operate token: %w", err)
+		return processinstance.ProcessInstances{}, fmt.Errorf("error retrieving operate token: %w", err)
 	}
 	resp, err := s.oc.SearchProcessInstancesWithResponse(ctx, body,
 		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
 	if err != nil {
-		return nil, err
+		return processinstance.ProcessInstances{}, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+		return processinstance.ProcessInstances{}, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
-	return resp.JSON200, nil
+	return resp.JSON200.ToStable(), nil
 }
 
-func (s *Service) CancelProcessInstance(ctx context.Context, key int64) (*processinstance.CancelResponse, error) {
+func (s *Service) CancelProcessInstance(ctx context.Context, key int64) (processinstance.CancelResponse, error) {
 	if !s.isQuiet {
 		fmt.Printf("trying to cancel process instance with key %d...\n", key)
 	}
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.CamundaApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving camunda token: %w", err)
+		return processinstance.CancelResponse{}, fmt.Errorf("error retrieving camunda token: %w", err)
 	}
 	resp, err := s.cc.CancelProcessInstanceWithResponse(ctx, strconv.Itoa(int(key)),
 		camundav87.CancelProcessInstanceJSONRequestBody{},
 		editors.BearerTokenEditorFn[camundav87.RequestEditorFn](token))
 	if err != nil {
-		return nil, err
+		return processinstance.CancelResponse{}, err
 	}
 	if resp.StatusCode() != http.StatusNoContent {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+		return processinstance.CancelResponse{}, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
 	if !s.isQuiet {
 		fmt.Printf("process instance with key %d was successfully cancelled\n", key)
 	}
-	ret := resp.ToStable()
-	return &ret, nil
+	return resp.ToStable(), nil
 }
 
-func (s *Service) DeleteProcessInstance(ctx context.Context, key int64) (*operatev87.ChangeStatus, error) {
+func (s *Service) DeleteProcessInstance(ctx context.Context, key int64) (processinstance.ChangeStatus, error) {
 	if !s.isQuiet {
 		fmt.Printf("trying to delete process instance with key %d...\n", key)
 	}
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.CamundaApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving camunda token: %w", err)
+		return processinstance.ChangeStatus{}, fmt.Errorf("error retrieving camunda token: %w", err)
 	}
 	resp, err := s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key,
 		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
 	if err != nil {
-		return nil, err
+		return processinstance.ChangeStatus{}, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+		return processinstance.ChangeStatus{}, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
 	if !s.isQuiet {
 		fmt.Printf("process instance with key %d was successfully deleted\n", key)
 	}
-	return resp.JSON200, nil
+	ret := resp.JSON200.ToStable()
+	return ret, nil
 }
 
-func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key int64) (*operatev87.ChangeStatus, error) {
+func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key int64) (processinstance.ChangeStatus, error) {
 	if !s.isQuiet {
 		fmt.Printf("trying to delete process instance with key %d...\n", key)
 	}
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.CamundaApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving camunda token: %w", err)
+		return processinstance.ChangeStatus{}, fmt.Errorf("error retrieving camunda token: %w", err)
 	}
 	resp, err := s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key,
 		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
@@ -212,27 +210,28 @@ func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key int64
 		}
 		_, err = s.CancelProcessInstance(ctx, key)
 		if err != nil {
-			return nil, fmt.Errorf("error cancelling process instance with key %d: %w", key, err)
+			return processinstance.ChangeStatus{}, fmt.Errorf("error cancelling process instance with key %d: %w", key, err)
 		}
 
 		if !s.isQuiet {
 			fmt.Printf("waiting for process instance with key %d to be cancelled by workflow engine...\n", key)
 		}
 		if err = s.WaitForProcessInstanceState(ctx, strconv.Itoa(int(key)), processinstance.StateCanceled.String()); err != nil {
-			return nil, fmt.Errorf("waiting for canceled state failed for %d: %w", key, err)
+			return processinstance.ChangeStatus{}, fmt.Errorf("waiting for canceled state failed for %d: %w", key, err)
 		}
 
 		resp, err = s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key,
 			editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
 	}
 	if err != nil {
-		return nil, err
+		return processinstance.ChangeStatus{}, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+		return processinstance.ChangeStatus{}, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
 	if !s.isQuiet {
 		fmt.Printf("process instance with key %d was successfully deleted\n", key)
 	}
-	return resp.JSON200, nil
+	ret := resp.JSON200.ToStable()
+	return ret, nil
 }

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	operatev87 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
-	"github.com/grafvonb/camunder/pkg/camunda/procesinstance"
+	"github.com/grafvonb/camunder/pkg/camunda/processinstance"
 )
 
 func StateOrNil(s processinstance.State) *operatev87.ProcessInstanceState {
@@ -53,10 +53,10 @@ func (s *Service) WaitForProcessInstanceState(ctx context.Context, key string, d
 		attempts++
 
 		pi, errInDelay := s.GetProcessInstanceByKey(ctx, keyInt)
-		if errInDelay == nil && pi != nil {
+		if errInDelay == nil {
 			state := ""
-			if pi.State != nil {
-				state = string(*pi.State)
+			if pi.State != "" {
+				state = string(pi.State)
 			}
 			if strings.ToLower(state) == desiredStr.String() {
 				if !s.isQuiet {

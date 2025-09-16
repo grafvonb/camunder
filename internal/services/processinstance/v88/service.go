@@ -11,7 +11,7 @@ import (
 	"github.com/grafvonb/camunder/internal/editors"
 	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/pkg/camunda"
-	"github.com/grafvonb/camunder/pkg/camunda/procesinstance"
+	"github.com/grafvonb/camunder/pkg/camunda/processinstance"
 )
 
 type Service struct {
@@ -63,26 +63,47 @@ func (s *Service) Capabilities(ctx context.Context) camunda.Capabilities {
 	}
 }
 
-func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (*operatev88.ProcessInstance, error) {
+func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (processinstance.ProcessInstance, error) {
 	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving operate token: %w", err)
+		return processinstance.ProcessInstance{}, fmt.Errorf("error retrieving operate token: %w", err)
 	}
 	resp, err := s.oc.GetProcessInstanceByKeyWithResponse(ctx, key,
 		editors.BearerTokenEditorFn[operatev88.RequestEditorFn](token))
 	if err != nil {
-		return nil, err
+		return processinstance.ProcessInstance{}, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
+		return processinstance.ProcessInstance{}, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
-	return resp.JSON200, nil
+	ret := resp.JSON200.ToStable()
+	return ret, nil
 }
 
 func (s *Service) WaitForProcessInstanceState(ctx context.Context, key string, desiredState string) error {
 	panic("not implemented in v88")
 }
 
-func (s *Service) CancelProcessInstance(ctx context.Context, key int64) (*processinstance.CancelResponse, error) {
+func (s *Service) CancelProcessInstance(ctx context.Context, key int64) (processinstance.CancelResponse, error) {
+	panic("not implemented in v88")
+}
+
+func (s *Service) SearchForProcessInstances(ctx context.Context, filter processinstance.SearchFilterOpts, size int32) (processinstance.ProcessInstances, error) {
+	panic("not implemented in v88")
+}
+
+func (s *Service) GetDirectChildrenOfProcessInstance(ctx context.Context, key int64) (processinstance.ProcessInstances, error) {
+	panic("not implemented in v88")
+}
+
+func (s *Service) DeleteProcessInstance(ctx context.Context, key int64) (processinstance.ChangeStatus, error) {
+	panic("not implemented in v88")
+}
+
+func (s *Service) FilterProcessInstanceWithOrphanParent(ctx context.Context, items []processinstance.ProcessInstance) ([]processinstance.ProcessInstance, error) {
+	panic("not implemented in v88")
+}
+
+func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key int64) (processinstance.ChangeStatus, error) {
 	panic("not implemented in v88")
 }

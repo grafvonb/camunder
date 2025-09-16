@@ -9,7 +9,7 @@ import (
 	v87 "github.com/grafvonb/camunder/internal/services/processinstance/v87"
 	v88 "github.com/grafvonb/camunder/internal/services/processinstance/v88"
 	"github.com/grafvonb/camunder/pkg/camunda"
-	processinstance "github.com/grafvonb/camunder/pkg/camunda/procesinstance"
+	"github.com/grafvonb/camunder/pkg/camunda/processinstance"
 )
 
 func New(cfg *config.Config, httpClient *http.Client, a *auth.Service, quiet bool) (processinstance.API, error) {

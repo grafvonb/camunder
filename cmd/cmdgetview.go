@@ -4,138 +4,104 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
 	"github.com/grafvonb/camunder/pkg/camunda/processdefinition"
+	"github.com/grafvonb/camunder/pkg/camunda/processinstance"
 	"github.com/spf13/cobra"
 )
 
-func listKeyOnlyProcessInstancesView(c *cobra.Command, resp *v87.ResultsProcessInstance) error {
-	return renderListView(c, resp, func(r *v87.ResultsProcessInstance) *[]v87.ProcessInstance {
+func listKeyOnlyProcessInstancesView(c *cobra.Command, resp processinstance.ProcessInstances) error {
+	return renderListViewV(c, resp, func(r processinstance.ProcessInstances) []processinstance.ProcessInstance {
 		return r.Items
 	}, keyOnlyProcessInstanceView)
 }
 
-func listProcessInstancesView(c *cobra.Command, resp *v87.ResultsProcessInstance) error {
+func listProcessInstancesView(c *cobra.Command, resp processinstance.ProcessInstances) error {
 	if flagOneLine {
-		return renderListView(c, resp, func(r *v87.ResultsProcessInstance) *[]v87.ProcessInstance {
+		return renderListViewV(c, resp, func(r processinstance.ProcessInstances) []processinstance.ProcessInstance {
 			return r.Items
 		}, oneLineProcessInstanceView)
 	}
-	return listJSONView(c, resp, func(r *v87.ResultsProcessInstance) *[]v87.ProcessInstance {
+	return listJSONViewV(c, resp, func(r processinstance.ProcessInstances) []processinstance.ProcessInstance {
 		return r.Items
 	})
 }
 
-func keyOnlyProcessInstanceView(c *cobra.Command, item *v87.ProcessInstance) error {
-	if item == nil {
-		return nil
-	}
-	c.Println(valueOr(item.Key, int64(0)))
+func keyOnlyProcessInstanceView(c *cobra.Command, item processinstance.ProcessInstance) error {
+	c.Println(item.Key)
 	return nil
 }
 
-func processInstanceView(c *cobra.Command, item *v87.ProcessInstance) error {
+func processInstanceView(c *cobra.Command, item processinstance.ProcessInstance) error {
 	if flagOneLine {
 		return oneLineProcessInstanceView(c, item)
 	}
 	if flagKeysOnly {
 		return keyOnlyProcessInstanceView(c, item)
 	}
-	if item == nil {
-		c.Println("{}")
-		return nil
-	}
 	c.Println(ToJSONString(item))
 	return nil
 }
 
-func oneLineProcessInstanceView(c *cobra.Command, item *v87.ProcessInstance) error {
-	if item == nil {
-		return nil
-	}
-
-	key := valueOr(item.Key, int64(0))
-	tenant := valueOr(item.TenantId, "")
-	bpmnID := valueOr(item.BpmnProcessId, "")
-	version := valueOr(item.ProcessVersion, int32(0))
-	versionTag := valueOr(item.ProcessVersionTag, "")
-	state := valueOr(item.State, "")
-	start := valueOr(item.StartDate, "")
-	end := valueOr(item.EndDate, "")
-	parent := valueOr(item.ParentKey, int64(0))
-	incident := valueOr(item.Incident, false)
-
+func oneLineProcessInstanceView(c *cobra.Command, item processinstance.ProcessInstance) error {
 	var pTag, eTag, vTag string
-	if parent > 0 {
-		pTag = fmt.Sprintf(" p:%d", parent)
+	if item.ParentKey > 0 {
+		pTag = fmt.Sprintf(" p:%d", item.ParentKey)
 	} else {
 		pTag = " p:<root>"
 	}
-	if end != "" {
-		eTag = fmt.Sprintf(" e:%s", end)
+	if item.EndDate != "" {
+		eTag = fmt.Sprintf(" e:%s", item.EndDate)
 	}
-	if versionTag != "" {
-		vTag = "/" + versionTag
+	if item.ProcessVersionTag != "" {
+		vTag = "/" + item.ProcessVersionTag
 	}
 
 	out := fmt.Sprintf(
 		"%-16d %s %s v%d%s %s s:%s%s%s i:%t",
-		key, tenant, bpmnID, version, vTag, state, start, eTag, pTag, incident,
+		item.Key, item.TenantId, item.BpmnProcessId, item.ProcessVersion, vTag, item.State, item.StartDate, eTag, pTag, item.Incident,
 	)
 	c.Println(strings.TrimSpace(out))
 	return nil
 }
 
-func listKeyOnlyProcessDefinitionsView(c *cobra.Command, resp *processdefinition.ResultsProcessDefinition) error {
-	return renderListView(c, resp, func(r *processdefinition.ResultsProcessDefinition) *[]processdefinition.ProcessDefinition {
-		return &r.Items
+func listKeyOnlyProcessDefinitionsView(c *cobra.Command, resp processdefinition.ProcessDefinitions) error {
+	return renderListViewV(c, resp, func(r processdefinition.ProcessDefinitions) []processdefinition.ProcessDefinition {
+		return r.Items
 	}, keyOnlyProcessDefinitionView)
 }
 
-func listProcessDefinitionsView(c *cobra.Command, resp *processdefinition.ResultsProcessDefinition) error {
+func listProcessDefinitionsView(c *cobra.Command, resp processdefinition.ProcessDefinitions) error {
 	if flagOneLine {
-		return renderListView(c, resp, func(r *processdefinition.ResultsProcessDefinition) *[]processdefinition.ProcessDefinition {
-			return &r.Items
+		return renderListViewV(c, resp, func(r processdefinition.ProcessDefinitions) []processdefinition.ProcessDefinition {
+			return r.Items
 		}, oneLineProcessDefinitionView)
 	}
-	return listJSONView(c, resp, func(r *processdefinition.ResultsProcessDefinition) *[]processdefinition.ProcessDefinition {
-		return &r.Items
+	return listJSONViewV(c, resp, func(r processdefinition.ProcessDefinitions) []processdefinition.ProcessDefinition {
+		return r.Items
 	})
 }
 
-func keyOnlyProcessDefinitionView(c *cobra.Command, item *processdefinition.ProcessDefinition) error {
-	if item == nil {
-		return nil
-	}
+func keyOnlyProcessDefinitionView(c *cobra.Command, item processdefinition.ProcessDefinition) error {
 	c.Println(item.Key)
 	return nil
 }
 
-func processDefinitionView(c *cobra.Command, item *processdefinition.ProcessDefinition) error {
+func processDefinitionView(c *cobra.Command, item processdefinition.ProcessDefinition) error {
 	if flagOneLine {
 		return oneLineProcessDefinitionView(c, item)
 	}
 	if flagKeysOnly {
 		return keyOnlyProcessDefinitionView(c, item)
 	}
-	if item == nil {
-		c.Println("{}")
-		return nil
-	}
 	c.Println(ToJSONString(item))
 	return nil
 }
 
-func oneLineProcessDefinitionView(c *cobra.Command, item *processdefinition.ProcessDefinition) error {
-	if item == nil {
-		return nil
-	}
-
+func oneLineProcessDefinitionView(c *cobra.Command, item processdefinition.ProcessDefinition) error {
 	vTag := ""
 	if item.VersionTag != "" {
 		vTag = "/" + item.VersionTag
 	}
-
 	out := fmt.Sprintf("%-16d %s %s v%s%s",
 		item.Key, item.TenantId, item.BpmnProcessId, version, vTag,
 	)
@@ -149,6 +115,13 @@ func listJSONView[Resp any, Item any](c *cobra.Command, resp *Resp, itemsOf func
 		return nil
 	}
 	printFound(c, itemsOf(resp))
+	c.Println(ToJSONString(resp))
+	return nil
+}
+
+func listJSONViewV[Resp any, Item any](c *cobra.Command, resp Resp, itemsOf func(Resp) []Item) error {
+	items := itemsOf(resp)
+	printFoundV(c, items)
 	c.Println(ToJSONString(resp))
 	return nil
 }
@@ -173,12 +146,32 @@ func renderListView[Resp any, Item any](c *cobra.Command, resp *Resp, itemsOf fu
 	return nil
 }
 
+func renderListViewV[Resp any, Item any](c *cobra.Command, resp Resp, itemsOf func(Resp) []Item,
+	render func(*cobra.Command, Item) error) error {
+	items := itemsOf(resp)
+	if len(items) == 0 {
+		c.Println("found: 0")
+		return nil
+	}
+	c.Println("found:", len(items))
+	for _, it := range items {
+		if err := render(c, it); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func printFound[T any](c *cobra.Command, items *[]T) {
 	if items == nil {
 		c.Println("found: 0")
 		return
 	}
 	c.Println("found:", len(*items))
+}
+
+func printFoundV[T any](c *cobra.Command, items []T) {
+	c.Println("found:", len(items))
 }
 
 func printFilter(c *cobra.Command) {

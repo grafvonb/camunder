@@ -8,27 +8,27 @@ import (
 
 type API interface {
 	camunda.Base
-	GetProcessDefinitionByKey(ctx context.Context, key int64) (*ProcessDefinition, error)
-	SearchProcessDefinitions(ctx context.Context, filter SearchFilterOpts, size int32) (*ResultsProcessDefinition, error)
+	GetProcessDefinitionByKey(ctx context.Context, key int64) (ProcessDefinition, error)
+	SearchProcessDefinitions(ctx context.Context, filter SearchFilterOpts, size int32) (ProcessDefinitions, error)
 }
 
 type ProcessDefinition struct {
-	BpmnProcessId string
-	Key           int64
-	Name          string
-	TenantId      string
-	Version       int32
-	VersionTag    string
+	BpmnProcessId string `json:"bpmnProcessId,omitempty"`
+	Key           int64  `json:"key,omitempty"`
+	Name          string `json:"name,omitempty"`
+	TenantId      string `json:"tenantId,omitempty"`
+	Version       int32  `json:"version,omitempty"`
+	VersionTag    string `json:"versionTag,omitempty"`
 }
 
 type SearchFilterOpts struct {
-	Key           int64
-	BpmnProcessId string
-	Version       int32
-	VersionTag    string
+	Key           int64  `json:"key,omitempty"`
+	BpmnProcessId string `json:"bpmnProcessId,omitempty"`
+	Version       int32  `json:"version,omitempty"`
+	VersionTag    string `json:"versionTag,omitempty"`
 }
 
-type ResultsProcessDefinition struct {
-	Total int32
-	Items []ProcessDefinition
+type ProcessDefinitions struct {
+	Total int32               `json:"total,omitempty"`
+	Items []ProcessDefinition `json:"items,omitempty"`
 }
