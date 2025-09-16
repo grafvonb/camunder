@@ -109,6 +109,7 @@ func oneLineProcessDefinitionView(c *cobra.Command, item processdefinition.Proce
 	return nil
 }
 
+//nolint:unused
 func listJSONView[Resp any, Item any](c *cobra.Command, resp *Resp, itemsOf func(*Resp) *[]Item) error {
 	if resp == nil {
 		c.Println("{}")
@@ -126,6 +127,7 @@ func listJSONViewV[Resp any, Item any](c *cobra.Command, resp Resp, itemsOf func
 	return nil
 }
 
+//nolint:unused
 func renderListView[Resp any, Item any](c *cobra.Command, resp *Resp, itemsOf func(*Resp) *[]Item,
 	render func(*cobra.Command, *Item) error) error {
 	if resp == nil {
@@ -162,6 +164,7 @@ func renderListViewV[Resp any, Item any](c *cobra.Command, resp Resp, itemsOf fu
 	return nil
 }
 
+//nolint:unused
 func printFound[T any](c *cobra.Command, items *[]T) {
 	if items == nil {
 		c.Println("found: 0")
@@ -202,6 +205,7 @@ func printFilter(c *cobra.Command) {
 	}
 }
 
+//nolint:unused
 func valueOr[T any](ptr *T, def T) T {
 	if ptr != nil {
 		return *ptr

@@ -148,6 +148,10 @@ var getCmd = &cobra.Command{
 				}
 				if flagOrphanParentsOnly {
 					pisr.Items, err = svc.FilterProcessInstanceWithOrphanParent(cmd.Context(), pisr.Items)
+					if err != nil {
+						cmd.PrintErrf("error filtering orphan parents: %v\n", err)
+						return
+					}
 				}
 				if flagIncidentsOnly {
 					pisr = pisr.FilterByHavingIncidents(true)
