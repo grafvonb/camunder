@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/grafvonb/camunder/internal/logging"
 	"github.com/grafvonb/camunder/internal/services/cluster"
 	"github.com/grafvonb/camunder/internal/services/common"
 	"github.com/grafvonb/camunder/internal/services/processdefinition"
@@ -53,6 +55,7 @@ var getCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Aliases: []string{"g", "list", "ls", "g"},
 	Run: func(cmd *cobra.Command, args []string) {
+		log := logging.FromContext(cmd.Context())
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())
 		if err != nil {
@@ -62,6 +65,7 @@ var getCmd = &cobra.Command{
 
 		switch rn {
 		case "cluster-topology", "ct":
+			log.Debug("fetching cluster topology")
 			svc, err := cluster.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating cluster service: %v\n", err)
@@ -75,6 +79,7 @@ var getCmd = &cobra.Command{
 			cmd.Println(ToJSONString(topology))
 
 		case "process-definition", "pd":
+			log.Debug("fetching process definitions")
 			searchFilterOpts := populatePDSearchFilterOpts()
 			svc, err := processdefinition.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, flagQuiet)
 			if err != nil {
@@ -82,6 +87,7 @@ var getCmd = &cobra.Command{
 				return
 			}
 			if searchFilterOpts.Key > 0 {
+				log.Debug(fmt.Sprintf("searching by key: %d", searchFilterOpts.Key))
 				pd, err := svc.GetProcessDefinitionByKey(cmd.Context(), searchFilterOpts.Key)
 				if err != nil {
 					cmd.PrintErrf("error fetching process definition by key %d: %v\n", searchFilterOpts.Key, err)
@@ -93,6 +99,7 @@ var getCmd = &cobra.Command{
 					return
 				}
 			} else {
+				log.Debug(fmt.Sprintf("searching by filter: %v", searchFilterOpts))
 				pdsr, err := svc.SearchProcessDefinitions(cmd.Context(), searchFilterOpts, maxSearchSize)
 				if err != nil {
 					cmd.PrintErrf("error fetching process definitions: %v\n", err)
@@ -112,6 +119,7 @@ var getCmd = &cobra.Command{
 			}
 
 		case "process-instance", "pi":
+			log.Debug("fetching process instances")
 			searchFilterOpts := populatePISearchFilterOpts()
 			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, flagQuiet)
 			if err != nil {
@@ -120,6 +128,7 @@ var getCmd = &cobra.Command{
 			}
 			printFilter(cmd)
 			if searchFilterOpts.Key > 0 {
+				log.Debug(fmt.Sprintf("searching by key: %d", searchFilterOpts.Key))
 				pi, err := svc.GetProcessInstanceByKey(cmd.Context(), searchFilterOpts.Key)
 				if err != nil {
 					cmd.PrintErrf("error fetching process instance by key %d: %v\n", searchFilterOpts.Key, err)
@@ -130,7 +139,9 @@ var getCmd = &cobra.Command{
 					cmd.PrintErrf("error rendering key-only view: %v\n", err)
 					return
 				}
+				log.Debug(fmt.Sprintf("searched by key, found process instance with key: %d", pi.Key))
 			} else {
+				log.Debug(fmt.Sprintf("searching by filter: %v", searchFilterOpts))
 				pisr, err := svc.SearchForProcessInstances(cmd.Context(), searchFilterOpts, maxSearchSize)
 				if err != nil {
 					cmd.PrintErrf("error fetching process instances: %v\n", err)
@@ -170,6 +181,7 @@ var getCmd = &cobra.Command{
 				if err != nil {
 					cmd.PrintErrf("error rendering items view: %v\n", err)
 				}
+				log.Debug(fmt.Sprintf("fetched process instances: %d", pisr.Total))
 			}
 
 		default:

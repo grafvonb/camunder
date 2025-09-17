@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafvonb/camunder/internal/config"
+	"github.com/grafvonb/camunder/internal/logging"
 	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/internal/services/httpc"
 	"github.com/grafvonb/camunder/pkg/camunda"
@@ -52,6 +53,14 @@ var rootCmd = &cobra.Command{
 			cmd.Println(cfg.String())
 			os.Exit(0)
 		}
+		// Setup logger
+		log := logging.New(logging.LoggerConfig{
+			Level:      v.GetString("log.level"),
+			Format:     v.GetString("log.format"),
+			WithSource: v.GetBool("log.with_source"),
+		})
+		cmd.SetContext(logging.ToContext(cmd.Context(), log))
+
 		// setup http service
 		httpSvc, err := httpc.New(cfg, httpc.WithQuietEnabled(flagQuiet))
 		if err != nil {
@@ -92,6 +101,10 @@ func init() {
 
 	pf.String("config", "", "path to config file")
 
+	pf.String("log-level", "info", "log level (debug, info, warn, error)")
+	pf.String("log-format", "plain", "log format (json, plain, text)")
+	pf.Bool("log-with-source", false, "include source file and line number in logs")
+
 	pf.String("tenant", "", "default tenant ID")
 
 	pf.String("auth-token-url", "", "auth token URL")
@@ -118,6 +131,11 @@ func initViper(v *viper.Viper, cmd *cobra.Command) error {
 	// Resolve precedence: flags > env > config file > defaults
 	fs := cmd.Flags()
 	_ = v.BindPFlag("config", fs.Lookup("config"))
+
+	_ = v.BindPFlag("log.level", fs.Lookup("log-level"))
+	_ = v.BindPFlag("log.format", fs.Lookup("log-format"))
+	_ = v.BindPFlag("log.with_source", fs.Lookup("log-with-source"))
+
 	_ = v.BindPFlag("app.tenant", fs.Lookup("tenant"))
 	_ = v.BindPFlag("auth.token_url", fs.Lookup("auth-token-url"))
 	_ = v.BindPFlag("auth.client_id", fs.Lookup("auth-client-id"))
