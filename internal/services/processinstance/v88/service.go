@@ -80,7 +80,7 @@ func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (proce
 	return ret, nil
 }
 
-func (s *Service) WaitForProcessInstanceState(ctx context.Context, key string, desiredState string) error {
+func (s *Service) WaitForProcessInstanceState(ctx context.Context, key int64, desiredState processinstance.State) error {
 	panic("not implemented in v88")
 }
 

@@ -3,6 +3,7 @@ package cmd
 import (
 	"strings"
 
+	"github.com/grafvonb/camunder/internal/logging"
 	"github.com/grafvonb/camunder/internal/services/common"
 	"github.com/grafvonb/camunder/internal/services/processinstance"
 	piapi "github.com/grafvonb/camunder/pkg/camunda/processinstance"
@@ -30,6 +31,7 @@ var walkCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Aliases: []string{"w", "traverse"},
 	Run: func(cmd *cobra.Command, args []string) {
+		log := logging.FromContext(cmd.Context())
 		if !validWalkModes[flagWalkMode] {
 			cmd.PrintErrf("invalid value for --walk: %q (must be parent, children, or family)", flagWalkMode)
 			return
@@ -42,7 +44,7 @@ var walkCmd = &cobra.Command{
 		}
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, flagQuiet)
+			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating walk service: %v\n", err)
 				return

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -18,14 +19,6 @@ var (
 	defaultBackoffMaxRetries   = 0 // 0 = unlimited
 	defaultBackoffTimeout      = 2 * time.Minute
 )
-
-func AddApiCommandsFlagsAndBindings(cmd *cobra.Command, v *viper.Viper) {
-	// fs := cmd.PersistentFlags()
-
-	// fs.String("api-url", "", "Base URL of the Camunda 8 API (e.g. https://operate.camunda.io/your-cluster-id)")
-	// _ = v.BindPFlag("app.api.url", fs.Lookup("api-url"))
-	// v.SetDefault("app.api.url", "")
-}
 
 func AddBackoffFlagsAndBindings(cmd *cobra.Command, v *viper.Viper) {
 	fs := cmd.PersistentFlags()
@@ -50,4 +43,13 @@ func AddBackoffFlagsAndBindings(cmd *cobra.Command, v *viper.Viper) {
 	v.SetDefault("app.backoff.max_retries", defaultBackoffMaxRetries)
 	v.SetDefault("app.backoff.multiplier", defaultBackoffMultiplier)
 	v.SetDefault("app.backoff.timeout", defaultBackoffTimeout)
+}
+
+func requireAnyFlag(cmd *cobra.Command, flags ...string) error {
+	for _, f := range flags {
+		if cmd.Flags().Changed(f) {
+			return nil
+		}
+	}
+	return fmt.Errorf("one of %v must be provided", flags)
 }

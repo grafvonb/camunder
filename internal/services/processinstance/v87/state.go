@@ -3,7 +3,6 @@ package v87
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -22,16 +21,8 @@ func StateOrNil(s processinstance.State) *operatev87.ProcessInstanceState {
 // WaitForProcessInstanceState waits until the instance reaches the desired state.
 // - Respects ctx cancellation/deadline; augments with cfg.Timeout if set
 // - Returns nil on success or an error on failure/timeout.
-func (s *Service) WaitForProcessInstanceState(ctx context.Context, key string, desiredState string) error {
-	desiredStr, err := processinstance.ParseState(desiredState)
-	if err != nil {
-		return err
-	}
-
-	keyInt, err := strconv.ParseInt(key, 10, 64)
-	if err != nil {
-		return fmt.Errorf("cannot parse provided instance key %q to int64: %w", key, err)
-	}
+func (s *Service) WaitForProcessInstanceState(ctx context.Context, key int64, desiredState processinstance.State) error {
+	log := s.log
 
 	cfg := s.cfg.App.Backoff
 	if cfg.Timeout > 0 {
@@ -52,29 +43,22 @@ func (s *Service) WaitForProcessInstanceState(ctx context.Context, key string, d
 		}
 		attempts++
 
-		pi, errInDelay := s.GetProcessInstanceByKey(ctx, keyInt)
+		pi, errInDelay := s.GetProcessInstanceByKey(ctx, key)
 		if errInDelay == nil {
-			state := ""
-			if pi.State != "" {
-				state = string(pi.State)
-			}
-			if strings.ToLower(state) == desiredStr.String() {
-				if !s.isQuiet {
-					fmt.Printf("process instance %q reached desired state %q\n", key, state)
-				}
+			if pi.State.EqualsIgnoreCase(desiredState) {
+				log.Info(fmt.Sprintf("process instance %d reached desired state %q", key, desiredState))
 				return nil
 			}
-			if !s.isQuiet {
-				fmt.Printf("process instance %q currently in state %q; waiting...\n", key, state)
-			}
+			log.Debug(fmt.Sprintf("process instance %d currently in state %q; waiting...", key, pi.State))
 		} else if errInDelay != nil {
-			if !s.isQuiet {
-				fmt.Printf("fetching state for %q failed: %v (will retry)\n", key, errInDelay)
+			if strings.Contains(errInDelay.Error(), "status 404") {
+				log.Debug(fmt.Sprintf("process instance %d is absent (not found); waiting...", key))
+			} else {
+				log.Error(fmt.Sprintf("fetching state for %q failed: %v (will retry)", key, errInDelay))
 			}
 		}
-
 		if cfg.MaxRetries > 0 && attempts >= cfg.MaxRetries {
-			return fmt.Errorf("exceeded max_retries (%d) waiting for state %q", cfg.MaxRetries, desiredStr)
+			return fmt.Errorf("exceeded max_retries (%d) waiting for state %q", cfg.MaxRetries, desiredState)
 		}
 		select {
 		case <-time.After(delay):

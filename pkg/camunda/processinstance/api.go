@@ -20,7 +20,7 @@ type API interface {
 	FilterProcessInstanceWithOrphanParent(ctx context.Context, items []ProcessInstance) ([]ProcessInstance, error)
 	DeleteProcessInstance(ctx context.Context, key int64) (ChangeStatus, error)
 	DeleteProcessInstanceWithCancel(ctx context.Context, key int64) (ChangeStatus, error)
-	WaitForProcessInstanceState(ctx context.Context, key string, desiredState string) error
+	WaitForProcessInstanceState(ctx context.Context, key int64, desiredState State) error
 }
 
 type ProcessInstance struct {
@@ -68,6 +68,10 @@ type SearchFilterOpts struct {
 
 // State is the process-instance state filter.
 type State string
+
+func (s State) EqualsIgnoreCase(other State) bool {
+	return strings.EqualFold(string(s), string(other))
+}
 
 const (
 	StateAll       State = "all"

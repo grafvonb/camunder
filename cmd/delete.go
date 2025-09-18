@@ -3,6 +3,7 @@ package cmd
 import (
 	"strings"
 
+	"github.com/grafvonb/camunder/internal/logging"
 	"github.com/grafvonb/camunder/internal/services/common"
 	"github.com/grafvonb/camunder/internal/services/processinstance"
 	piapi "github.com/grafvonb/camunder/pkg/camunda/processinstance"
@@ -26,6 +27,7 @@ var deleteCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Aliases: []string{"d", "del", "remove", "rm"},
 	Run: func(cmd *cobra.Command, args []string) {
+		log := logging.FromContext(cmd.Context())
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())
 		if err != nil {
@@ -34,7 +36,7 @@ var deleteCmd = &cobra.Command{
 		}
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, flagQuiet)
+			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return

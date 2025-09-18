@@ -3,6 +3,7 @@ package cmd
 import (
 	"strings"
 
+	"github.com/grafvonb/camunder/internal/logging"
 	"github.com/grafvonb/camunder/internal/services/common"
 	"github.com/grafvonb/camunder/internal/services/processinstance"
 	"github.com/spf13/cobra"
@@ -24,6 +25,7 @@ var cancelCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Aliases: []string{"c", "cn", "stop", "abort"},
 	Run: func(cmd *cobra.Command, args []string) {
+		log := logging.FromContext(cmd.Context())
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())
 		if err != nil {
@@ -33,7 +35,7 @@ var cancelCmd = &cobra.Command{
 
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, flagQuiet)
+			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log, flagQuiet)
 			if err != nil {
 				cmd.PrintErrf("error creating process instance service: %v\n", err)
 				return

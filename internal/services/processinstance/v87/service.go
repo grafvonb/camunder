@@ -3,6 +3,7 @@ package v87
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,6 +26,7 @@ type Service struct {
 	oc      *operatev87.ClientWithResponses
 	auth    *auth.Service
 	cfg     *config.Config
+	log     *slog.Logger
 	isQuiet bool
 }
 
@@ -36,7 +38,7 @@ func WithQuietEnabled(enabled bool) Option {
 	}
 }
 
-func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
+func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, logger *slog.Logger, opts ...Option) (*Service, error) {
 	cc, err := camundav87.NewClientWithResponses(
 		cfg.APIs.Camunda.BaseURL,
 		camundav87.WithHTTPClient(httpClient),
@@ -56,6 +58,7 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 		cc:   cc,
 		auth: auth,
 		cfg:  cfg,
+		log:  logger,
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -216,7 +219,7 @@ func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key int64
 		if !s.isQuiet {
 			fmt.Printf("waiting for process instance with key %d to be cancelled by workflow engine...\n", key)
 		}
-		if err = s.WaitForProcessInstanceState(ctx, strconv.Itoa(int(key)), processinstance.StateCanceled.String()); err != nil {
+		if err = s.WaitForProcessInstanceState(ctx, key, processinstance.StateCanceled); err != nil {
 			return processinstance.ChangeStatus{}, fmt.Errorf("waiting for canceled state failed for %d: %w", key, err)
 		}
 
