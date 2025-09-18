@@ -13,13 +13,13 @@ import (
 	"github.com/grafvonb/camunder/pkg/camunda/processinstance"
 )
 
-func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, logger *slog.Logger, quiet bool) (processinstance.API, error) {
+func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *slog.Logger) (processinstance.API, error) {
 	v := cfg.APIs.Version
 	switch v {
 	case camunda.V88:
-		return v88.New(cfg, httpClient, auth, v88.WithQuietEnabled(quiet))
+		return v88.New(cfg, httpClient, auth, log)
 	case camunda.V87:
-		return v87.New(cfg, httpClient, auth, logger, v87.WithQuietEnabled(quiet))
+		return v87.New(cfg, httpClient, auth, log)
 	default:
 		return nil, fmt.Errorf("%w: %q (supported: %v)", camunda.ErrUnknownAPIVersion, v, camunda.Supported())
 	}

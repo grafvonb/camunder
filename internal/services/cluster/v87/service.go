@@ -3,6 +3,7 @@ package v87
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	camundav87 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda/v87"
@@ -14,21 +15,15 @@ import (
 )
 
 type Service struct {
-	c       *camundav87.ClientWithResponses
-	auth    *auth.Service
-	cfg     *config.Config
-	isQuiet bool
+	c    *camundav87.ClientWithResponses
+	auth *auth.Service
+	cfg  *config.Config
+	log  *slog.Logger
 }
 
 type Option func(*Service)
 
-func WithQuietEnabled(enabled bool) Option {
-	return func(s *Service) {
-		s.isQuiet = enabled
-	}
-}
-
-func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
+func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *slog.Logger, opts ...Option) (*Service, error) {
 	c, err := camundav87.NewClientWithResponses(
 		cfg.APIs.Camunda.BaseURL,
 		camundav87.WithHTTPClient(httpClient),
@@ -40,6 +35,7 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 		c:    c,
 		cfg:  cfg,
 		auth: auth,
+		log:  log,
 	}
 	for _, opt := range opts {
 		opt(s)

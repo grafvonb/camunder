@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +28,7 @@ var versionCmd = &cobra.Command{
 			cmd.Println(ToJSONString(out))
 			return
 		}
-		fmt.Printf("Camunder version %s, commit %s, built at %s\n", version, commit, date)
+		cmd.Printf("Camunder version %s, commit %s, built at %s\n", version, commit, date)
 	},
 }
 

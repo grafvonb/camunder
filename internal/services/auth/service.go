@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,21 +27,15 @@ var (
 type Service struct {
 	c   *auth.ClientWithResponses
 	cfg *config.Config
+	log *slog.Logger
 
-	mu      sync.Mutex
-	cache   map[string]string
-	isQuiet bool
+	mu    sync.Mutex
+	cache map[string]string
 }
 
 type Option func(*Service)
 
-func WithQuietEnabled(enabled bool) Option {
-	return func(s *Service) {
-		s.isQuiet = enabled
-	}
-}
-
-func New(cfg *config.Config, httpClient *http.Client, opts ...Option) (*Service, error) {
+func New(cfg *config.Config, httpClient *http.Client, log *slog.Logger, opts ...Option) (*Service, error) {
 	if cfg == nil {
 		return nil, errors.New("cfg is nil")
 	}
@@ -54,6 +49,7 @@ func New(cfg *config.Config, httpClient *http.Client, opts ...Option) (*Service,
 	s := &Service{
 		c:     c,
 		cfg:   cfg,
+		log:   log,
 		cache: make(map[string]string),
 	}
 	for _, opt := range opts {

@@ -45,8 +45,8 @@ func New(cfg LoggerConfig) *slog.Logger {
 	return slog.New(handler)
 }
 
-func ToContext(ctx context.Context, logger *slog.Logger) context.Context {
-	return context.WithValue(ctx, ctxKey{}, logger)
+func ToContext(ctx context.Context, log *slog.Logger) context.Context {
+	return context.WithValue(ctx, ctxKey{}, log)
 }
 
 func FromContext(ctx context.Context) *slog.Logger {

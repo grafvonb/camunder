@@ -17,7 +17,6 @@ import (
 )
 
 var (
-	flagQuiet      bool // quiet mode, suppress output, use exit code only
 	flagShowConfig bool // show effective config and exit
 )
 
@@ -62,13 +61,13 @@ var rootCmd = &cobra.Command{
 		cmd.SetContext(logging.ToContext(cmd.Context(), log))
 
 		// setup http service
-		httpSvc, err := httpc.New(cfg, httpc.WithQuietEnabled(flagQuiet))
+		httpSvc, err := httpc.New(cfg, log)
 		if err != nil {
 			return fmt.Errorf("create http service: %w", err)
 		}
 		cmd.SetContext(httpSvc.ToContext(cmd.Context()))
 		// setup auth service
-		authSvc, err := auth.New(cfg, httpSvc.Client(), auth.WithQuietEnabled(flagQuiet))
+		authSvc, err := auth.New(cfg, httpSvc.Client(), log)
 		if err != nil {
 			return fmt.Errorf("create auth service: %w", err)
 		}
@@ -118,8 +117,6 @@ func init() {
 	pf.String("camunda-base-url", "", "Camunda API base URL")
 	pf.String("operate-base-url", "", "Operate API base URL")
 	pf.String("tasklist-base-url", "", "Tasklist API base URL")
-
-	pf.BoolVar(&flagQuiet, "quiet", false, "suppress output, use exit code only")
 
 	// TODO show-config flag should be in a "config" subcommand
 	pf.BoolVar(&flagShowConfig, "show-config", false, "print effective config (secrets redacted)")

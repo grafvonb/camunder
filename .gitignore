@@ -45,7 +45,7 @@ build/
 api/**/gen/
 
 # local build artifacts from Makefile
-/bin/
+bin/
 
 # macos / windows explorer cruft
 .DS_Store

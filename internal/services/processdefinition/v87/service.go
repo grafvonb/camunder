@@ -3,6 +3,7 @@ package v87
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/grafvonb/camunder/internal/api/convert"
@@ -15,21 +16,15 @@ import (
 )
 
 type Service struct {
-	c       *operatev87.ClientWithResponses
-	auth    *auth.Service
-	cfg     *config.Config
-	isQuiet bool
+	c    *operatev87.ClientWithResponses
+	auth *auth.Service
+	cfg  *config.Config
+	log  *slog.Logger
 }
 
 type Option func(*Service)
 
-func WithQuietEnabled(enabled bool) Option {
-	return func(s *Service) {
-		s.isQuiet = enabled
-	}
-}
-
-func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts ...Option) (*Service, error) {
+func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *slog.Logger, opts ...Option) (*Service, error) {
 	c, err := operatev87.NewClientWithResponses(
 		cfg.APIs.Operate.BaseURL,
 		operatev87.WithHTTPClient(httpClient),
@@ -41,6 +36,7 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, opts .
 		c:    c,
 		cfg:  cfg,
 		auth: auth,
+		log:  log,
 	}
 	for _, opt := range opts {
 		opt(s)

@@ -41,7 +41,7 @@ var expectCmd = &cobra.Command{
 
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log, flagQuiet)
+			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
 			if err != nil {
 				log.Error(fmt.Sprintf("error creating process instance service: %v", err))
 				return

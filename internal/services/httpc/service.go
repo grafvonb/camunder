@@ -3,6 +3,7 @@ package httpc
 import (
 	"context"
 	"errors"
+	"log/slog"
 	nethttp "net/http"
 	"time"
 
@@ -17,17 +18,10 @@ var (
 type Service struct {
 	c   *nethttp.Client
 	cfg *config.Config
-
-	isQuiet bool
+	log *slog.Logger
 }
 
 type Option func(*Service)
-
-func WithQuietEnabled(enabled bool) Option {
-	return func(s *Service) {
-		s.isQuiet = enabled
-	}
-}
 
 // WithTimeout sets the timeout directly.
 func WithTimeout(d time.Duration) Option {
@@ -49,7 +43,7 @@ func WithTimeoutString(v string) Option {
 	}
 }
 
-func New(cfg *config.Config, opts ...Option) (*Service, error) {
+func New(cfg *config.Config, log *slog.Logger, opts ...Option) (*Service, error) {
 	if cfg == nil {
 		return nil, errors.New("cfg is nil")
 	}
@@ -64,6 +58,7 @@ func New(cfg *config.Config, opts ...Option) (*Service, error) {
 	s := &Service{
 		c:   httpClient,
 		cfg: cfg,
+		log: log,
 	}
 	for _, opt := range opts {
 		opt(s)
