@@ -72,7 +72,7 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("create auth service: %w", err)
 		}
 		if err := authSvc.Warmup(cmd.Context()); err != nil {
-			cmd.PrintErrf("warming up auth service: %v\n", err)
+			log.Error(fmt.Sprintf("warming up auth service: %v", err))
 			return err
 		}
 		cmd.SetContext(authSvc.ToContext(cmd.Context()))

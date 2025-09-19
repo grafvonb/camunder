@@ -59,7 +59,7 @@ var getCmd = &cobra.Command{
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())
 		if err != nil {
-			cmd.PrintErrf("%v\n", err)
+			log.Error(fmt.Sprintf("%v", err))
 			return
 		}
 
@@ -68,12 +68,12 @@ var getCmd = &cobra.Command{
 			log.Debug("fetching cluster topology")
 			svc, err := cluster.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
 			if err != nil {
-				cmd.PrintErrf("error creating cluster service: %v\n", err)
+				log.Error(fmt.Sprintf("error creating cluster service: %v", err))
 				return
 			}
 			topology, err := svc.GetClusterTopology(cmd.Context())
 			if err != nil {
-				cmd.PrintErrf("error fetching topology: %v\n", err)
+				log.Error(fmt.Sprintf("error fetching topology: %v", err))
 				return
 			}
 			cmd.Println(ToJSONString(topology))
@@ -83,38 +83,38 @@ var getCmd = &cobra.Command{
 			searchFilterOpts := populatePDSearchFilterOpts()
 			svc, err := processdefinition.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
 			if err != nil {
-				cmd.PrintErrf("error creating process definition service: %v\n", err)
+				log.Error(fmt.Sprintf("error creating process definition service: %v", err))
 				return
 			}
 			if searchFilterOpts.Key > 0 {
 				log.Debug(fmt.Sprintf("searching by key: %d", searchFilterOpts.Key))
 				pd, err := svc.GetProcessDefinitionByKey(cmd.Context(), searchFilterOpts.Key)
 				if err != nil {
-					cmd.PrintErrf("error fetching process definition by key %d: %v\n", searchFilterOpts.Key, err)
+					log.Error(fmt.Sprintf("error fetching process definition by key %d: %v", searchFilterOpts.Key, err))
 					return
 				}
 				err = processDefinitionView(cmd, pd)
 				if err != nil {
-					cmd.PrintErrf("error rendering key-only view: %v\n", err)
+					log.Error(fmt.Sprintf("error rendering key-only view: %v", err))
 					return
 				}
 			} else {
 				log.Debug(fmt.Sprintf("searching by filter: %v", searchFilterOpts))
 				pdsr, err := svc.SearchProcessDefinitions(cmd.Context(), searchFilterOpts, maxSearchSize)
 				if err != nil {
-					cmd.PrintErrf("error fetching process definitions: %v\n", err)
+					log.Error(fmt.Sprintf("error fetching process definitions: %v", err))
 					return
 				}
 				if flagKeysOnly {
 					err = listKeyOnlyProcessDefinitionsView(cmd, pdsr)
 					if err != nil {
-						cmd.PrintErrf("error rendering keys-only view: %v\n", err)
+						log.Error(fmt.Sprintf("error rendering keys-only view: %v", err))
 					}
 					return
 				}
 				err = listProcessDefinitionsView(cmd, pdsr)
 				if err != nil {
-					cmd.PrintErrf("error rendering items view: %v\n", err)
+					log.Error(fmt.Sprintf("error rendering items view: %v", err))
 				}
 			}
 
@@ -123,7 +123,7 @@ var getCmd = &cobra.Command{
 			searchFilterOpts := populatePISearchFilterOpts()
 			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
 			if err != nil {
-				cmd.PrintErrf("error creating process instance service: %v\n", err)
+				log.Error(fmt.Sprintf("error creating process instance service: %v", err))
 				return
 			}
 			printFilter(cmd)
@@ -131,12 +131,12 @@ var getCmd = &cobra.Command{
 				log.Debug(fmt.Sprintf("searching by key: %d", searchFilterOpts.Key))
 				pi, err := svc.GetProcessInstanceByKey(cmd.Context(), searchFilterOpts.Key)
 				if err != nil {
-					cmd.PrintErrf("error fetching process instance by key %d: %v\n", searchFilterOpts.Key, err)
+					log.Error(fmt.Sprintf("error fetching process instance by key %d: %v", searchFilterOpts.Key, err))
 					return
 				}
 				err = processInstanceView(cmd, pi)
 				if err != nil {
-					cmd.PrintErrf("error rendering key-only view: %v\n", err)
+					log.Error(fmt.Sprintf("error rendering key-only view: %v", err))
 					return
 				}
 				log.Debug(fmt.Sprintf("searched by key, found process instance with key: %d", pi.Key))
@@ -144,11 +144,11 @@ var getCmd = &cobra.Command{
 				log.Debug(fmt.Sprintf("searching by filter: %v", searchFilterOpts))
 				pisr, err := svc.SearchForProcessInstances(cmd.Context(), searchFilterOpts, maxSearchSize)
 				if err != nil {
-					cmd.PrintErrf("error fetching process instances: %v\n", err)
+					log.Error(fmt.Sprintf("error fetching process instances: %v", err))
 					return
 				}
 				if flagChildrenOnly && flagParentsOnly {
-					cmd.PrintErrf("using both --children-only and --parents-only filters returns always no results\n")
+					log.Error("using both --children-only and --parents-only filters returns always no results")
 					return
 				}
 				if flagChildrenOnly {
@@ -160,7 +160,7 @@ var getCmd = &cobra.Command{
 				if flagOrphanParentsOnly {
 					pisr.Items, err = svc.FilterProcessInstanceWithOrphanParent(cmd.Context(), pisr.Items)
 					if err != nil {
-						cmd.PrintErrf("error filtering orphan parents: %v\n", err)
+						log.Error(fmt.Sprintf("error filtering orphan parents: %v", err))
 						return
 					}
 				}
@@ -173,20 +173,19 @@ var getCmd = &cobra.Command{
 				if flagKeysOnly {
 					err = listKeyOnlyProcessInstancesView(cmd, pisr)
 					if err != nil {
-						cmd.PrintErrf("error rendering keys-only view: %v\n", err)
+						log.Error(fmt.Sprintf("error rendering keys-only view: %v", err))
 					}
 					return
 				}
 				err = listProcessInstancesView(cmd, pisr)
 				if err != nil {
-					cmd.PrintErrf("error rendering items view: %v\n", err)
+					log.Error(fmt.Sprintf("error rendering items view: %v", err))
 				}
 				log.Debug(fmt.Sprintf("fetched process instances: %d", pisr.Total))
 			}
 
 		default:
-			cmd.PrintErrf("unknown resource type: %s\n", rn)
-			cmd.Println(supportedResourcesForGet.PrettyString())
+			log.Error(fmt.Sprintf("unknown resource type: %s, supported: %s", rn, supportedResourcesForGet))
 		}
 	},
 }

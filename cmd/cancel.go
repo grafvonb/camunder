@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/grafvonb/camunder/internal/logging"
@@ -29,7 +30,7 @@ var cancelCmd = &cobra.Command{
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())
 		if err != nil {
-			cmd.PrintErrf("%v\n", err)
+			log.Error(fmt.Sprintf("%v", err))
 			return
 		}
 
@@ -37,17 +38,16 @@ var cancelCmd = &cobra.Command{
 		case "process-instance", "pi":
 			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
 			if err != nil {
-				cmd.PrintErrf("error creating process instance service: %v\n", err)
+				log.Error(fmt.Sprintf("creating process instance service: %v", err))
 				return
 			}
 			_, err = svc.CancelProcessInstance(cmd.Context(), flagCancelKey)
 			if err != nil {
-				cmd.PrintErrf("error cancelling process instance: %v\n", err)
+				log.Error(fmt.Sprintf("cancelling process instance: %v", err))
 				return
 			}
 		default:
-			cmd.PrintErrf("error: unknown resource type: %s\n", rn)
-			cmd.Println(supportedResourcesForGet.PrettyString())
+			log.Error(fmt.Sprintf("unknown resource type: %s, supported: %s", rn, supportedResourcesForCancel))
 		}
 	},
 }

@@ -46,7 +46,7 @@ func (s *Service) WaitForProcessInstanceState(ctx context.Context, key int64, de
 		pi, errInDelay := s.GetProcessInstanceByKey(ctx, key)
 		if errInDelay == nil {
 			if pi.State.EqualsIgnoreCase(desiredState) {
-				log.Info(fmt.Sprintf("process instance %d reached desired state %q", key, desiredState))
+				log.Debug(fmt.Sprintf("process instance %d reached desired state %q", key, desiredState))
 				return nil
 			}
 			log.Debug(fmt.Sprintf("process instance %d currently in state %q; waiting...", key, pi.State))

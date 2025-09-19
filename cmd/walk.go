@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/grafvonb/camunder/internal/logging"
@@ -33,25 +34,25 @@ var walkCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log := logging.FromContext(cmd.Context())
 		if !validWalkModes[flagWalkMode] {
-			cmd.PrintErrf("invalid value for --walk: %q (must be parent, children, or family)", flagWalkMode)
+			log.Error(fmt.Sprintf("invalid value for --walk: %q (must be parent, children, or family)", flagWalkMode))
 			return
 		}
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())
 		if err != nil {
-			cmd.PrintErrf("%v\n", err)
+			log.Error(fmt.Sprintf("%v", err))
 			return
 		}
 		switch rn {
 		case "process-instance", "pi":
 			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
 			if err != nil {
-				cmd.PrintErrf("error creating walk service: %v\n", err)
+				log.Error(fmt.Sprintf("error creating walk service: %v", err))
 				return
 			}
 			walkerSvc, ok := svc.(piapi.Walker)
 			if !ok {
-				cmd.PrintErrf("walk command not supported by this API version %s\n", svcs.Config.APIs.Version)
+				log.Error(fmt.Sprintf("walk command not supported by this API version %s\n", svcs.Config.APIs.Version))
 				return
 			}
 
@@ -82,8 +83,7 @@ var walkCmd = &cobra.Command{
 			}
 			cmd.Println(path.StandardLine(chain))
 		default:
-			cmd.PrintErrf("unknown resource type: %s\n", rn)
-			cmd.Println(supportedResourcesForWalk.PrettyString())
+			log.Error(fmt.Sprintf("unknown resource type: %s, supported: %s", rn, supportedResourcesForWalk))
 		}
 	},
 }

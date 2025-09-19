@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/grafvonb/camunder/internal/logging"
@@ -31,14 +32,14 @@ var deleteCmd = &cobra.Command{
 		rn := strings.ToLower(args[0])
 		svcs, err := NewFromContext(cmd.Context())
 		if err != nil {
-			cmd.PrintErrf("%v\n", err)
+			log.Error(fmt.Sprintf("%v", err))
 			return
 		}
 		switch rn {
 		case "process-instance", "pi":
 			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
 			if err != nil {
-				cmd.PrintErrf("error creating process instance service: %v\n", err)
+				log.Error(fmt.Sprintf("creating process instance service: %v", err))
 				return
 			}
 			var pidr piapi.ChangeStatus
@@ -48,13 +49,12 @@ var deleteCmd = &cobra.Command{
 				pidr, err = svc.DeleteProcessInstance(cmd.Context(), flagDeleteKey)
 			}
 			if err != nil {
-				cmd.PrintErrf("error deleting process instance with key %d: %v\n", flagDeleteKey, err)
+				log.Error(fmt.Sprintf("deleting process instance with key %d: %v", flagDeleteKey, err))
 				return
 			}
-			cmd.Println(ToJSONString(pidr))
+			log.Debug(pidr.String())
 		default:
-			cmd.PrintErrf("unknown resource type: %s\n", rn)
-			cmd.Println(supportedResourcesForDelete.PrettyString())
+			log.Error(fmt.Sprintf("unknown resource type: %s, supported: %s", rn, supportedResourcesForDelete))
 		}
 	},
 }

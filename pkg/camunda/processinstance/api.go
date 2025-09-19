@@ -57,6 +57,10 @@ type ChangeStatus struct {
 	Message string
 }
 
+func (c ChangeStatus) String() string {
+	return fmt.Sprintf("deleted: %d, message: %s", c.Deleted, c.Message)
+}
+
 type SearchFilterOpts struct {
 	Key               int64
 	BpmnProcessId     string

@@ -10,13 +10,14 @@ import (
 )
 
 type PlainHandler struct {
-	w          io.Writer
-	level      slog.Leveler
-	withSource bool
+	w             io.Writer
+	level         slog.Leveler
+	withTimestamp bool
+	withSource    bool
 }
 
-func NewPlainHandler(w io.Writer, level slog.Leveler, withSource bool) *PlainHandler {
-	return &PlainHandler{w: w, level: level, withSource: withSource}
+func NewPlainHandler(w io.Writer, level slog.Leveler) *PlainHandler {
+	return &PlainHandler{w: w, level: level}
 }
 
 func (h *PlainHandler) Enabled(_ context.Context, lvl slog.Level) bool {
@@ -24,11 +25,16 @@ func (h *PlainHandler) Enabled(_ context.Context, lvl slog.Level) bool {
 }
 
 func (h *PlainHandler) Handle(_ context.Context, r slog.Record) error {
-	ts := r.Time.Format(time.RFC3339)
 	level := r.Level.String()
 
 	// base message
-	line := fmt.Sprintf("%s %-5s %s", ts, level, r.Message)
+	line := fmt.Sprintf("%s %s", level, r.Message)
+
+	// optional timestamp
+	if h.withTimestamp {
+		ts := r.Time.Format(time.RFC3339)
+		line = fmt.Sprintf("%s %s", ts, line)
+	}
 
 	// optional source
 	if h.withSource && r.PC != 0 {
@@ -38,6 +44,16 @@ func (h *PlainHandler) Handle(_ context.Context, r slog.Record) error {
 
 	_, err := fmt.Fprintln(h.w, line)
 	return err
+}
+
+func (h *PlainHandler) WithTimestamp(b bool) *PlainHandler {
+	h.withTimestamp = b
+	return h
+}
+
+func (h *PlainHandler) WithSource(b bool) *PlainHandler {
+	h.withSource = b
+	return h
 }
 
 func (h *PlainHandler) WithAttrs(attrs []slog.Attr) slog.Handler { return h }

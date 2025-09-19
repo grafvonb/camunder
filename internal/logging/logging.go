@@ -38,7 +38,9 @@ func New(cfg LoggerConfig) *slog.Logger {
 	case "json":
 		handler = slog.NewJSONHandler(os.Stdout, opts)
 	case "plain":
-		handler = NewPlainHandler(os.Stdout, opts.Level, opts.AddSource)
+		handler = NewPlainHandler(os.Stdout, opts.Level).
+			WithSource(cfg.WithSource).
+			WithTimestamp(lv < slog.LevelInfo)
 	default:
 		handler = slog.NewTextHandler(os.Stdout, opts)
 	}
