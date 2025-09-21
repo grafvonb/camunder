@@ -15,3 +15,9 @@ packages:
   github.com/grafvonb/camunder/internal/services/auth:
     config:
       all: true
+  github.com/grafvonb/camunder/internal/services/cluster/v87:
+    config:
+      all: true
+  github.com/grafvonb/camunder/internal/services/cluster/v88:
+    config:
+      all: true
