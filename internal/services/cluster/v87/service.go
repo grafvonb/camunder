@@ -15,13 +15,19 @@ import (
 )
 
 type Service struct {
-	c    *camundav87.ClientWithResponses
+	c    GenClusterClient
 	auth *auth.Service
 	cfg  *config.Config
 	log  *slog.Logger
 }
 
 type Option func(*Service)
+
+func WithClient(c GenClusterClient) Option {
+	return func(s *Service) {
+		s.c = c
+	}
+}
 
 func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *slog.Logger, opts ...Option) (*Service, error) {
 	c, err := camundav87.NewClientWithResponses(
@@ -64,5 +70,5 @@ func (s *Service) GetClusterTopology(ctx context.Context) (cluster.Topology, err
 }
 
 func (s *Service) Capabilities(ctx context.Context) camunda.Capabilities {
-	panic("not implemented in v88")
+	panic("not implemented in v87")
 }

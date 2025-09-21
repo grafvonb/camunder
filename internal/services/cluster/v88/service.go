@@ -15,13 +15,19 @@ import (
 )
 
 type Service struct {
-	c    *camundav88.ClientWithResponses
+	c    GenClusterClient
 	auth *auth.Service
 	cfg  *config.Config
 	log  *slog.Logger
 }
 
 type Option func(*Service)
+
+func WithClient(c GenClusterClient) Option {
+	return func(s *Service) {
+		s.c = c
+	}
+}
 
 func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *slog.Logger, opts ...Option) (*Service, error) {
 	c, err := camundav88.NewClientWithResponses(
