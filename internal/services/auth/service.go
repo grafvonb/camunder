@@ -25,7 +25,7 @@ var (
 )
 
 type Service struct {
-	c   *auth.ClientWithResponses
+	c   GenAuthClient
 	cfg *config.Config
 	log *slog.Logger
 
@@ -34,6 +34,12 @@ type Service struct {
 }
 
 type Option func(*Service)
+
+func WithClient(c GenAuthClient) Option {
+	return func(s *Service) {
+		s.c = c
+	}
+}
 
 func New(cfg *config.Config, httpClient *http.Client, log *slog.Logger, opts ...Option) (*Service, error) {
 	if cfg == nil {

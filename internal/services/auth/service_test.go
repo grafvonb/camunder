@@ -1,0 +1,144 @@
+package auth
+
+import (
+	"context"
+	"io"
+	"net/http"
+	"net/url"
+	"testing"
+
+	gen "github.com/grafvonb/camunder/internal/api/gen/clients/auth"
+	"github.com/grafvonb/camunder/internal/config"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+)
+
+type TokenJSON200 = struct {
+	AccessToken  string  `json:"access_token"`
+	ExpiresIn    int     `json:"expires_in"`
+	IdToken      *string `json:"id_token,omitempty"`
+	RefreshToken *string `json:"refresh_token,omitempty"`
+	Scope        *string `json:"scope,omitempty"`
+	TokenType    string  `json:"token_type"`
+}
+
+func testConfig() *config.Config {
+	return &config.Config{
+		Auth: config.Authentication{
+			TokenURL:     "http://localhost:8080/auth/realms/camunda-platform/protocol/openid-connect/token",
+			ClientID:     "test",
+			ClientSecret: "test",
+		},
+	}
+}
+
+func testResponse(status int, token string, raw string) *gen.RequestTokenResponse {
+	return &gen.RequestTokenResponse{
+		Body: []byte(raw),
+		JSON200: &TokenJSON200{
+			AccessToken: token,
+			TokenType:   "Bearer",
+		},
+		HTTPResponse: &http.Response{
+			StatusCode: status,
+		},
+	}
+}
+
+func newTestService(t *testing.T) (*Service, *MockGenAuthClient) {
+	t.Helper()
+	m := NewMockGenAuthClient(t)
+	s, err := New(testConfig(), nil, nil, WithClient(m))
+	require.NoError(t, err)
+	return s, m
+}
+
+func TestRetrieveTokenForAPI_SuccessAndCaches(t *testing.T) {
+	s, m := newTestService(t)
+	ctx := context.Background()
+
+	m.EXPECT().
+		RequestTokenWithBodyWithResponse(mock.Anything, formCT, mock.Anything).
+		Run(func(ctx context.Context, contentType string, body io.Reader, _ ...gen.RequestEditorFn) {
+			b, _ := io.ReadAll(body)
+			v, _ := url.ParseQuery(string(b))
+			assert.Equal(t, "client_credentials", v.Get("grant_type"))
+			assert.Equal(t, "test", v.Get("client_id"))
+			assert.Equal(t, "test", v.Get("client_secret"))
+		}).
+		Return(testResponse(200, "token", `{"access_token":"token1","token_type":"Bearer"}`), nil).
+		Once()
+
+	tok, err := s.RetrieveTokenForAPI(ctx, "camunda")
+	require.NoError(t, err)
+	assert.Equal(t, "token", tok)
+
+	// second call should hit the cache, no new request
+	tok, err = s.RetrieveTokenForAPI(ctx, "camunda")
+	require.NoError(t, err)
+	assert.Equal(t, "token", tok)
+}
+
+func TestRetrieveTokenForAPI_HTTPErrorStatus(t *testing.T) {
+	s, m := newTestService(t)
+	ctx := context.Background()
+
+	m.EXPECT().
+		RequestTokenWithBodyWithResponse(mock.Anything, formCT, mock.Anything).
+		Return(testResponse(400, "", `{"error":"invalid_client"}`), nil).
+		Once()
+
+	_, err := s.RetrieveTokenForAPI(ctx, "camunda")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "token request failed: status=400 body={\"error\":\"invalid_client\"}")
+}
+
+func TestRetrieveTokenForAPI_MissingToken(t *testing.T) {
+	s, m := newTestService(t)
+	ctx := context.Background()
+
+	m.EXPECT().
+		RequestTokenWithBodyWithResponse(mock.Anything, formCT, mock.Anything).
+		Return(testResponse(200, "", `{"access_token":"","token_type":"Bearer"}`), nil).
+		Once()
+
+	_, err := s.RetrieveTokenForAPI(ctx, "camunda")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "missing access token")
+}
+
+func TestRetrieveTokenForAPI_CleanCache(t *testing.T) {
+	s, m := newTestService(t)
+	ctx := context.Background()
+
+	m.EXPECT().
+		RequestTokenWithBodyWithResponse(mock.Anything, formCT, mock.Anything).
+		Return(testResponse(200, "token", `{"access_token":"token","token_type":"Bearer"}`), nil).
+		Twice()
+
+	tok, err := s.RetrieveTokenForAPI(ctx, "camunda")
+	require.NoError(t, err)
+	assert.Equal(t, "token", tok)
+
+	s.ClearCache()
+
+	tok, err = s.RetrieveTokenForAPI(ctx, "camunda")
+	require.NoError(t, err)
+	assert.Equal(t, "token", tok)
+}
+
+func TestFromContext_NoValue(t *testing.T) {
+	svc, err := FromContext(context.Background())
+	require.Nil(t, svc)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrNoAuthServiceInContext)
+}
+
+func TestFromContext_WrongType(t *testing.T) {
+	ctx := context.WithValue(context.Background(), ctxAuthServiceKey{}, "wrong type")
+	svc, err := FromContext(ctx)
+	require.Nil(t, svc)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidServiceInContext)
+}
