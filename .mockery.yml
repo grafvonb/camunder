@@ -1,21 +1,13 @@
 all: false
-dir: '{{.InterfaceDir}}' # where to scan for interfaces
-
-# where mocks are written (global)
-output: internal/mocks
-keeptree: true        # mirror the source package path under output
-inpackage: false      # do NOT write next to the source
-
-# mock file/package naming
+dir: '{{.InterfaceDir}}'
 filename: '{{.InterfaceName}}_mock.go'
-outpkg: 'mocks'                          # package name for generated mocks
-structname: '{{.Mock}}{{.InterfaceName}}'
-pkgname: '{{.SrcPackageName}}'
-
 force-file-write: true
 formatter: goimports
 include-auto-generated: false
 log-level: info
+structname: '{{.Mock}}{{.InterfaceName}}'
+pkgname: '{{.SrcPackageName}}mock'
+recursive: false
 require-template-schema-exists: true
 template: testify
 template-schema: '{{.Template}}.schema.json'
@@ -24,9 +16,12 @@ packages:
   github.com/grafvonb/camunder/internal/services/auth:
     config:
       all: true
+      dir: 'internal/services/auth/mocks'              # unique per package
   github.com/grafvonb/camunder/internal/services/cluster/v87:
     config:
       all: true
+      dir: 'internal/services/cluster/v87/mocks'      # include version
   github.com/grafvonb/camunder/internal/services/cluster/v88:
     config:
       all: true
+      dir: 'internal/services/cluster/v88/mocks'      # include version

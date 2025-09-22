@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/auth"
+	"github.com/grafvonb/camunder/internal/services/cluster/v87/mocks"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,9 +16,9 @@ func testConfig() *config.Config {
 }
 
 // nolint
-func newServiceUnderTest(t *testing.T, auth auth.AuthClient) (*Service, *MockGenClusterClient) {
+func newServiceUnderTest(t *testing.T, auth auth.AuthClient) (*Service, *v87mock.MockGenClusterClient) {
 	t.Helper()
-	m := NewMockGenClusterClient(t)
+	m := v87mock.NewMockGenClusterClient(t)
 	s, err := New(testConfig(), &http.Client{}, auth, nil, WithClient(m))
 	require.NoError(t, err)
 	return s, m

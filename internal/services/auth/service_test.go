@@ -8,6 +8,7 @@ import (
 
 	gen "github.com/grafvonb/camunder/internal/api/gen/clients/auth"
 	"github.com/grafvonb/camunder/internal/config"
+	"github.com/grafvonb/camunder/internal/services/auth/mocks"
 
 	"github.com/grafvonb/camunder/internal/testutil"
 	"github.com/stretchr/testify/assert"
@@ -25,9 +26,9 @@ func testConfig() *config.Config {
 	}
 }
 
-func newServiceUnderTest(t *testing.T) (*Service, *MockGenAuthClient) {
+func newServiceUnderTest(t *testing.T) (*Service, *authmock.MockGenAuthClient) {
 	t.Helper()
-	m := NewMockGenAuthClient(t)
+	m := authmock.NewMockGenAuthClient(t)
 	s, err := New(testConfig(), nil, nil, WithClient(m))
 	require.NoError(t, err)
 	return s, m
