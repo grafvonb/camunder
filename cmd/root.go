@@ -25,20 +25,12 @@ var rootCmd = &cobra.Command{
 	Use:   "camunder",
 	Short: "Camunder is a CLI tool to interact with Camunda 8.",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// Skip config loading for root/help-like commands
-		if cmd.Name() == "help" || cmd.Name() == "version" || cmd.Name() == "completion" {
-			return nil
-		}
-		if cmd.Flags().Changed("help") {
-			return nil
-		}
-
 		v := viper.New()
 		if err := initViper(v, cmd); err != nil {
 			return err
 		}
 		// retrieve and validate config
-		cfg, err := retrieveConfig(v, !flagShowConfig)
+		cfg, err := retrieveConfig(v)
 		if err != nil {
 			return err
 		}
@@ -59,6 +51,17 @@ var rootCmd = &cobra.Command{
 			WithSource: v.GetBool("log.with_source"),
 		})
 		cmd.SetContext(logging.ToContext(cmd.Context(), log))
+
+		if cmd.Name() == "help" || cmd.Name() == "version" || cmd.Name() == "completion" {
+			return nil
+		}
+		if cmd.Flags().Changed("help") {
+			return nil
+		}
+
+		if err := cfg.Validate(); err != nil {
+			return fmt.Errorf("validate config: %w", err)
+		}
 
 		// setup http service
 		httpSvc, err := httpc.New(cfg, log)
@@ -192,25 +195,17 @@ func initViper(v *viper.Viper, cmd *cobra.Command) error {
 	return nil
 }
 
-func retrieveConfig(v *viper.Viper, validate bool) (*config.Config, error) {
+func retrieveConfig(v *viper.Viper) (*config.Config, error) {
 	var cfg config.Config
-
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}
-
 	if tmpScopes := v.GetStringMapString("tmp.auth_scopes"); len(tmpScopes) > 0 {
 		if cfg.Auth.Scopes == nil {
 			cfg.Auth.Scopes = make(map[string]string, len(tmpScopes))
 		}
 		for k, scope := range tmpScopes {
 			cfg.Auth.Scopes[strings.TrimSpace(k)] = strings.TrimSpace(scope)
-		}
-	}
-
-	if validate {
-		if err := cfg.Validate(); err != nil {
-			return nil, fmt.Errorf("validate config\n%w", err)
 		}
 	}
 	return &cfg, nil
