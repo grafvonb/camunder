@@ -15,10 +15,6 @@ import (
 	"github.com/grafvonb/camunder/internal/config"
 )
 
-const (
-	formCT = "application/x-www-form-urlencoded"
-)
-
 var (
 	ErrNoAuthServiceInContext  = errors.New("no auth service in context")
 	ErrInvalidServiceInContext = errors.New("invalid service in context")
@@ -127,7 +123,7 @@ func FromContext(ctx context.Context) (*Service, error) {
 
 func (s *Service) requestToken(ctx context.Context, clientID, clientSecret, scope string) (string, error) {
 	body := formBody(clientID, clientSecret, scope)
-	resp, err := s.c.RequestTokenWithBodyWithResponse(ctx, formCT, body)
+	resp, err := s.c.RequestTokenWithBodyWithResponse(ctx, formContentType, body)
 
 	if err != nil {
 		return "", err

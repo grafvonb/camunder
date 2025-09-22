@@ -16,7 +16,7 @@ import (
 
 type Service struct {
 	c    GenClusterClient
-	auth *auth.Service
+	auth auth.AuthClient
 	cfg  *config.Config
 	log  *slog.Logger
 }
@@ -29,7 +29,7 @@ func WithClient(c GenClusterClient) Option {
 	}
 }
 
-func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *slog.Logger, opts ...Option) (*Service, error) {
+func New(cfg *config.Config, httpClient *http.Client, auth auth.AuthClient, log *slog.Logger, opts ...Option) (*Service, error) {
 	c, err := camundav87.NewClientWithResponses(
 		cfg.APIs.Camunda.BaseURL,
 		camundav87.WithHTTPClient(httpClient),

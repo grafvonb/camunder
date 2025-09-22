@@ -7,6 +7,8 @@ import (
 	client "github.com/grafvonb/camunder/internal/api/gen/clients/auth"
 )
 
+const formContentType = "application/x-www-form-urlencoded"
+
 type GenAuthClient interface {
 	RequestTokenWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...client.RequestEditorFn) (*client.RequestTokenResponse, error)
 }

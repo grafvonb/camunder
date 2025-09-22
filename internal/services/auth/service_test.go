@@ -3,25 +3,17 @@ package auth
 import (
 	"context"
 	"io"
-	"net/http"
 	"net/url"
 	"testing"
 
 	gen "github.com/grafvonb/camunder/internal/api/gen/clients/auth"
 	"github.com/grafvonb/camunder/internal/config"
+
+	"github.com/grafvonb/camunder/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-type TokenJSON200 = struct {
-	AccessToken  string  `json:"access_token"`
-	ExpiresIn    int     `json:"expires_in"`
-	IdToken      *string `json:"id_token,omitempty"`
-	RefreshToken *string `json:"refresh_token,omitempty"`
-	Scope        *string `json:"scope,omitempty"`
-	TokenType    string  `json:"token_type"`
-}
 
 func testConfig() *config.Config {
 	return &config.Config{
@@ -33,20 +25,7 @@ func testConfig() *config.Config {
 	}
 }
 
-func testResponse(status int, token string, raw string) *gen.RequestTokenResponse {
-	return &gen.RequestTokenResponse{
-		Body: []byte(raw),
-		JSON200: &TokenJSON200{
-			AccessToken: token,
-			TokenType:   "Bearer",
-		},
-		HTTPResponse: &http.Response{
-			StatusCode: status,
-		},
-	}
-}
-
-func newTestService(t *testing.T) (*Service, *MockGenAuthClient) {
+func newServiceUnderTest(t *testing.T) (*Service, *MockGenAuthClient) {
 	t.Helper()
 	m := NewMockGenAuthClient(t)
 	s, err := New(testConfig(), nil, nil, WithClient(m))
@@ -55,11 +34,11 @@ func newTestService(t *testing.T) (*Service, *MockGenAuthClient) {
 }
 
 func TestRetrieveTokenForAPI_SuccessAndCaches(t *testing.T) {
-	s, m := newTestService(t)
+	s, m := newServiceUnderTest(t)
 	ctx := context.Background()
 
 	m.EXPECT().
-		RequestTokenWithBodyWithResponse(mock.Anything, formCT, mock.Anything).
+		RequestTokenWithBodyWithResponse(mock.Anything, formContentType, mock.Anything).
 		Run(func(ctx context.Context, contentType string, body io.Reader, _ ...gen.RequestEditorFn) {
 			b, _ := io.ReadAll(body)
 			v, _ := url.ParseQuery(string(b))
@@ -67,7 +46,7 @@ func TestRetrieveTokenForAPI_SuccessAndCaches(t *testing.T) {
 			assert.Equal(t, "test", v.Get("client_id"))
 			assert.Equal(t, "test", v.Get("client_secret"))
 		}).
-		Return(testResponse(200, "token", `{"access_token":"token1","token_type":"Bearer"}`), nil).
+		Return(testutil.TestAuthJSON200Response(200, "token", `{"access_token":"token1","token_type":"Bearer"}`), nil).
 		Once()
 
 	tok, err := s.RetrieveTokenForAPI(ctx, "camunda")
@@ -81,12 +60,12 @@ func TestRetrieveTokenForAPI_SuccessAndCaches(t *testing.T) {
 }
 
 func TestRetrieveTokenForAPI_HTTPErrorStatus(t *testing.T) {
-	s, m := newTestService(t)
+	s, m := newServiceUnderTest(t)
 	ctx := context.Background()
 
 	m.EXPECT().
-		RequestTokenWithBodyWithResponse(mock.Anything, formCT, mock.Anything).
-		Return(testResponse(400, "", `{"error":"invalid_client"}`), nil).
+		RequestTokenWithBodyWithResponse(mock.Anything, formContentType, mock.Anything).
+		Return(testutil.TestAuthJSON200Response(400, "", `{"error":"invalid_client"}`), nil).
 		Once()
 
 	_, err := s.RetrieveTokenForAPI(ctx, "camunda")
@@ -95,12 +74,12 @@ func TestRetrieveTokenForAPI_HTTPErrorStatus(t *testing.T) {
 }
 
 func TestRetrieveTokenForAPI_MissingToken(t *testing.T) {
-	s, m := newTestService(t)
+	s, m := newServiceUnderTest(t)
 	ctx := context.Background()
 
 	m.EXPECT().
-		RequestTokenWithBodyWithResponse(mock.Anything, formCT, mock.Anything).
-		Return(testResponse(200, "", `{"access_token":"","token_type":"Bearer"}`), nil).
+		RequestTokenWithBodyWithResponse(mock.Anything, formContentType, mock.Anything).
+		Return(testutil.TestAuthJSON200Response(200, "", `{"access_token":"","token_type":"Bearer"}`), nil).
 		Once()
 
 	_, err := s.RetrieveTokenForAPI(ctx, "camunda")
@@ -109,12 +88,12 @@ func TestRetrieveTokenForAPI_MissingToken(t *testing.T) {
 }
 
 func TestRetrieveTokenForAPI_CleanCache(t *testing.T) {
-	s, m := newTestService(t)
+	s, m := newServiceUnderTest(t)
 	ctx := context.Background()
 
 	m.EXPECT().
-		RequestTokenWithBodyWithResponse(mock.Anything, formCT, mock.Anything).
-		Return(testResponse(200, "token", `{"access_token":"token","token_type":"Bearer"}`), nil).
+		RequestTokenWithBodyWithResponse(mock.Anything, formContentType, mock.Anything).
+		Return(testutil.TestAuthJSON200Response(200, "token", `{"access_token":"token","token_type":"Bearer"}`), nil).
 		Twice()
 
 	tok, err := s.RetrieveTokenForAPI(ctx, "camunda")
