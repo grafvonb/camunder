@@ -9,7 +9,8 @@ import (
 
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/logging"
-	"github.com/grafvonb/camunder/internal/services/auth"
+	"github.com/grafvonb/camunder/internal/services/auth/build"
+	authcore "github.com/grafvonb/camunder/internal/services/auth/core"
 	"github.com/grafvonb/camunder/internal/services/httpc"
 	"github.com/grafvonb/camunder/pkg/camunda"
 	"github.com/spf13/cobra"
@@ -63,22 +64,22 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("validate config: %w", err)
 		}
 
-		// setup http service
-		httpSvc, err := httpc.New(cfg, log)
+		httpSvc, err := httpc.New(cfg, log, httpc.WithCookieJar())
 		if err != nil {
-			return fmt.Errorf("create http service: %w", err)
+			return fmt.Errorf("http service: %w", err)
 		}
-		cmd.SetContext(httpSvc.ToContext(cmd.Context()))
-		// setup auth service
-		authSvc, err := auth.New(cfg, httpSvc.Client(), log)
+		authenticator, err := build.Build(cfg, httpSvc.Client(), log)
 		if err != nil {
-			return fmt.Errorf("create auth service: %w", err)
+			return fmt.Errorf("auth build: %w", err)
 		}
-		if err := authSvc.Warmup(cmd.Context()); err != nil {
-			log.Error(fmt.Sprintf("warming up auth service: %v", err))
-			return err
+		if err := authenticator.Init(cmd.Context()); err != nil {
+			return fmt.Errorf("auth init: %w", err)
 		}
-		cmd.SetContext(authSvc.ToContext(cmd.Context()))
+		httpSvc.InstallAuthEditor(authenticator.Editor())
+
+		ctx := httpSvc.ToContext(cmd.Context())
+		ctx = authcore.ToContext(ctx, authenticator)
+		cmd.SetContext(ctx)
 
 		return nil
 	},
@@ -201,11 +202,11 @@ func retrieveConfig(v *viper.Viper) (*config.Config, error) {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}
 	if tmpScopes := v.GetStringMapString("tmp.auth_scopes"); len(tmpScopes) > 0 {
-		if cfg.Auth.Scopes == nil {
-			cfg.Auth.Scopes = make(map[string]string, len(tmpScopes))
+		if cfg.Auth.OAuth2.Scopes == nil {
+			cfg.Auth.OAuth2.Scopes = make(map[string]string, len(tmpScopes))
 		}
 		for k, scope := range tmpScopes {
-			cfg.Auth.Scopes[strings.TrimSpace(k)] = strings.TrimSpace(scope)
+			cfg.Auth.OAuth2.Scopes[strings.TrimSpace(k)] = strings.TrimSpace(scope)
 		}
 	}
 	return &cfg, nil

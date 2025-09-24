@@ -66,7 +66,7 @@ var getCmd = &cobra.Command{
 		switch rn {
 		case "cluster-topology", "ct":
 			log.Debug("fetching cluster topology")
-			svc, err := cluster.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
+			svc, err := cluster.New(svcs.Config, svcs.HTTP.Client(), log)
 			if err != nil {
 				log.Error(fmt.Sprintf("error creating cluster service: %v", err))
 				return
@@ -81,7 +81,7 @@ var getCmd = &cobra.Command{
 		case "process-definition", "pd":
 			log.Debug("fetching process definitions")
 			searchFilterOpts := populatePDSearchFilterOpts()
-			svc, err := processdefinition.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
+			svc, err := processdefinition.New(svcs.Config, svcs.HTTP.Client(), log)
 			if err != nil {
 				log.Error(fmt.Sprintf("error creating process definition service: %v", err))
 				return
@@ -121,7 +121,7 @@ var getCmd = &cobra.Command{
 		case "process-instance", "pi":
 			log.Debug("fetching process instances")
 			searchFilterOpts := populatePISearchFilterOpts()
-			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
+			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), log)
 			if err != nil {
 				log.Error(fmt.Sprintf("error creating process instance service: %v", err))
 				return

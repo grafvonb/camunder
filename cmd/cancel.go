@@ -36,7 +36,7 @@ var cancelCmd = &cobra.Command{
 
 		switch rn {
 		case "process-instance", "pi":
-			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), svcs.Auth, log)
+			svc, err := processinstance.New(svcs.Config, svcs.HTTP.Client(), log)
 			if err != nil {
 				log.Error(fmt.Sprintf("creating process instance service: %v", err))
 				return

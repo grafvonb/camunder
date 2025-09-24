@@ -3,7 +3,7 @@ package testutil
 import (
 	"net/http"
 
-	"github.com/grafvonb/camunder/internal/api/gen/clients/auth"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/auth/oauth2"
 	"github.com/grafvonb/camunder/internal/config"
 )
 
@@ -16,8 +16,8 @@ type tokenJSON200 = struct {
 	TokenType    string  `json:"token_type"`
 }
 
-func TestAuthJSON200Response(status int, token string, raw string) *auth.RequestTokenResponse {
-	return &auth.RequestTokenResponse{
+func TestAuthJSON200Response(status int, token string, raw string) *oauth2.RequestTokenResponse {
+	return &oauth2.RequestTokenResponse{
 		Body: []byte(raw),
 		JSON200: &tokenJSON200{
 			AccessToken: token,
@@ -32,10 +32,19 @@ func TestConfig() *config.Config {
 		App: config.App{
 			Tenant: "tenant",
 		},
-		Auth: config.Authentication{
-			TokenURL:     "http://localhost/token",
-			ClientID:     "test",
-			ClientSecret: "test",
+		Auth: config.Auth{
+			OAuth2: config.AuthOAuth2ClientCredentials{
+				TokenURL:     "http://localhost/token",
+				ClientID:     "test",
+				ClientSecret: "test",
+			},
+			IMX: config.AuthImxSession{
+				BaseURL:  "http://localhost/imx",
+				AppId:    "test",
+				Module:   "test",
+				User:     "test",
+				Password: "test",
+			},
 		},
 		APIs: config.APIs{
 			Camunda: config.API{

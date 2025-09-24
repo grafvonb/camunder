@@ -2,78 +2,36 @@ package v88
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 
 	camundav88 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/camunda/v88"
 	operatev88 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v88"
 	"github.com/grafvonb/camunder/internal/config"
-	"github.com/grafvonb/camunder/internal/editors"
-	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/pkg/camunda"
 	"github.com/grafvonb/camunder/pkg/camunda/processinstance"
 )
 
+// nolint
 type Service struct {
-	cc   *camundav88.ClientWithResponses
-	oc   *operatev88.ClientWithResponses
-	auth *auth.Service
-	cfg  *config.Config
-	log  *slog.Logger
+	cc  *camundav88.ClientWithResponses
+	oc  *operatev88.ClientWithResponses
+	cfg *config.Config
+	log *slog.Logger
 }
 
 type Option func(*Service)
 
-func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *slog.Logger, opts ...Option) (*Service, error) {
-	cc, err := camundav88.NewClientWithResponses(
-		cfg.APIs.Camunda.BaseURL,
-		camundav88.WithHTTPClient(httpClient),
-	)
-	if err != nil {
-		return nil, err
-	}
-	co, err := operatev88.NewClientWithResponses(
-		cfg.APIs.Operate.BaseURL,
-		operatev88.WithHTTPClient(httpClient),
-	)
-	if err != nil {
-		return nil, err
-	}
-	s := &Service{
-		oc:   co,
-		cc:   cc,
-		auth: auth,
-		cfg:  cfg,
-		log:  log,
-	}
-	for _, opt := range opts {
-		opt(s)
-	}
-	return s, nil
+func New(cfg *config.Config, httpClient *http.Client, log *slog.Logger, opts ...Option) (*Service, error) {
+	panic("not implemented in v88")
 }
 
 func (s *Service) Capabilities(ctx context.Context) camunda.Capabilities {
-	return camunda.Capabilities{
-		APIVersion: camunda.V88,
-	}
+	panic("not implemented in v88")
 }
 
 func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (processinstance.ProcessInstance, error) {
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
-	if err != nil {
-		return processinstance.ProcessInstance{}, fmt.Errorf("error retrieving operate token: %w", err)
-	}
-	resp, err := s.oc.GetProcessInstanceByKeyWithResponse(ctx, key,
-		editors.BearerTokenEditorFn[operatev88.RequestEditorFn](token))
-	if err != nil {
-		return processinstance.ProcessInstance{}, err
-	}
-	if resp.StatusCode() != http.StatusOK {
-		return processinstance.ProcessInstance{}, fmt.Errorf("unexpected status %d: %s", resp.StatusCode(), string(resp.Body))
-	}
-	ret := resp.JSON200.ToStable()
-	return ret, nil
+	panic("not implemented in v88")
 }
 
 func (s *Service) WaitForProcessInstanceState(ctx context.Context, key int64, desiredState processinstance.State) error {
