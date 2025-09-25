@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/logging"
-	"github.com/grafvonb/camunder/internal/services/auth/build"
+	"github.com/grafvonb/camunder/internal/services/auth"
 	authcore "github.com/grafvonb/camunder/internal/services/auth/core"
 	"github.com/grafvonb/camunder/internal/services/httpc"
 	"github.com/grafvonb/camunder/pkg/camunda"
@@ -68,7 +68,7 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("http service: %w", err)
 		}
-		authenticator, err := build.Build(cfg, httpSvc.Client(), log)
+		authenticator, err := auth.BuildAuthenticator(cfg, httpSvc.Client(), log)
 		if err != nil {
 			return fmt.Errorf("auth build: %w", err)
 		}

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strings"
 	"sync"
 
 	imxapi "github.com/grafvonb/camunder/internal/api/gen/clients/auth/imx"
@@ -71,6 +72,10 @@ func New(cfg *config.Config, hc *http.Client, log *slog.Logger, opts ...Option) 
 
 func (s *Service) Name() string { return "imx" }
 
+func (s *Service) IsAuthenticated() bool {
+	return s.xsrfToken != ""
+}
+
 func (s *Service) Init(ctx context.Context) error {
 	if s.xsrfToken != "" {
 		return nil
@@ -106,6 +111,11 @@ func (s *Service) Init(ctx context.Context) error {
 
 func (s *Service) Editor() authcore.RequestEditor {
 	return func(ctx context.Context, req *http.Request) error {
+		sameHost := strings.EqualFold(req.URL.Host, s.baseURL.Host)
+		isLogin := strings.Contains(req.URL.Path, "/imx/login/")
+		if sameHost && !isLogin && s.xsrfToken == "" {
+			return errors.New("imx: not authenticated; call Init first")
+		}
 		req.Header.Set("Accept", "application/json")
 		if s.xsrfToken != "" {
 			req.Header.Set("X-XSRF-TOKEN", s.xsrfToken)
