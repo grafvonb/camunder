@@ -1,0 +1,130 @@
+package cookie
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"strings"
+
+	"github.com/grafvonb/camunder/internal/config"
+	authcore "github.com/grafvonb/camunder/internal/services/auth/core"
+)
+
+type Service struct {
+	cfg     *config.Config
+	http    *http.Client
+	log     *slog.Logger
+	baseURL *url.URL
+
+	isAuth bool // set to true when observe at least one non-empty cookie after login
+}
+
+type Option func(*Service)
+
+func WithHTTPClient(h *http.Client) Option { return func(s *Service) { s.http = h } }
+
+func New(cfg *config.Config, httpClient *http.Client, log *slog.Logger, opts ...Option) (*Service, error) {
+	if cfg == nil {
+		return nil, errors.New("cfg is nil")
+	}
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+
+	s := &Service{cfg: cfg, http: httpClient, log: log}
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	if s.http.Jar == nil {
+		jar, _ := cookiejar.New(nil)
+		s.http.Jar = jar
+	}
+
+	baseUrl, err := url.Parse(cfg.Auth.Cookie.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("parse base url: %w", err)
+	}
+	s.baseURL = baseUrl
+	return s, nil
+}
+
+func (s *Service) Name() string { return "cookie" }
+
+func (s *Service) IsAuthenticated() bool { return s.isAuth }
+
+func (s *Service) Init(ctx context.Context) error {
+	if s.isAuth {
+		return nil
+	}
+
+	loginURL := *s.baseURL
+	loginURL.Path = strings.TrimRight(loginURL.Path, "/") + "/api/login"
+	query := loginURL.Query()
+	query.Set("username", s.cfg.Auth.Cookie.Username)
+	query.Set("password", s.cfg.Auth.Cookie.Password)
+	loginURL.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, loginURL.String(), http.NoBody)
+	if err != nil {
+		return fmt.Errorf("build login request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := s.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("login request: %w", err)
+	}
+	defer func() {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("login failed: status=%d from %s", resp.StatusCode, req.URL.RawPath)
+	}
+
+	// Verify we received at least one cookie for the base host.
+	cookies := s.http.Jar.Cookies(s.baseURL)
+	if len(cookies) == 0 {
+		// Some setups mark cookies Secure; re-check https scheme.
+		if s.baseURL.Scheme == "http" {
+			httpsURL := *s.baseURL
+			httpsURL.Scheme = "https"
+			if len(s.http.Jar.Cookies(&httpsURL)) > 0 {
+				return fmt.Errorf("session cookie is Secure; switch BaseURL to https://%s", s.baseURL.Host)
+			}
+		}
+		return errors.New("login succeeded but no session cookie stored")
+	}
+
+	s.isAuth = true
+	return nil
+}
+
+// Editor adds standard headers and ensures login happened before non-login calls.
+// Use this with your generated clients’ RequestEditor hook, or call before building requests.
+func (s *Service) Editor() authcore.RequestEditor {
+	return func(ctx context.Context, req *http.Request) error {
+		sameHost := strings.EqualFold(req.URL.Host, s.baseURL.Host)
+		isLogin := strings.Contains(req.URL.Path, "/api/login")
+		if sameHost && !isLogin && !s.isAuth {
+			return errors.New("cookie auth: not authenticated; call Init first")
+		}
+		req.Header.Set("Accept", "application/json")
+		// Cookies are attached automatically by s.http.Jar for same-host requests.
+		return nil
+	}
+}
+
+func (s *Service) ClearCache() {
+	s.isAuth = false
+	if s.http != nil && s.http.Jar != nil {
+		s.http.Jar.SetCookies(s.baseURL, nil)
+	}
+}

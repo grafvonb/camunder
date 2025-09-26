@@ -8,22 +8,23 @@ import (
 
 type AuthMode string
 
-func (m AuthMode) IsValid() bool { return m == ModeOAuth2 || m == ModeIMX }
+func (m AuthMode) IsValid() bool { return m == ModeOAuth2 || m == ModeIMX || m == ModeCookie }
 
 const (
 	ModeOAuth2 AuthMode = "oauth2"
 	ModeIMX    AuthMode = "imx"
+	ModeCookie AuthMode = "cookie"
 )
 
 type Auth struct {
 	Mode   AuthMode                    `mapstructure:"mode"`
 	OAuth2 AuthOAuth2ClientCredentials `mapstructure:"oauth2"`
 	IMX    AuthImxSession              `mapstructure:"imx"`
+	Cookie AuthCookieSession           `mapstructure:"cookie"`
 }
 
 func (c *Auth) Validate() error {
 	var errs []error
-
 	if !c.Mode.IsValid() {
 		errs = append(errs, fmt.Errorf("mode: invalid value %q (allowed values: %q, %q)", c.Mode, ModeOAuth2, ModeIMX))
 	} else {
@@ -35,6 +36,10 @@ func (c *Auth) Validate() error {
 		case ModeIMX:
 			if err := c.IMX.Validate(); err != nil {
 				errs = append(errs, fmt.Errorf("imx: %w", err))
+			}
+		case ModeCookie:
+			if err := c.Cookie.Validate(); err != nil {
+				errs = append(errs, fmt.Errorf("cookie: %w", err))
 			}
 		}
 	}
@@ -117,4 +122,24 @@ func (a *AuthOAuth2ClientCredentials) Scope(key string) string {
 		return ""
 	}
 	return a.Scopes[key]
+}
+
+type AuthCookieSession struct {
+	BaseURL  string `mapstructure:"base_url"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+}
+
+func (c *AuthCookieSession) Validate() error {
+	var errs []error
+	if strings.TrimSpace(c.BaseURL) == "" {
+		errs = append(errs, errors.New("no base_url provided in cookie auth configuration"))
+	}
+	if strings.TrimSpace(c.Username) == "" {
+		errs = append(errs, errors.New("no username provided in cookie auth configuration"))
+	}
+	if strings.TrimSpace(c.Password) == "" {
+		errs = append(errs, errors.New("no password provided in cookie auth configuration"))
+	}
+	return errors.Join(errs...)
 }
