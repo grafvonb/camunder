@@ -48,5 +48,5 @@ func TestXSRF_Login_IT(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, svc.IsAuthenticated(), "expected authenticated")
 	require.NotEmpty(t, svc.Token(), "expected non-empty token")
-	t.Logf("got xsrf token: %q...", svc.Token())
+	t.Logf("success: got xsrf token: %q...", svc.Token())
 }

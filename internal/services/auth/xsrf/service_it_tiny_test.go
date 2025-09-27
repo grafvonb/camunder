@@ -1,4 +1,4 @@
-package cookie_test
+package xsrf_test
 
 import (
 	"context"
@@ -9,18 +9,15 @@ import (
 	"time"
 
 	"github.com/grafvonb/camunder/internal/config"
-	"github.com/grafvonb/camunder/internal/services/auth/cookie"
+	"github.com/grafvonb/camunder/internal/services/auth/xsrf"
 	"github.com/grafvonb/camunder/internal/testx"
 	"github.com/stretchr/testify/require"
 )
 
-func TestCookie_Login_OK(t *testing.T) {
-	srv := testx.StartAuthServerCookie(t, testx.CookieAuthOpts{
-		SetCookie: true,
-		ExpectUser: struct {
-			Name     string
-			Password string
-		}{Name: "demo", Password: "demo"},
+func TestXsrf_Login_OK(t *testing.T) {
+	srv := testx.StartAuthServerXSRF(t, testx.XsrfAuthOpts{
+		SetSessionCookie: true,
+		SetXSRFToken:     true,
 	})
 	defer srv.Close()
 
@@ -31,23 +28,25 @@ func TestCookie_Login_OK(t *testing.T) {
 
 	cfg := &config.Config{
 		Auth: config.Auth{
-			Mode: config.ModeCookie,
-			Cookie: config.AuthCookieSession{
+			Mode: config.ModeXSRF,
+			XSRF: config.AuthXsrfSession{
 				BaseURL:  srv.BaseURL,
-				Username: "demo",
+				AppId:    "app",
+				Module:   "module",
+				User:     "demo",
 				Password: "demo",
 			},
 		},
 	}
 	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	svc, err := cookie.New(cfg, httpClient, log)
+	svc, err := xsrf.New(cfg, httpClient, log)
 	require.NoError(t, err)
 	require.NotNil(t, svc)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	t.Logf("trying to authenticate aginst %s with user %q", cfg.Auth.Cookie.BaseURL, cfg.Auth.Cookie.Username)
+	t.Logf("trying to authenticate aginst %s with user %q", cfg.Auth.XSRF.BaseURL, cfg.Auth.XSRF.User)
 	err = svc.Init(ctx)
 	require.NoError(t, err)
 	require.True(t, svc.IsAuthenticated())

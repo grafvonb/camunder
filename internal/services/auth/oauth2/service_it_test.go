@@ -50,6 +50,7 @@ func TestOAuth2_TokenAndEditor_IT(t *testing.T) {
 	tok, err := svc.RetrieveTokenForAPI(ctx, target)
 	require.NoError(t, err)
 	require.NotEmpty(t, tok)
+	t.Logf("success: got token %q...", tok[:10])
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://example.com/", nil)
 	require.NoError(t, svc.Editor()(ctx, req))
