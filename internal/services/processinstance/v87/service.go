@@ -15,23 +15,20 @@ import (
 	"github.com/grafvonb/camunder/pkg/camunda/processinstance"
 
 	"github.com/grafvonb/camunder/internal/config"
-	"github.com/grafvonb/camunder/internal/editors"
-	"github.com/grafvonb/camunder/internal/services/auth"
 )
 
 const wrongStateMessage400 = "Process instances needs to be in one of the states [COMPLETED, CANCELED]"
 
 type Service struct {
-	cc   *camundav87.ClientWithResponses
-	oc   *operatev87.ClientWithResponses
-	auth *auth.Service
-	cfg  *config.Config
-	log  *slog.Logger
+	cc  *camundav87.ClientWithResponses
+	oc  *operatev87.ClientWithResponses
+	cfg *config.Config
+	log *slog.Logger
 }
 
 type Option func(*Service)
 
-func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *slog.Logger, opts ...Option) (*Service, error) {
+func New(cfg *config.Config, httpClient *http.Client, log *slog.Logger, opts ...Option) (*Service, error) {
 	cc, err := camundav87.NewClientWithResponses(
 		cfg.APIs.Camunda.BaseURL,
 		camundav87.WithHTTPClient(httpClient),
@@ -46,13 +43,7 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *s
 	if err != nil {
 		return nil, err
 	}
-	s := &Service{
-		oc:   co,
-		cc:   cc,
-		auth: auth,
-		cfg:  cfg,
-		log:  log,
-	}
+	s := &Service{oc: co, cc: cc, cfg: cfg, log: log}
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -85,12 +76,7 @@ func (s *Service) FilterProcessInstanceWithOrphanParent(ctx context.Context, ite
 }
 
 func (s *Service) GetProcessInstanceByKey(ctx context.Context, key int64) (processinstance.ProcessInstance, error) {
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
-	if err != nil {
-		return processinstance.ProcessInstance{}, fmt.Errorf("error retrieving operate token: %w", err)
-	}
-	resp, err := s.oc.GetProcessInstanceByKeyWithResponse(ctx, key,
-		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
+	resp, err := s.oc.GetProcessInstanceByKeyWithResponse(ctx, key)
 	if err != nil {
 		return processinstance.ProcessInstance{}, err
 	}
@@ -126,12 +112,7 @@ func (s *Service) SearchForProcessInstances(ctx context.Context, filter processi
 		Filter: &f,
 		Size:   &size,
 	}
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
-	if err != nil {
-		return processinstance.ProcessInstances{}, fmt.Errorf("error retrieving operate token: %w", err)
-	}
-	resp, err := s.oc.SearchProcessInstancesWithResponse(ctx, body,
-		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
+	resp, err := s.oc.SearchProcessInstancesWithResponse(ctx, body)
 	if err != nil {
 		return processinstance.ProcessInstances{}, err
 	}
@@ -143,13 +124,8 @@ func (s *Service) SearchForProcessInstances(ctx context.Context, filter processi
 
 func (s *Service) CancelProcessInstance(ctx context.Context, key int64) (processinstance.CancelResponse, error) {
 	s.log.Debug(fmt.Sprintf("trying to cancel process instance with key %d...", key))
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.CamundaApiKeyConst)
-	if err != nil {
-		return processinstance.CancelResponse{}, fmt.Errorf("error retrieving camunda token: %w", err)
-	}
 	resp, err := s.cc.CancelProcessInstanceWithResponse(ctx, strconv.Itoa(int(key)),
-		camundav87.CancelProcessInstanceJSONRequestBody{},
-		editors.BearerTokenEditorFn[camundav87.RequestEditorFn](token))
+		camundav87.CancelProcessInstanceJSONRequestBody{})
 	if err != nil {
 		return processinstance.CancelResponse{}, err
 	}
@@ -162,12 +138,7 @@ func (s *Service) CancelProcessInstance(ctx context.Context, key int64) (process
 
 func (s *Service) DeleteProcessInstance(ctx context.Context, key int64) (processinstance.ChangeStatus, error) {
 	s.log.Debug(fmt.Sprintf("trying to delete process instance with key %d...", key))
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.CamundaApiKeyConst)
-	if err != nil {
-		return processinstance.ChangeStatus{}, fmt.Errorf("error retrieving camunda token: %w", err)
-	}
-	resp, err := s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key,
-		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
+	resp, err := s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key)
 	if err != nil {
 		return processinstance.ChangeStatus{}, err
 	}
@@ -181,12 +152,7 @@ func (s *Service) DeleteProcessInstance(ctx context.Context, key int64) (process
 
 func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key int64) (processinstance.ChangeStatus, error) {
 	s.log.Debug(fmt.Sprintf("trying to delete process instance with key %d...", key))
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.CamundaApiKeyConst)
-	if err != nil {
-		return processinstance.ChangeStatus{}, fmt.Errorf("error retrieving camunda token: %w", err)
-	}
-	resp, err := s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key,
-		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
+	resp, err := s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key)
 	if resp.StatusCode() == http.StatusBadRequest &&
 		resp.ApplicationproblemJSON400 != nil &&
 		*resp.ApplicationproblemJSON400.Message == wrongStateMessage400 {
@@ -199,8 +165,7 @@ func (s *Service) DeleteProcessInstanceWithCancel(ctx context.Context, key int64
 		if err = s.WaitForProcessInstanceState(ctx, key, processinstance.StateCanceled); err != nil {
 			return processinstance.ChangeStatus{}, fmt.Errorf("waiting for canceled state failed for %d: %w", key, err)
 		}
-		resp, err = s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key,
-			editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
+		resp, err = s.oc.DeleteProcessInstanceAndAllDependantDataByKeyWithResponse(ctx, key)
 	}
 	if err != nil {
 		return processinstance.ChangeStatus{}, err

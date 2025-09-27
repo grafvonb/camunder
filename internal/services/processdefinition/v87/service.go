@@ -9,22 +9,19 @@ import (
 	"github.com/grafvonb/camunder/internal/api/convert"
 	operatev87 "github.com/grafvonb/camunder/internal/api/gen/clients/camunda/operate/v87"
 	"github.com/grafvonb/camunder/internal/config"
-	"github.com/grafvonb/camunder/internal/editors"
-	"github.com/grafvonb/camunder/internal/services/auth"
 	"github.com/grafvonb/camunder/pkg/camunda"
 	"github.com/grafvonb/camunder/pkg/camunda/processdefinition"
 )
 
 type Service struct {
-	c    *operatev87.ClientWithResponses
-	auth *auth.Service
-	cfg  *config.Config
-	log  *slog.Logger
+	c   *operatev87.ClientWithResponses
+	cfg *config.Config
+	log *slog.Logger
 }
 
 type Option func(*Service)
 
-func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *slog.Logger, opts ...Option) (*Service, error) {
+func New(cfg *config.Config, httpClient *http.Client, log *slog.Logger, opts ...Option) (*Service, error) {
 	c, err := operatev87.NewClientWithResponses(
 		cfg.APIs.Operate.BaseURL,
 		operatev87.WithHTTPClient(httpClient),
@@ -32,12 +29,7 @@ func New(cfg *config.Config, httpClient *http.Client, auth *auth.Service, log *s
 	if err != nil {
 		return nil, err
 	}
-	s := &Service{
-		c:    c,
-		cfg:  cfg,
-		auth: auth,
-		log:  log,
-	}
+	s := &Service{c: c, cfg: cfg, log: log}
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -49,12 +41,7 @@ func (s *Service) Capabilities(ctx context.Context) camunda.Capabilities {
 }
 
 func (s *Service) GetProcessDefinitionByKey(ctx context.Context, key int64) (processdefinition.ProcessDefinition, error) {
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
-	if err != nil {
-		return processdefinition.ProcessDefinition{}, fmt.Errorf("error retrieving operate token: %w", err)
-	}
-	resp, err := s.c.GetProcessDefinitionByKeyWithResponse(ctx, key,
-		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
+	resp, err := s.c.GetProcessDefinitionByKeyWithResponse(ctx, key)
 	if err != nil {
 		return processdefinition.ProcessDefinition{}, err
 	}
@@ -74,12 +61,7 @@ func (s *Service) SearchProcessDefinitions(ctx context.Context, filter processde
 		},
 		Size: &size,
 	}
-	token, err := s.auth.RetrieveTokenForAPI(ctx, config.OperateApiKeyConst)
-	if err != nil {
-		return processdefinition.ProcessDefinitions{}, fmt.Errorf("error retrieving operate token: %w", err)
-	}
-	resp, err := s.c.SearchProcessDefinitionsWithResponse(ctx, body,
-		editors.BearerTokenEditorFn[operatev87.RequestEditorFn](token))
+	resp, err := s.c.SearchProcessDefinitionsWithResponse(ctx, body)
 	if err != nil {
 		return processdefinition.ProcessDefinitions{}, err
 	}

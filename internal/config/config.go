@@ -14,6 +14,12 @@ var (
 	ErrNoClientID     = errors.New("no client_id provided in auth configuration")
 	ErrNoClientSecret = errors.New("no client_secret provided in auth configuration")
 
+	ErrNoXSRFBaseURL  = errors.New("no base_url provided in xsrf auth configuration")
+	ErrNoXSRFAppID    = errors.New("no app_id provided in xsrf auth configuration")
+	ErrNoXSRFModule   = errors.New("no module provided in xsrf auth configuration")
+	ErrNoXSRFUser     = errors.New("no user provided in xsrf auth configuration")
+	ErrNoXSRFPassword = errors.New("no password provided in xsrf auth configuration")
+
 	ErrNoConfigInContext       = errors.New("no config in context")
 	ErrInvalidServiceInContext = errors.New("invalid config in context")
 )
@@ -21,10 +27,10 @@ var (
 type Config struct {
 	Config string `mapstructure:"config"`
 
-	App  App            `mapstructure:"app"`
-	Auth Authentication `mapstructure:"auth"`
-	APIs APIs           `mapstructure:"apis"`
-	HTTP HTTP           `mapstructure:"http"`
+	App  App  `mapstructure:"app"`
+	Auth Auth `mapstructure:"auth"`
+	APIs APIs `mapstructure:"apis"`
+	HTTP HTTP `mapstructure:"http"`
 }
 
 func (c *Config) String() string {
@@ -33,16 +39,24 @@ func (c *Config) String() string {
 	alias.App = c.App
 	alias.HTTP = c.HTTP
 	alias.APIs.Version = c.APIs.Version
+
 	alias.APIs.Camunda.Key = c.APIs.Camunda.Key
 	alias.APIs.Camunda.BaseURL = c.APIs.Camunda.BaseURL
 	alias.APIs.Operate.Key = c.APIs.Operate.Key
 	alias.APIs.Operate.BaseURL = c.APIs.Operate.BaseURL
 	alias.APIs.Tasklist.Key = c.APIs.Tasklist.Key
 	alias.APIs.Tasklist.BaseURL = c.APIs.Tasklist.BaseURL
-	alias.Auth.TokenURL = c.Auth.TokenURL
-	alias.Auth.ClientID = "******"
-	alias.Auth.ClientSecret = "******"
-	alias.Auth.Scopes = maps.Clone(c.Auth.Scopes)
+
+	alias.Auth.OAuth2.TokenURL = c.Auth.OAuth2.TokenURL
+	alias.Auth.OAuth2.ClientID = "******"
+	alias.Auth.OAuth2.ClientSecret = "******"
+	alias.Auth.OAuth2.Scopes = maps.Clone(c.Auth.OAuth2.Scopes)
+
+	alias.Auth.XSRF.BaseURL = c.Auth.XSRF.BaseURL
+	alias.Auth.XSRF.AppId = c.Auth.XSRF.AppId
+	alias.Auth.XSRF.Module = c.Auth.XSRF.Module
+	alias.Auth.XSRF.User = c.Auth.XSRF.User
+	alias.Auth.XSRF.Password = "******"
 
 	b, err := json.MarshalIndent(alias, "", "  ")
 	if err != nil {

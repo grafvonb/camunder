@@ -8,7 +8,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/grafvonb/camunder/internal/api/gen/clients/auth"
+	"github.com/grafvonb/camunder/internal/api/gen/clients/auth/oauth2"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -40,7 +40,7 @@ func (_m *MockGenAuthClient) EXPECT() *MockGenAuthClient_Expecter {
 }
 
 // RequestTokenWithBodyWithResponse provides a mock function for the type MockGenAuthClient
-func (_mock *MockGenAuthClient) RequestTokenWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...auth.RequestEditorFn) (*auth.RequestTokenResponse, error) {
+func (_mock *MockGenAuthClient) RequestTokenWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...oauth2.RequestEditorFn) (*oauth2.RequestTokenResponse, error) {
 	var tmpRet mock.Arguments
 	if len(reqEditors) > 0 {
 		tmpRet = _mock.Called(ctx, contentType, body, reqEditors)
@@ -53,19 +53,19 @@ func (_mock *MockGenAuthClient) RequestTokenWithBodyWithResponse(ctx context.Con
 		panic("no return value specified for RequestTokenWithBodyWithResponse")
 	}
 
-	var r0 *auth.RequestTokenResponse
+	var r0 *oauth2.RequestTokenResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, io.Reader, ...auth.RequestEditorFn) (*auth.RequestTokenResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, io.Reader, ...oauth2.RequestEditorFn) (*oauth2.RequestTokenResponse, error)); ok {
 		return returnFunc(ctx, contentType, body, reqEditors...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, io.Reader, ...auth.RequestEditorFn) *auth.RequestTokenResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, io.Reader, ...oauth2.RequestEditorFn) *oauth2.RequestTokenResponse); ok {
 		r0 = returnFunc(ctx, contentType, body, reqEditors...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*auth.RequestTokenResponse)
+			r0 = ret.Get(0).(*oauth2.RequestTokenResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, io.Reader, ...auth.RequestEditorFn) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, io.Reader, ...oauth2.RequestEditorFn) error); ok {
 		r1 = returnFunc(ctx, contentType, body, reqEditors...)
 	} else {
 		r1 = ret.Error(1)
@@ -88,7 +88,7 @@ func (_e *MockGenAuthClient_Expecter) RequestTokenWithBodyWithResponse(ctx inter
 		append([]interface{}{ctx, contentType, body}, reqEditors...)...)}
 }
 
-func (_c *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call) Run(run func(ctx context.Context, contentType string, body io.Reader, reqEditors ...auth.RequestEditorFn)) *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call {
+func (_c *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call) Run(run func(ctx context.Context, contentType string, body io.Reader, reqEditors ...oauth2.RequestEditorFn)) *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -102,10 +102,10 @@ func (_c *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call) Run(run func(
 		if args[2] != nil {
 			arg2 = args[2].(io.Reader)
 		}
-		var arg3 []auth.RequestEditorFn
-		var variadicArgs []auth.RequestEditorFn
+		var arg3 []oauth2.RequestEditorFn
+		var variadicArgs []oauth2.RequestEditorFn
 		if len(args) > 3 {
-			variadicArgs = args[3].([]auth.RequestEditorFn)
+			variadicArgs = args[3].([]oauth2.RequestEditorFn)
 		}
 		arg3 = variadicArgs
 		run(
@@ -118,12 +118,12 @@ func (_c *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call) Run(run func(
 	return _c
 }
 
-func (_c *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call) Return(requestTokenResponse *auth.RequestTokenResponse, err error) *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call {
+func (_c *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call) Return(requestTokenResponse *oauth2.RequestTokenResponse, err error) *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call {
 	_c.Call.Return(requestTokenResponse, err)
 	return _c
 }
 
-func (_c *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call) RunAndReturn(run func(ctx context.Context, contentType string, body io.Reader, reqEditors ...auth.RequestEditorFn) (*auth.RequestTokenResponse, error)) *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call {
+func (_c *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call) RunAndReturn(run func(ctx context.Context, contentType string, body io.Reader, reqEditors ...oauth2.RequestEditorFn) (*oauth2.RequestTokenResponse, error)) *MockGenAuthClient_RequestTokenWithBodyWithResponse_Call {
 	_c.Call.Return(run)
 	return _c
 }

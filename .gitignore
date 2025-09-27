@@ -33,6 +33,7 @@ go.work.sum
 
 # Private http test configuration
 http-client.private.env.json
+envs.sh
 
 # goreleaser
 dist/
@@ -46,6 +47,7 @@ api/**/gen/
 
 # local build artifacts from Makefile
 bin/
+camunder
 
 # macos / windows explorer cruft
 .DS_Store
