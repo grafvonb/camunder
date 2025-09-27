@@ -88,7 +88,7 @@ func (s *Service) Init(ctx context.Context) error {
 	}()
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return fmt.Errorf("login failed: status=%d from %s", resp.StatusCode, req.URL.RawPath)
+		return fmt.Errorf("login failed: %d (%s)", resp.StatusCode, http.StatusText(resp.StatusCode))
 	}
 
 	// Verify we received at least one cookie for the base host.

@@ -53,3 +53,25 @@ func TestCookie_Login_OK(t *testing.T) {
 	require.True(t, svc.IsAuthenticated())
 	t.Log("success: got authenticated")
 }
+
+func TestCookie_Login_OK_MissingCookie(t *testing.T) {
+	srv := testx.StartAuthServerCookie(t, testx.CookieAuthOpts{SetCookie: false})
+	defer srv.Close()
+
+	jar, _ := cookiejar.New(nil)
+	hc := srv.TS.Client()
+	hc.Jar = jar
+
+	cfg := &config.Config{}
+	cfg.Auth.Cookie.BaseURL = srv.BaseURL
+
+	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	svc, _ := cookie.New(cfg, hc, log)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	err := svc.Init(ctx)
+	require.Error(t, err)
+	require.False(t, svc.IsAuthenticated())
+	t.Logf("success: got expected error: %v", err)
+}
