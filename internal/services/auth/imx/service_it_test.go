@@ -18,7 +18,7 @@ import (
 
 func TestIMX_Login_IT(t *testing.T) {
 	if testing.Short() {
-		t.Skip("short")
+		t.Skip("short mode")
 	}
 
 	cfg := &config.Config{}
