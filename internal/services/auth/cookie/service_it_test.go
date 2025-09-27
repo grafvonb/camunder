@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCookie_Login_IT(t *testing.T) {
+func TestCookie_Login_OK_IT(t *testing.T) {
 	if testing.Short() {
 		t.Skip("short mode")
 	}

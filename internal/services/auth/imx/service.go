@@ -78,7 +78,28 @@ func New(cfg *config.Config, httpClient *http.Client, log *slog.Logger, opts ...
 func (s *Service) Name() string { return "imx" }
 
 func (s *Service) IsAuthenticated() bool {
-	return s.xsrfToken != ""
+	if s.xsrfToken == "" || s.http == nil || s.http.Jar == nil || s.baseURL == nil {
+		return false
+	}
+	if hasIMXSession(s.http.Jar, s.baseURL) {
+		return true
+	}
+	// Handle Secure cookies stored for https only
+	if s.baseURL.Scheme == "http" {
+		u := *s.baseURL
+		u.Scheme = "https"
+		return hasIMXSession(s.http.Jar, &u)
+	}
+	return false
+}
+
+func hasIMXSession(j http.CookieJar, u *url.URL) bool {
+	for _, ck := range j.Cookies(u) {
+		if strings.HasPrefix(ck.Name, "imx-session-") {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Service) Token() string {

@@ -102,7 +102,7 @@ func (s *Service) Init(ctx context.Context) error {
 				return fmt.Errorf("session cookie is Secure; switch BaseURL to https://%s", s.baseURL.Host)
 			}
 		}
-		return errors.New("login succeeded but no session cookie stored")
+		return errors.New("login succeeded but no session cookie stored at " + s.baseURL.Host)
 	}
 
 	s.isAuth = true
