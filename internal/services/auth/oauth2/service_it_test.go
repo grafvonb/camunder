@@ -13,27 +13,19 @@ import (
 
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/auth/oauth2"
+	"github.com/grafvonb/camunder/internal/testx"
 )
-
-func requireEnv(t *testing.T, key string) string {
-	t.Helper()
-	v := os.Getenv(key)
-	if v == "" {
-		t.Skipf("missing %s; skipping integration test", key)
-	}
-	return v
-}
 
 func TestOAuth2_TokenAndEditor_IT(t *testing.T) {
 	if testing.Short() {
 		t.Skip("short mode")
 	}
 
-	tokenURL := requireEnv(t, "OAUTH_TOKEN_URL")
-	clientID := requireEnv(t, "OAUTH_CLIENT_ID")
-	clientSecret := requireEnv(t, "OAUTH_CLIENT_SECRET")
-	// scope := os.Getenv("OAUTH_SCOPE")   // optional
-	target := os.Getenv("OAUTH_TARGET") // optional; defaults to req host
+	tokenURL := testx.RequireEnvWithPrefix(t, "OAUTH_TOKEN_URL")
+	clientID := testx.RequireEnvWithPrefix(t, "OAUTH_CLIENT_ID")
+	clientSecret := testx.RequireEnvWithPrefix(t, "OAUTH_CLIENT_SECRET")
+	// scope := testx.GetEnvWithPrefix("OAUTH_SCOPE") // optional
+	target := testx.GetEnvRaw("OAUTH_TARGET") // optional; defaults to req host
 
 	cfg := &config.Config{}
 	cfg.Auth.OAuth2.TokenURL = tokenURL

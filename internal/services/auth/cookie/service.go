@@ -15,6 +15,8 @@ import (
 	authcore "github.com/grafvonb/camunder/internal/services/auth/core"
 )
 
+var _ authcore.Authenticator = (*Service)(nil)
+
 type Service struct {
 	cfg     *config.Config
 	http    *http.Client

@@ -81,6 +81,10 @@ func (s *Service) IsAuthenticated() bool {
 	return s.xsrfToken != ""
 }
 
+func (s *Service) Token() string {
+	return s.xsrfToken
+}
+
 func (s *Service) Init(ctx context.Context) error {
 	if s.xsrfToken != "" {
 		return nil
@@ -98,7 +102,7 @@ func (s *Service) Init(ctx context.Context) error {
 		return fmt.Errorf("imx login request: %w", err)
 	}
 	if resp.StatusCode() < http.StatusOK || resp.StatusCode() >= http.StatusMultipleChoices {
-		return fmt.Errorf("imx login failed: status=%d body=%s", resp.StatusCode(), string(resp.Body))
+		return fmt.Errorf("imx login failed: url:%s status:%d body:%s", resp.HTTPResponse.Request.URL, resp.StatusCode(), string(resp.Body))
 	}
 	if s.http.Jar == nil {
 		return errors.New("http client has no cookie jar")
