@@ -4,16 +4,16 @@ package oauth2_test
 
 import (
 	"context"
+	"log/slog"
+	"net/http"
 	"os"
 	"testing"
 	"time"
 
-	"log/slog"
-	"net/http"
-
 	"github.com/grafvonb/camunder/internal/config"
 	"github.com/grafvonb/camunder/internal/services/auth/oauth2"
 	"github.com/grafvonb/camunder/internal/testx"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOAuth2_TokenAndEditor_IT(t *testing.T) {
@@ -24,46 +24,38 @@ func TestOAuth2_TokenAndEditor_IT(t *testing.T) {
 	tokenURL := testx.RequireEnvWithPrefix(t, "OAUTH_TOKEN_URL")
 	clientID := testx.RequireEnvWithPrefix(t, "OAUTH_CLIENT_ID")
 	clientSecret := testx.RequireEnvWithPrefix(t, "OAUTH_CLIENT_SECRET")
-	// scope := testx.GetEnvWithPrefix("OAUTH_SCOPE") // optional
-	target := testx.GetEnvRaw("OAUTH_TARGET") // optional; defaults to req host
+	target := testx.GetEnvRaw("OAUTH_TARGET") // optional
 
-	cfg := &config.Config{}
-	cfg.Auth.OAuth2.TokenURL = tokenURL
-	cfg.Auth.OAuth2.ClientID = clientID
-	cfg.Auth.OAuth2.ClientSecret = clientSecret
+	cfg := &config.Config{
+		Auth: config.Auth{
+			OAuth2: config.AuthOAuth2ClientCredentials{
+				TokenURL:     tokenURL,
+				ClientID:     clientID,
+				ClientSecret: clientSecret,
+			},
+		},
+	}
 
 	httpClient := &http.Client{Timeout: 15 * time.Second}
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
+	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	svc, err := oauth2.New(cfg, httpClient, log)
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
+	require.NoError(t, err)
+	require.NotNil(t, svc)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	t.Log("trying to get token from", cfg.Auth.OAuth2.TokenURL)
 	tok, err := svc.RetrieveTokenForAPI(ctx, target)
-	if err != nil {
-		t.Fatalf("RetrieveTokenForAPI: %v", err)
-	}
-	if tok == "" {
-		t.Fatalf("empty access token")
-	}
-	t.Logf("success: got token: %q...", tok[:30])
+	require.NoError(t, err)
+	require.NotEmpty(t, tok)
 
-	// Editor adds header on non-token URL
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://example.com/", nil)
-	_ = svc.Editor()(ctx, req)
-	if got := req.Header.Get("Authorization"); got == "" {
-		t.Fatalf("Authorization header not set")
-	}
+	require.NoError(t, svc.Editor()(ctx, req))
+	require.NotEmpty(t, req.Header.Get("Authorization"))
 
-	// Editor must NOT add header on token URL
 	req2, _ := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, nil)
-	_ = svc.Editor()(ctx, req2)
-	if req2.Header.Get("Authorization") != "" {
-		t.Fatalf("editor must skip token URL")
-	}
+	require.NoError(t, svc.Editor()(ctx, req2))
+	require.Empty(t, req2.Header.Get("Authorization"), "editor must skip token URL")
 }
