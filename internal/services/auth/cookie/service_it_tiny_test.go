@@ -1,11 +1,11 @@
-//go:build integration
+//go:build integration_tiny
 
 package cookie_test
 
 import (
 	"context"
 	"log/slog"
-	"net/http"
+	"net/http/cookiejar"
 	"os"
 	"testing"
 	"time"
@@ -16,30 +16,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCookie_Login_OK_IT(t *testing.T) {
-	if testing.Short() {
-		t.Skip("short mode")
-	}
+func TestCookie_Login_OK_Tiny_IT(t *testing.T) {
+	srv := testx.StartAuthServerCookie(t, testx.CookieAuthOpts{
+		SetCookie: true,
+		ExpectUser: struct {
+			Name     string
+			Password string
+		}{Name: "demo", Password: "demo"},
+	})
+	defer srv.Close()
+
+	jar, _ := cookiejar.New(nil)
+	httpClient := srv.TS.Client()
+	httpClient.Jar = jar
+	httpClient.Timeout = 5 * time.Second
 
 	cfg := &config.Config{
 		Auth: config.Auth{
 			Mode: config.ModeCookie,
 			Cookie: config.AuthCookieSession{
-				BaseURL:  testx.RequireEnvWithPrefix(t, "COOKIE_BASE_URL"),
-				Username: testx.RequireEnvWithPrefix(t, "COOKIE_USERNAME"),
-				Password: testx.RequireEnvWithPrefix(t, "COOKIE_PASSWORD"),
+				BaseURL:  srv.BaseURL,
+				Username: "demo",
+				Password: "demo",
 			},
 		},
 	}
-
-	httpClient := &http.Client{Timeout: 15 * time.Second}
 	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
-
 	svc, err := cookie.New(cfg, httpClient, log)
 	require.NoError(t, err)
 	require.NotNil(t, svc)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	t.Logf("trying to authenticate aginst %s with user %q", cfg.Auth.Cookie.BaseURL, cfg.Auth.Cookie.Username)

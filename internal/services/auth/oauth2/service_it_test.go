@@ -43,6 +43,7 @@ func TestOAuth2_TokenAndEditor_IT(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
+	t.Log("trying to get token from", cfg.Auth.OAuth2.TokenURL)
 	tok, err := svc.RetrieveTokenForAPI(ctx, target)
 	if err != nil {
 		t.Fatalf("RetrieveTokenForAPI: %v", err)
@@ -50,7 +51,7 @@ func TestOAuth2_TokenAndEditor_IT(t *testing.T) {
 	if tok == "" {
 		t.Fatalf("empty access token")
 	}
-	t.Logf("got token: %q...", tok[:30])
+	t.Logf("success: got token: %q...", tok[:30])
 
 	// Editor adds header on non-token URL
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://example.com/", nil)
