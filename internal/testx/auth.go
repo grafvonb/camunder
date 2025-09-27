@@ -1,4 +1,4 @@
-package testutil
+package testx
 
 import (
 	"net/http"
@@ -38,11 +38,16 @@ func TestConfig() *config.Config {
 				ClientID:     "test",
 				ClientSecret: "test",
 			},
-			IMX: config.AuthImxSession{
-				BaseURL:  "http://localhost/imx",
+			XSRF: config.AuthXsrfSession{
+				BaseURL:  "http://localhost/xsrf",
 				AppId:    "test",
 				Module:   "test",
 				User:     "test",
+				Password: "test",
+			},
+			Cookie: config.AuthCookieSession{
+				BaseURL:  "http://localhost/cookie",
+				Username: "test",
 				Password: "test",
 			},
 		},

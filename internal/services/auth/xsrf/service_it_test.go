@@ -1,6 +1,6 @@
 //go:build integration
 
-package imx_test
+package xsrf_test
 
 import (
 	"context"
@@ -12,26 +12,26 @@ import (
 	"log/slog"
 
 	"github.com/grafvonb/camunder/internal/config"
-	"github.com/grafvonb/camunder/internal/services/auth/imx"
+	"github.com/grafvonb/camunder/internal/services/auth/xsrf"
 	"github.com/grafvonb/camunder/internal/testx"
 )
 
-func TestIMX_Login_IT(t *testing.T) {
+func TestXSRF_Login_IT(t *testing.T) {
 	if testing.Short() {
 		t.Skip("short mode")
 	}
 
 	cfg := &config.Config{}
-	cfg.Auth.IMX.BaseURL = testx.RequireEnvWithPrefix(t, "IMX_BASE_URL")
-	cfg.Auth.IMX.AppId = testx.RequireEnvWithPrefix(t, "IMX_APP_ID")
-	cfg.Auth.IMX.Module = testx.RequireEnvWithPrefix(t, "IMX_MODULE")
-	cfg.Auth.IMX.User = testx.RequireEnvWithPrefix(t, "IMX_USER")
-	cfg.Auth.IMX.Password = testx.RequireEnvWithPrefix(t, "IMX_PASSWORD")
+	cfg.Auth.XSRF.BaseURL = testx.RequireEnvWithPrefix(t, "XSRF_BASE_URL")
+	cfg.Auth.XSRF.AppId = testx.RequireEnvWithPrefix(t, "XSRF_APP_ID")
+	cfg.Auth.XSRF.Module = testx.RequireEnvWithPrefix(t, "XSRF_MODULE")
+	cfg.Auth.XSRF.User = testx.RequireEnvWithPrefix(t, "XSRF_USER")
+	cfg.Auth.XSRF.Password = testx.RequireEnvWithPrefix(t, "XSRF_PASSWORD")
 
 	hc := &http.Client{Timeout: 15 * time.Second}
 	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	svc, err := imx.New(cfg, hc, log)
+	svc, err := xsrf.New(cfg, hc, log)
 	if err != nil {
 		t.Fatal(err)
 	}

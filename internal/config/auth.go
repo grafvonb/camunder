@@ -8,34 +8,34 @@ import (
 
 type AuthMode string
 
-func (m AuthMode) IsValid() bool { return m == ModeOAuth2 || m == ModeIMX || m == ModeCookie }
+func (m AuthMode) IsValid() bool { return m == ModeOAuth2 || m == ModeXSRF || m == ModeCookie }
 
 const (
 	ModeOAuth2 AuthMode = "oauth2"
-	ModeIMX    AuthMode = "imx"
+	ModeXSRF   AuthMode = "xsrf"
 	ModeCookie AuthMode = "cookie"
 )
 
 type Auth struct {
 	Mode   AuthMode                    `mapstructure:"mode"`
 	OAuth2 AuthOAuth2ClientCredentials `mapstructure:"oauth2"`
-	IMX    AuthImxSession              `mapstructure:"imx"`
+	XSRF   AuthXsrfSession             `mapstructure:"xsrf"`
 	Cookie AuthCookieSession           `mapstructure:"cookie"`
 }
 
 func (c *Auth) Validate() error {
 	var errs []error
 	if !c.Mode.IsValid() {
-		errs = append(errs, fmt.Errorf("mode: invalid value %q (allowed values: %q, %q)", c.Mode, ModeOAuth2, ModeIMX))
+		errs = append(errs, fmt.Errorf("mode: invalid value %q (allowed values: %q, %q)", c.Mode, ModeOAuth2, ModeXSRF))
 	} else {
 		switch c.Mode {
 		case ModeOAuth2:
 			if err := c.OAuth2.Validate(); err != nil {
 				errs = append(errs, fmt.Errorf("oauth2: %w", err))
 			}
-		case ModeIMX:
-			if err := c.IMX.Validate(); err != nil {
-				errs = append(errs, fmt.Errorf("imx: %w", err))
+		case ModeXSRF:
+			if err := c.XSRF.Validate(); err != nil {
+				errs = append(errs, fmt.Errorf("xsrf: %w", err))
 			}
 		case ModeCookie:
 			if err := c.Cookie.Validate(); err != nil {
@@ -46,7 +46,7 @@ func (c *Auth) Validate() error {
 	return errors.Join(errs...)
 }
 
-type AuthImxSession struct {
+type AuthXsrfSession struct {
 	BaseURL  string `mapstructure:"base_url"`
 	AppId    string `mapstructure:"app_id"`
 	Module   string `mapstructure:"module"`
@@ -54,23 +54,23 @@ type AuthImxSession struct {
 	Password string `mapstructure:"password"`
 }
 
-func (c *AuthImxSession) Validate() error {
+func (c *AuthXsrfSession) Validate() error {
 	var errs []error
 
 	if strings.TrimSpace(c.BaseURL) == "" {
-		errs = append(errs, ErrNoIMXBaseURL)
+		errs = append(errs, ErrNoXSRFBaseURL)
 	}
 	if strings.TrimSpace(c.AppId) == "" {
-		errs = append(errs, ErrNoIMXAppID)
+		errs = append(errs, ErrNoXSRFAppID)
 	}
 	if strings.TrimSpace(c.Module) == "" {
-		errs = append(errs, ErrNoIMXModule)
+		errs = append(errs, ErrNoXSRFModule)
 	}
 	if strings.TrimSpace(c.User) == "" {
-		errs = append(errs, ErrNoIMXUser)
+		errs = append(errs, ErrNoXSRFUser)
 	}
 	if strings.TrimSpace(c.Password) == "" {
-		errs = append(errs, ErrNoIMXPassword)
+		errs = append(errs, ErrNoXSRFPassword)
 	}
 
 	return errors.Join(errs...)

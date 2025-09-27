@@ -14,11 +14,11 @@ var (
 	ErrNoClientID     = errors.New("no client_id provided in auth configuration")
 	ErrNoClientSecret = errors.New("no client_secret provided in auth configuration")
 
-	ErrNoIMXBaseURL  = errors.New("no base_url provided in imx auth configuration")
-	ErrNoIMXAppID    = errors.New("no app_id provided in imx auth configuration")
-	ErrNoIMXModule   = errors.New("no module provided in imx auth configuration")
-	ErrNoIMXUser     = errors.New("no user provided in imx auth configuration")
-	ErrNoIMXPassword = errors.New("no password provided in imx auth configuration")
+	ErrNoXSRFBaseURL  = errors.New("no base_url provided in xsrf auth configuration")
+	ErrNoXSRFAppID    = errors.New("no app_id provided in xsrf auth configuration")
+	ErrNoXSRFModule   = errors.New("no module provided in xsrf auth configuration")
+	ErrNoXSRFUser     = errors.New("no user provided in xsrf auth configuration")
+	ErrNoXSRFPassword = errors.New("no password provided in xsrf auth configuration")
 
 	ErrNoConfigInContext       = errors.New("no config in context")
 	ErrInvalidServiceInContext = errors.New("invalid config in context")
@@ -52,11 +52,11 @@ func (c *Config) String() string {
 	alias.Auth.OAuth2.ClientSecret = "******"
 	alias.Auth.OAuth2.Scopes = maps.Clone(c.Auth.OAuth2.Scopes)
 
-	alias.Auth.IMX.BaseURL = c.Auth.IMX.BaseURL
-	alias.Auth.IMX.AppId = c.Auth.IMX.AppId
-	alias.Auth.IMX.Module = c.Auth.IMX.Module
-	alias.Auth.IMX.User = c.Auth.IMX.User
-	alias.Auth.IMX.Password = "******"
+	alias.Auth.XSRF.BaseURL = c.Auth.XSRF.BaseURL
+	alias.Auth.XSRF.AppId = c.Auth.XSRF.AppId
+	alias.Auth.XSRF.Module = c.Auth.XSRF.Module
+	alias.Auth.XSRF.User = c.Auth.XSRF.User
+	alias.Auth.XSRF.Password = "******"
 
 	b, err := json.MarshalIndent(alias, "", "  ")
 	if err != nil {

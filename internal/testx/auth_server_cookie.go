@@ -70,7 +70,7 @@ func StartAuthServerCookie(t testing.TB, opts CookieAuthOpts) *AuthServerCookie 
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(opts.StatusCode)
-		json.NewEncoder(w).Encode(map[string]any{"ok": opts.StatusCode == http.StatusOK})
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": opts.StatusCode == http.StatusOK})
 	})
 
 	t.Log("trying to start AuthServerCookie...")

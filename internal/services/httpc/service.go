@@ -40,7 +40,7 @@ func WithTimeoutString(v string) Option {
 	}
 }
 
-// WithCookieJar Ensure cookie jar (needed for IMX)
+// WithCookieJar Ensure cookie jar (needed for XSRF)
 func WithCookieJar() Option {
 	return func(s *Service) { _ = s.InstallCookieJar() }
 }

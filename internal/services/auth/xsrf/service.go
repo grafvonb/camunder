@@ -1,4 +1,4 @@
-package imx
+package xsrf
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	imxapi "github.com/grafvonb/camunder/internal/api/gen/clients/auth/imx"
+	xsrfapi "github.com/grafvonb/camunder/internal/api/gen/clients/auth/xsrf"
 	"github.com/grafvonb/camunder/internal/config"
 	authcore "github.com/grafvonb/camunder/internal/services/auth/core"
 )
@@ -59,43 +59,43 @@ func New(cfg *config.Config, httpClient *http.Client, log *slog.Logger, opts ...
 		s.http.Jar = jar
 	}
 
-	baseURL, err := url.Parse(cfg.Auth.IMX.BaseURL)
+	baseURL, err := url.Parse(cfg.Auth.XSRF.BaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("parse imx base url: %w", err)
+		return nil, fmt.Errorf("parse xsrf base url: %w", err)
 	}
 	s.baseURL = baseURL
 
 	if s.c == nil {
-		cli, err := imxapi.NewClientWithResponses(cfg.Auth.IMX.BaseURL, imxapi.WithHTTPClient(s.http))
+		cli, err := xsrfapi.NewClientWithResponses(cfg.Auth.XSRF.BaseURL, xsrfapi.WithHTTPClient(s.http))
 		if err != nil {
-			return nil, fmt.Errorf("init imx auth client: %w", err)
+			return nil, fmt.Errorf("init xsrf auth client: %w", err)
 		}
 		s.c = cli
 	}
 	return s, nil
 }
 
-func (s *Service) Name() string { return "imx" }
+func (s *Service) Name() string { return "xsrf" }
 
 func (s *Service) IsAuthenticated() bool {
 	if s.xsrfToken == "" || s.http == nil || s.http.Jar == nil || s.baseURL == nil {
 		return false
 	}
-	if hasIMXSession(s.http.Jar, s.baseURL) {
+	if hasXSRFSession(s.http.Jar, s.baseURL) {
 		return true
 	}
 	// Handle Secure cookies stored for https only
 	if s.baseURL.Scheme == "http" {
 		u := *s.baseURL
 		u.Scheme = "https"
-		return hasIMXSession(s.http.Jar, &u)
+		return hasXSRFSession(s.http.Jar, &u)
 	}
 	return false
 }
 
-func hasIMXSession(j http.CookieJar, u *url.URL) bool {
+func hasXSRFSession(j http.CookieJar, u *url.URL) bool {
 	for _, ck := range j.Cookies(u) {
-		if strings.HasPrefix(ck.Name, "imx-session-") {
+		if strings.HasPrefix(ck.Name, "xsrf-session-") {
 			return true
 		}
 	}
@@ -111,19 +111,19 @@ func (s *Service) Init(ctx context.Context) error {
 		return nil
 	}
 
-	appID := imxapi.ImxLoginPostParamsAppId(s.cfg.Auth.IMX.AppId)
-	body := imxapi.ImxLoginPostJSONRequestBody{
-		"Module":   s.cfg.Auth.IMX.Module,
-		"User":     s.cfg.Auth.IMX.User,
-		"Password": s.cfg.Auth.IMX.Password,
+	appID := xsrfapi.XsrfLoginPostParamsAppId(s.cfg.Auth.XSRF.AppId)
+	body := xsrfapi.XsrfLoginPostJSONRequestBody{
+		"Module":   s.cfg.Auth.XSRF.Module,
+		"User":     s.cfg.Auth.XSRF.User,
+		"Password": s.cfg.Auth.XSRF.Password,
 	}
 
-	resp, err := s.c.ImxLoginPostWithResponse(ctx, appID, &imxapi.ImxLoginPostParams{}, body)
+	resp, err := s.c.XsrfLoginPostWithResponse(ctx, appID, &xsrfapi.XsrfLoginPostParams{}, body)
 	if err != nil {
-		return fmt.Errorf("imx login request: %w", err)
+		return fmt.Errorf("xsrf login request: %w", err)
 	}
 	if resp.StatusCode() < http.StatusOK || resp.StatusCode() >= http.StatusMultipleChoices {
-		return fmt.Errorf("imx login failed: url:%s status:%d body:%s", resp.HTTPResponse.Request.URL, resp.StatusCode(), string(resp.Body))
+		return fmt.Errorf("xsrf login failed: url:%s status:%d body:%s", resp.HTTPResponse.Request.URL, resp.StatusCode(), string(resp.Body))
 	}
 	if s.http.Jar == nil {
 		return errors.New("http client has no cookie jar")
@@ -131,7 +131,7 @@ func (s *Service) Init(ctx context.Context) error {
 
 	var haveSession bool
 	for _, ck := range s.http.Jar.Cookies(s.baseURL) {
-		if strings.HasPrefix(ck.Name, "imx-session-") {
+		if strings.HasPrefix(ck.Name, "xsrf-session-") {
 			haveSession = true
 		}
 		if ck.Name == "XSRF-TOKEN" && ck.Value != "" {
@@ -148,10 +148,10 @@ func (s *Service) Init(ctx context.Context) error {
 				}
 			}
 		}
-		return errors.New("imx login missing XSRF-TOKEN cookie")
+		return errors.New("xsrf login missing XSRF-TOKEN cookie")
 	}
 	if !haveSession {
-		return errors.New("imx login missing session cookie")
+		return errors.New("xsrf login missing session cookie")
 	}
 	return nil
 }
@@ -159,9 +159,9 @@ func (s *Service) Init(ctx context.Context) error {
 func (s *Service) Editor() authcore.RequestEditor {
 	return func(ctx context.Context, req *http.Request) error {
 		sameHost := strings.EqualFold(req.URL.Host, s.baseURL.Host)
-		isLogin := strings.Contains(req.URL.Path, "/imx/login/")
+		isLogin := strings.Contains(req.URL.Path, "/xsrf/login/")
 		if sameHost && !isLogin && s.xsrfToken == "" {
-			return errors.New("imx: not authenticated; call Init first")
+			return errors.New("xsrf: not authenticated; call Init first")
 		}
 		req.Header.Set("Accept", "application/json")
 		if s.xsrfToken != "" {
