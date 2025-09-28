@@ -14,12 +14,6 @@ var (
 	ErrNoClientID     = errors.New("no client_id provided in auth configuration")
 	ErrNoClientSecret = errors.New("no client_secret provided in auth configuration")
 
-	ErrNoXSRFBaseURL  = errors.New("no base_url provided in xsrf auth configuration")
-	ErrNoXSRFAppID    = errors.New("no app_id provided in xsrf auth configuration")
-	ErrNoXSRFModule   = errors.New("no module provided in xsrf auth configuration")
-	ErrNoXSRFUser     = errors.New("no user provided in xsrf auth configuration")
-	ErrNoXSRFPassword = errors.New("no password provided in xsrf auth configuration")
-
 	ErrNoConfigInContext       = errors.New("no config in context")
 	ErrInvalidServiceInContext = errors.New("invalid config in context")
 )
@@ -51,6 +45,10 @@ func (c *Config) String() string {
 	alias.Auth.OAuth2.ClientID = "******"
 	alias.Auth.OAuth2.ClientSecret = "******"
 	alias.Auth.OAuth2.Scopes = maps.Clone(c.Auth.OAuth2.Scopes)
+
+	alias.Auth.Cookie.BaseURL = c.Auth.Cookie.BaseURL
+	alias.Auth.Cookie.Username = "******"
+	alias.Auth.Cookie.Password = "******"
 
 	b, err := json.MarshalIndent(alias, "", "  ")
 	if err != nil {

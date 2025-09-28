@@ -43,12 +43,6 @@ func (a *APIs) Validate() error {
 	if err := a.Camunda.Validate(); err != nil {
 		errs = append(errs, fmt.Errorf("camunda: %w", err))
 	}
-	if err := a.Operate.Validate(); err != nil {
-		errs = append(errs, fmt.Errorf("operate: %w", err))
-	}
-	if err := a.Tasklist.Validate(); err != nil {
-		errs = append(errs, fmt.Errorf("tasklist: %w", err))
-	}
 	return errors.Join(errs...)
 }
 

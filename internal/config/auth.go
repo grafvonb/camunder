@@ -40,36 +40,6 @@ func (c *Auth) Validate() error {
 	return errors.Join(errs...)
 }
 
-type AuthXsrfSession struct {
-	BaseURL  string `mapstructure:"base_url"`
-	AppId    string `mapstructure:"app_id"`
-	Module   string `mapstructure:"module"`
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
-}
-
-func (c *AuthXsrfSession) Validate() error {
-	var errs []error
-
-	if strings.TrimSpace(c.BaseURL) == "" {
-		errs = append(errs, ErrNoXSRFBaseURL)
-	}
-	if strings.TrimSpace(c.AppId) == "" {
-		errs = append(errs, ErrNoXSRFAppID)
-	}
-	if strings.TrimSpace(c.Module) == "" {
-		errs = append(errs, ErrNoXSRFModule)
-	}
-	if strings.TrimSpace(c.User) == "" {
-		errs = append(errs, ErrNoXSRFUser)
-	}
-	if strings.TrimSpace(c.Password) == "" {
-		errs = append(errs, ErrNoXSRFPassword)
-	}
-
-	return errors.Join(errs...)
-}
-
 type AuthOAuth2ClientCredentials struct {
 	TokenURL     string            `mapstructure:"token_url"`
 	ClientID     string            `mapstructure:"client_id"`
@@ -128,12 +98,6 @@ func (c *AuthCookieSession) Validate() error {
 	var errs []error
 	if strings.TrimSpace(c.BaseURL) == "" {
 		errs = append(errs, errors.New("no base_url provided in cookie auth configuration"))
-	}
-	if strings.TrimSpace(c.Username) == "" {
-		errs = append(errs, errors.New("no username provided in cookie auth configuration"))
-	}
-	if strings.TrimSpace(c.Password) == "" {
-		errs = append(errs, errors.New("no password provided in cookie auth configuration"))
 	}
 	return errors.Join(errs...)
 }

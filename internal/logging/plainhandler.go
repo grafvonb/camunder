@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"path/filepath"
 	"time"
 )
 
@@ -37,10 +36,10 @@ func (h *PlainHandler) Handle(_ context.Context, r slog.Record) error {
 	}
 
 	// optional source
-	if h.withSource && r.PC != 0 {
-		fs := r.Source()
-		line = fmt.Sprintf("%s (%s:%d)", line, filepath.Base(fs.File), fs.Line)
-	}
+	//if h.withSource && r.PC != 0 {
+	//	fs := r.Source()
+	//	line = fmt.Sprintf("%s (%s:%d)", line, filepath.Base(fs.File), fs.Line)
+	//}
 
 	_, err := fmt.Fprintln(h.w, line)
 	return err

@@ -15,6 +15,7 @@ import (
 	client "github.com/grafvonb/camunder/internal/api/gen/clients/auth/oauth2"
 	"github.com/grafvonb/camunder/internal/config"
 	authcore "github.com/grafvonb/camunder/internal/services/auth/core"
+	"github.com/grafvonb/camunder/internal/services/common"
 )
 
 type TargetResolver func(*http.Request) string
@@ -61,6 +62,9 @@ func New(cfg *config.Config, apiHTTP *http.Client, log *slog.Logger, opts ...Opt
 		return nil, fmt.Errorf("parse token url: %w", err)
 	}
 	tokenHTTP := &http.Client{Timeout: apiHTTP.Timeout} // no wrapped Transport, no Jar
+
+	cfg.APIs.Operate.BaseURL = common.DefaultVal(cfg.APIs.Operate.BaseURL, cfg.APIs.Camunda.BaseURL)
+	cfg.APIs.Tasklist.BaseURL = common.DefaultVal(cfg.APIs.Tasklist.BaseURL, cfg.APIs.Camunda.BaseURL)
 
 	c, err := client.NewClientWithResponses(tu.String(), client.WithHTTPClient(tokenHTTP))
 	if err != nil {

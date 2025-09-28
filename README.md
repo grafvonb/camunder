@@ -15,86 +15,241 @@ or *[finding process instances with orphan parent process instances](#finding-pr
 which simplify recurring administration and maintenance of Camunda 8 process instances. 
 
 See [Camunder in Action](#camunder-in-action) for more examples.
+
+## Table of Contents
+- [Camunder – a CLI for Camunda 8](#camunder--a-cli-for-camunda-8)
+- [Quick Start with Camunda 8 Run](#quick-start-with-camunda-8-run)
+- [Highlights](#highlights)
+- [Supported Camunda 8 APIs](#supported-camunda-8-apis)
+- [Configuration](#configuration)
+    - [Choose authentication method](#choose-authentication-method)
+        - [Authentication with OAuth2 (OIDC)](#authentication-with-oauth2-oidc)
+        - [Authentication with API Cookie (development with Camunda 8 Run only)](#authentication-with-api-cookie-development-with-camunda-8-run-only)
+    - [Connecting to Camunda 8 APIs](#connecting-to-camunda-8-apis)
+        - [If you use Camunda 8 Run with API Cookie Authentication (Development only)](#if-you-use-camunda-8-run-with-api-cookie-authentication-development-only)
+        - [If you use Camunda 8 with OAuth2 (oidc) authentication](#if-you-use-camunda-8-with-oauth2-oidc-authentication)
+    - [Ways to provide settings](#ways-to-provide-settings)
+    - [Precedence](#precedence)
+    - [Default configuration file locations](#default-configuration-file-locations)
+    - [File format](#file-format)
+    - [Environment variables](#environment-variables)
+    - [Security note](#security-note)
+    - [Example: Show effective configuration](#example-show-effective-configuration)
+- [Usage Help](#usage-help)
+- [Camunder in Action](#camunder-in-action)
+    - [Deleting an active process instance by cancelling it first](#deleting-an-active-process-instance-by-cancelling-it-first)
+    - [Finding process instances with orphan parent process instances](#finding-process-instances-with-orphan-parent-process-instances)
+    - [Listing process instances for a specific process definition (model) and its first version](#listing-process-instances-for-a-specific-process-definition-model-and-its-first-version)
+
  
+## Quick Start with Camunda 8 Run
+
+1. **Install Camunda 8.7 Run**  
+   Download Camunda 8 Run from the [Camunda Releases](https://github.com/camunda/camunda/releases?q=%22c8run-8.7%22&expanded=true) page, unpack and start it with `./start.sh`.
+2. **Install Camunder**
+   Download the latest release from the [Camunder Releases](https://github.com/grafvonb/camunder/releases) page and unpack it.
+3. **Configure Camunder**  
+   Create a configuration file (YAML) in the folder where you unpacked Camunder with the name `config.yaml` or in `$HOME/.camunder/config.yaml` with the minimal connection and authentication details:
+    ```yaml
+    auth:
+      mode: "cookie"
+      cookie:
+        base_url: "http://localhost:8080"
+    
+    apis:
+      version: "87"
+      camunda_api:
+        base_url: "http://localhost:8080/v2"
+    ```
+4. **Run Camunder**  
+   Test the connection and list cluster topology:
+   ```bash
+   ./camunder get cluster-topology
+   ```
+   or use explicit path to config file:
+   ```bash
+   ./camunder get cluster-topology --config ./config-minimal.yaml
+   ```
+   You should see output like this:
+    ```json
+    {
+      "Brokers": [
+        {
+          "Host": "192.168.178.88",
+          "NodeId": 0,
+          "Partitions": [
+            {
+              "Health": "healthy",
+              "PartitionId": 1,
+              "Role": "leader"
+            }
+          ],
+          "Port": 26501,
+          "Version": "8.7.12"
+        }
+      ],
+      "ClusterSize": 1,
+      "GatewayVersion": "8.7.12",
+      "PartitionsCount": 1,
+      "ReplicationFactor": 1,
+      "LastCompletedChangeId": ""
+    }  
+    ```
+
 ## Highlights
 
 Camunder simplifies various tasks related to Camunda 8, including these special use cases:
 
 - **Delete active process instances by cancelling them first**
   ```bash
-  camunder delete pi --key <process-instance-key> --cancel
+  ./camunder delete pi --key <process-instance-key> --cancel
   ```
 
 - **List process instances that are children (sub-processes) of other process instances**
   ```bash
-  camunder get pi --bpmn-process-id=<bpmn-process-id> --children-only
+  ./camunder get pi --bpmn-process-id=<bpmn-process-id> --children-only
   ```
 
 - **List process instances that are parents of other process instances**
   ```bash
-  camunder get pi --bpmn-process-id=<bpmn-process-id> --parents-only
+  ./camunder get pi --bpmn-process-id=<bpmn-process-id> --parents-only
   ```
 
 - **List process instances that are children of orphan parent process instances**  
   (i.e., their parent process instance no longer exists)
   ```bash
-  camunder get pi --bpmn-process-id=<bpmn-process-id> --orphan-parents-only
+  ./camunder get pi --bpmn-process-id=<bpmn-process-id> --orphan-parents-only
   ```
 
 - **List process instances for a specific process definition (model) and its first version**
   ```bash
-  camunder get pi --bpmn-process-id=<bpmn-process-id> --process-version=1
+  ./camunder get pi --bpmn-process-id=<bpmn-process-id> --process-version=1
   ```
 
 - **List process instances with incidents**
   ```bash
-  camunder get pi --incidents-only
+  ./camunder get pi --incidents-only
   ```
 
 - **List process instances without incidents**
   ```bash
-  camunder get pi --no-incidents-only
+  ./camunder get pi --no-incidents-only
   ```
 
 - **Recursive search (walk) process instances with parent–child relationships**
     - List all child process instances of a given process instance
       ```bash
-      camunder walk pi --mode children --start-key <process-instance-key>
+      ./camunder walk pi --mode children --start-key <process-instance-key>
       ```
     - List path from a given process instance to its root ancestor (top-level parent)
       ```bash
-      camunder walk pi --mode parent --start-key <process-instance-key>
+      ./camunder walk pi --mode parent --start-key <process-instance-key>
       ```
     - List the entire family (parent, grandparent, …) of a given process instance (traverse up and down the tree)
       ```bash
-      camunder walk pi --mode family --start-key <process-instance-key>
+      ./camunder walk pi --mode family --start-key <process-instance-key>
       ```
 
 - **List process instances in one line per instance (suitable for scripting)**  
   Works with all `get` commands.
   ```bash
-  camunder get pi --one-line
+  ./camunder get pi --one-line
   ```
 
 - **List process instances just by their keys (suitable for scripting)**  
   Works with all `get` commands.
   ```bash
-  camunder get pi --keys-only
+  ./camunder get pi --keys-only
   ```
 
-- …and more to come!
-
-
-## Upcoming features
-
+- …and more to come:
 - bulk operations (e.g., delete multiple process instances by filter)
 - multiple Camunda 8 API versions support (currently 8.7, 8.8 to come)
+- or submit a proposal or contribute code on [GitHub](https://github.com/grafvonb/camunder)
 
 ## Supported Camunda 8 APIs
 
 - 8.7.x
+- 8.8.x (to come after release in October 2025)
 
 ## Configuration
+
+### Choose authentication method
+
+Camunder supports two authentication methods for connecting to Camunda 8 APIs:
+- OAuth2 (OIDC)
+- API Cookie (development with Camunda 8 Run only)
+
+#### Authentication with OAuth2 (OIDC)
+
+Camunder supports OAuth2 (OIDC) authentication with client credentials flow.
+You need to provide the following settings:
+* Token URL
+* Client ID
+* Client Secret
+* Scopes (optional, depending on your identity provider and API setup)
+
+Here is an example configuration snippet for OAuth2 authentication for Camunda 8 running locally with Keycloak:
+```yaml
+auth:
+  mode: "oauth2" # options: "oauth2", "cookie"
+  oauth2:
+    token_url: "http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect"
+    client_id: "camunder"
+    client_secret: "*******" # use environment variable CAMUNDER_AUTH_CLIENT_SECRET if possible
+    scopes:
+      camunda_api: "profile"
+      operate_api: "profile"
+      tasklist_api: "profile"
+```
+
+#### Authentication with API Cookie (development with Camunda 8 Run only)
+
+This method is only suitable for local development with Camunda 8 Run, as it uses the API cookie set by the web interface.
+You need to provide the following settings:
+* API base URL
+* (optional) Username and Password (if not set, defaults to `demo`/`demo`)
+
+Here is an example configuration snippet for API Cookie authentication for Camunda 8 Run running locally:
+```yaml
+auth:
+  mode: "cookie" # options: "oauth2", "cookie"
+  cookie:
+    base_url: "http://localhost:8090"
+    username: "demo"
+    password: "demo"
+```
+
+### Connecting to Camunda 8 APIs
+
+To run Camunder, you need to configure the connection to your Camunda 8 APIs (Camunda, Operate, Tasklist) and authentication details.
+With the introduction of Camunda 8.8 and unified APIs, some of these settings may become optional or redundant in the future.
+
+Camunder expects the following API configurations:
+* Camunda 8 API (required, formally known as Zeebe API)
+* Operate API (optional, required for some commands, if not set defaults to Camunda 8 API)
+* Tasklist API (optional, required for some commands, if not set defaults to Camunda 8 API)
+
+#### If you use Camunda 8 Run with API Cookie Authentication (Development only)
+
+After starting Camunda 8 Run, you can find the API endpoint in the terminal output (default is `http://localhost:8080/v2`). 
+(current, October 2025, gotcha: if you use `--port` flag, the terminal output still shows port 8080, but it actually runs on the port you specified).
+
+Provide the following settings in the config file, environment variables, or flags:
+```yaml
+apis:
+  version: "87"
+  camunda_api:
+    base_url: "http://localhost:8080/v2"
+  operate_api:
+    base_url: "http://localhost:8080"
+  tasklist_api:
+    base_url: "http://localhost:8080"
+```
+
+#### If you use Camunda 8 with OAuth2 (oidc) authentication
+
+### Ways to provide settings
 
 Camunder uses [Viper](https://github.com/spf13/viper) under the hood.
 Configuration values can come from:
@@ -193,8 +348,8 @@ You can inspect the effective configuration (after merging defaults,
 config file, env vars, and flags) with:
 
 ```bash
-$ camunder --show-config
-config loaded: /Users/adam.boczek/.camunder/config.yaml
+$ ./camunder --show-config
+config loaded: /Users/adam.boczek/Development/Workspace/Boczek/Projects/camunder/camunder/config.yaml
 {
   "Config": "",
   "App": {
@@ -205,42 +360,51 @@ config loaded: /Users/adam.boczek/.camunder/config.yaml
       "MaxDelay": 8000000000,
       "MaxRetries": 0,
       "Multiplier": 2,
-      "Timeout": 120000000000
+      "Timeout": 30000000000
     }
   },
   "Auth": {
-    "TokenURL": "http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect",
-    "ClientID": "******",
-    "ClientSecret": "******",
-    "Scopes": {
-      "camunda_api": "profile",
-      "operate_api": "profile",
-      "tasklist_api": "profile"
+    "Mode": "",
+    "OAuth2": {
+      "TokenURL": "http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect",
+      "ClientID": "******",
+      "ClientSecret": "******",
+      "Scopes": {
+        "camunda_api": "profile",
+        "operate_api": "profile",
+        "tasklist_api": "profile"
+      }
+    },
+    "Cookie": {
+      "BaseURL": "http://localhost:8090",
+      "Username": "******",
+      "Password": "******"
     }
   },
   "APIs": {
+    "Version": "87",
     "Camunda": {
       "Key": "camunda_api",
       "BaseURL": "http://localhost:8086/v2"
     },
     "Operate": {
       "Key": "operate_api",
-      "BaseURL": "http://localhost:8081/v1"
+      "BaseURL": "http://localhost:8081"
     },
     "Tasklist": {
       "Key": "tasklist_api",
-      "BaseURL": "http://localhost:8082/v1"
+      "BaseURL": "http://localhost:8082"
     }
   },
   "HTTP": {
-    "Timeout": "30s"
+    "Timeout": "23s"
   }
 }
 ```
-## Usage 
 
+## Usage Help
 ```bash
-$ camunder --help
+$ ./camunder help
 Camunder is a CLI tool to interact with Camunda 8.
 
 Usage:
@@ -251,28 +415,33 @@ Available Commands:
   cancel      Cancel a resource of a given type by its key. Supported resource types are: process-instance (pi)
   completion  Generate the autocompletion script for the specified shell
   delete      Delete a resource of a given type by its key. Supported resource types are: process-instance (pi)
-  get         List resources of a defined type. Supported resource types are: cluster-topology (ct), process-definition (pd), process-instance (pi)
+  expect      Expect a resource of a given type to change (e.g. its state) by its key. Supported resource types are: process-instance (pi)
+  get         List resources of a resource type. Supported resource types are: cluster-topology (ct), process-definition (pd), process-instance (pi)
   help        Help about any command
   version     Print version information
-  walk        Traverse (walk) the parent/child graph process instances.
+  walk        Traverse (walk) the parent/child graph of resource type. Supported resource types are: process-instance (pi)
 
 Flags:
-      --auth-client-id string        auth client ID
-      --auth-client-secret string    auth client secret
-      --auth-scopes stringToString   auth scopes as key=value (repeatable or comma-separated) (default [])
-      --auth-token-url string        auth token URL
-      --camunda-base-url string     Camunda8 API base URL
-      --config string                path to config file
-  -h, --help                         help for camunder
-      --http-timeout string          HTTP timeout (Go duration, e.g. 30s)
-      --operate-base-url string      Operate API base URL
-      --quiet                        suppress output, use exit code only
-      --show-config                  print effective config (secrets redacted)
-      --tasklist-base-url string     Tasklist API base URL
-      --tenant string                default tenant ID
+      --auth-client-id string         auth client ID
+      --auth-client-secret string     auth client secret
+      --auth-scopes stringToString    auth scopes as key=value (repeatable or comma-separated) (default [])
+      --auth-token-url string         auth token URL
+  -a, --camunda-apis-version string   Camunda API version (supported: [8.7 8.8]) (default "8.7")
+      --camunda-base-url string       Camunda API base URL
+      --config string                 path to config file
+  -h, --help                          help for camunder
+      --http-timeout string           HTTP timeout (Go duration, e.g. 30s)
+      --log-format string             log format (json, plain, text) (default "plain")
+      --log-level string              log level (debug, info, warn, error) (default "info")
+      --log-with-source               include source file and line number in logs
+      --operate-base-url string       Operate API base URL
+      --show-config                   print effective config (secrets redacted)
+      --tasklist-base-url string      Tasklist API base URL
+      --tenant string                 default tenant ID
 
 Use "camunder [command] --help" for more information about a command.
 ```
+
 ### Camunder in Action
 
 #### Deleting an active process instance by cancelling it first
@@ -325,6 +494,7 @@ process instance with key 2251799813685511 was successfully deleted
   "message": "Process instance and dependant data deleted for key '2251799813685511'"
 }
 ```
+
 #### Finding process instances with orphan parent process instances
 ```bash
 $ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line
@@ -354,6 +524,7 @@ found: 2
 2251799813685571 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:28.190+0000 e:2025-09-10T20:36:44.990+0000 p:2251799813685566 i:false
 2251799813685582 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:33.364+0000 e:2025-09-09T20:27:55.530+0000 p:2251799813685577 i:false
 ```
+
 #### Listing process instances for a specific process definition (model) and its first version
 ```bash
 $ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line

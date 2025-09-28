@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/grafvonb/camunder/internal/services/common"
 )
 
 type AuthServerCookie struct {
@@ -26,21 +28,11 @@ type CookieAuthOpts struct {
 
 func StartAuthServerCookie(t testing.TB, opts CookieAuthOpts) *AuthServerCookie {
 	t.Helper()
-	if opts.LoginPath == "" {
-		opts.LoginPath = "/api/login"
-	}
-	if opts.CookieName == "" {
-		opts.CookieName = "sessionid"
-	}
-	if opts.StatusCode == 0 {
-		opts.StatusCode = http.StatusOK
-	}
-	if opts.ExpectUser.Name == "" {
-		opts.ExpectUser.Name = "demo"
-	}
-	if opts.ExpectUser.Password == "" {
-		opts.ExpectUser.Password = "demo"
-	}
+	opts.LoginPath = common.DefaultVal(opts.LoginPath, "/api/login")
+	opts.CookieName = common.DefaultVal(opts.CookieName, "sessionid")
+	opts.StatusCode = common.DefaultVal(opts.StatusCode, http.StatusOK)
+	opts.ExpectUser.Name = common.DefaultVal(opts.ExpectUser.Name, "demo")
+	opts.ExpectUser.Password = common.DefaultVal(opts.ExpectUser.Password, "demo")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc(opts.LoginPath, func(w http.ResponseWriter, r *http.Request) {

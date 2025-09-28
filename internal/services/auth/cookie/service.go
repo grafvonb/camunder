@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafvonb/camunder/internal/config"
 	authcore "github.com/grafvonb/camunder/internal/services/auth/core"
+	"github.com/grafvonb/camunder/internal/services/common"
 )
 
 var _ authcore.Authenticator = (*Service)(nil)
@@ -37,6 +38,8 @@ func New(cfg *config.Config, httpClient *http.Client, log *slog.Logger, opts ...
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
+	cfg.APIs.Operate.BaseURL = common.DefaultVal(cfg.APIs.Operate.BaseURL, cfg.APIs.Camunda.BaseURL)
+	cfg.APIs.Tasklist.BaseURL = common.DefaultVal(cfg.APIs.Tasklist.BaseURL, cfg.APIs.Camunda.BaseURL)
 
 	s := &Service{cfg: cfg, http: httpClient, log: log}
 	for _, opt := range opts {
@@ -67,9 +70,10 @@ func (s *Service) Init(ctx context.Context) error {
 
 	loginURL := *s.baseURL
 	loginURL.Path = strings.TrimRight(loginURL.Path, "/") + "/api/login"
+
 	query := loginURL.Query()
-	query.Set("username", s.cfg.Auth.Cookie.Username)
-	query.Set("password", s.cfg.Auth.Cookie.Password)
+	query.Set("username", common.DefaultVal(s.cfg.Auth.Cookie.Username, "demo"))
+	query.Set("password", common.DefaultVal(s.cfg.Auth.Cookie.Password, "demo"))
 	loginURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, loginURL.String(), http.NoBody)
@@ -80,7 +84,11 @@ func (s *Service) Init(ctx context.Context) error {
 
 	resp, err := s.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("login request: %w", err)
+		hint := ""
+		if strings.Contains(err.Error(), "connect: connection refused") {
+			hint = " (is the server running?)"
+		}
+		return fmt.Errorf("login request: %w%s", err, hint)
 	}
 	defer func() {
 		_, _ = io.Copy(io.Discard, resp.Body)
