@@ -52,12 +52,6 @@ func (c *Config) String() string {
 	alias.Auth.OAuth2.ClientSecret = "******"
 	alias.Auth.OAuth2.Scopes = maps.Clone(c.Auth.OAuth2.Scopes)
 
-	alias.Auth.XSRF.BaseURL = c.Auth.XSRF.BaseURL
-	alias.Auth.XSRF.AppId = c.Auth.XSRF.AppId
-	alias.Auth.XSRF.Module = c.Auth.XSRF.Module
-	alias.Auth.XSRF.User = c.Auth.XSRF.User
-	alias.Auth.XSRF.Password = "******"
-
 	b, err := json.MarshalIndent(alias, "", "  ")
 	if err != nil {
 		return fmt.Sprintf("error marshaling config: %v", err)

@@ -8,34 +8,28 @@ import (
 
 type AuthMode string
 
-func (m AuthMode) IsValid() bool { return m == ModeOAuth2 || m == ModeXSRF || m == ModeCookie }
+func (m AuthMode) IsValid() bool { return m == ModeOAuth2 || m == ModeCookie }
 
 const (
 	ModeOAuth2 AuthMode = "oauth2"
-	ModeXSRF   AuthMode = "xsrf"
 	ModeCookie AuthMode = "cookie"
 )
 
 type Auth struct {
 	Mode   AuthMode                    `mapstructure:"mode"`
 	OAuth2 AuthOAuth2ClientCredentials `mapstructure:"oauth2"`
-	XSRF   AuthXsrfSession             `mapstructure:"xsrf"`
 	Cookie AuthCookieSession           `mapstructure:"cookie"`
 }
 
 func (c *Auth) Validate() error {
 	var errs []error
 	if !c.Mode.IsValid() {
-		errs = append(errs, fmt.Errorf("mode: invalid value %q (allowed values: %q, %q)", c.Mode, ModeOAuth2, ModeXSRF))
+		errs = append(errs, fmt.Errorf("mode: invalid value %q (allowed values: %q, %q)", c.Mode, ModeOAuth2, ModeCookie))
 	} else {
 		switch c.Mode {
 		case ModeOAuth2:
 			if err := c.OAuth2.Validate(); err != nil {
 				errs = append(errs, fmt.Errorf("oauth2: %w", err))
-			}
-		case ModeXSRF:
-			if err := c.XSRF.Validate(); err != nil {
-				errs = append(errs, fmt.Errorf("xsrf: %w", err))
 			}
 		case ModeCookie:
 			if err := c.Cookie.Validate(); err != nil {

@@ -38,13 +38,6 @@ func TestConfig() *config.Config {
 				ClientID:     "test",
 				ClientSecret: "test",
 			},
-			XSRF: config.AuthXsrfSession{
-				BaseURL:  "http://localhost/xsrf",
-				AppId:    "test",
-				Module:   "test",
-				User:     "test",
-				Password: "test",
-			},
 			Cookie: config.AuthCookieSession{
 				BaseURL:  "http://localhost/cookie",
 				Username: "test",
@@ -53,7 +46,7 @@ func TestConfig() *config.Config {
 		},
 		APIs: config.APIs{
 			Camunda: config.API{
-				BaseURL: "http://localhost/camunda",
+				BaseURL: "http://localhost/camunda/v2",
 			},
 			Operate: config.API{
 				BaseURL: "http://localhost/operate",
