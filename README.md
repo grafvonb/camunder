@@ -46,7 +46,7 @@ See [Camunder in Action](#camunder-in-action) for more examples.
 
 1. **Install Camunda 8.7 Run**  
    Download Camunda 8 Run from the [Camunda Releases](https://github.com/camunda/camunda/releases?q=%22c8run-8.7%22&expanded=true) page, unpack and start it with `./start.sh`.
-2. **Install Camunder**
+2. **Install Camunder**  
    Download the latest release from the [Camunder Releases](https://github.com/grafvonb/camunder/releases) page and unpack it.
 3. **Configure Camunder**  
    Create a configuration file (YAML) in the folder where you unpacked Camunder with the name `config.yaml` or in `$HOME/.camunder/config.yaml` with the minimal connection and authentication details:
@@ -443,9 +443,11 @@ Use "camunder [command] --help" for more information about a command.
 ```
 
 ### Camunder in Action
+Look here for practical examples of using Camunder for common tasks and special use cases.
 
-#### Deleting an active process instance by cancelling it first
-```bash
+#### Deleting an active process instance by cancelling it first, if the instance is active
+List all process instances for a specific process definition:
+```
 $ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line
 found: 12
 2251799813685511 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:30.380+0000 i:false
@@ -460,6 +462,9 @@ found: 12
 2251799813685595 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:27.621+0000 p:2251799813685590 i:false
 2251799813685606 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:33.533+0000 p:2251799813685601 i:false
 2251799813685614 dev01 C87SimpleUserTask_Process v3 ACTIVE s:2025-09-10T10:03:12.700+0000 i:false
+```
+List only active process instances for the specific process definition in active state:
+```
 $ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line --state=active
 filter: state=active
 found: 10
@@ -473,9 +478,15 @@ found: 10
 2251799813685595 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:27.621+0000 p:2251799813685590 i:false
 2251799813685606 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:33.533+0000 p:2251799813685601 i:false
 2251799813685614 dev01 C87SimpleUserTask_Process v3 ACTIVE s:2025-09-10T10:03:12.700+0000 i:false
+```
+Try to delete an active process instance (will fail):
+```
 $ camunder delete pi --key 2251799813685511
 trying to delete process instance with key 2251799813685511...
 Error deleting process instance with key 2251799813685511: unexpected status 400: {"status":400,"message":"Process instances needs to be in one of the states [COMPLETED, CANCELED]","instance":"dae2c2ce-58dd-4396-a948-4d57463168ed","type":"Invalid request"}
+```
+Try to delete an active process instance by forcing cancellation first (will succeed):
+```
 $ camunder delete pi --key 2251799813685511 --cancel
 trying to delete process instance with key 2251799813685511...
 process instance with key 2251799813685511 not in state COMPLETED or CANCELED, cancelling it first...
@@ -495,8 +506,9 @@ process instance with key 2251799813685511 was successfully deleted
 }
 ```
 
-#### Finding process instances with orphan parent process instances
-```bash
+#### Finding process instances with orphan (non-existing) parent process instances
+List all process instances for a specific process definition:
+```
 $ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line
 found: 12
 2251799813685511 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:30.380+0000 i:false
@@ -511,6 +523,9 @@ found: 12
 2251799813685595 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:27.621+0000 p:2251799813685590 i:false
 2251799813685606 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:33.533+0000 p:2251799813685601 i:false
 2251799813685614 dev01 C87SimpleUserTask_Process v3 ACTIVE s:2025-09-10T10:03:12.700+0000 i:false
+```
+List all process instances for a specific process definition that are children of other process instances (look at p:...):
+```
 $ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line --children-only
 filter: children-only=true
 found: 4
@@ -518,6 +533,9 @@ found: 4
 2251799813685582 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:33.364+0000 e:2025-09-09T20:27:55.530+0000 p:2251799813685577 i:false
 2251799813685595 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:27.621+0000 p:2251799813685590 i:false
 2251799813685606 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:33.533+0000 p:2251799813685601 i:false
+```
+List all process instances for a specific process definition that are children of orphan parent process instances (their parent process instance no longer exists):
+```
 $ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line --orphan-parents-only
 filter: orphan-parents-only=true
 found: 2
@@ -525,8 +543,9 @@ found: 2
 2251799813685582 dev01 C87SimpleUserTask_Process v2 CANCELED s:2025-09-09T19:10:33.364+0000 e:2025-09-09T20:27:55.530+0000 p:2251799813685577 i:false
 ```
 
-#### Listing process instances for a specific process definition (model) and its first version
-```bash
+#### Listing process instances for a process definition in a specific version
+List all process instances for a specific process definition:
+```
 $ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line
 found: 11
 2251799813685518 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:36.618+0000 i:false
@@ -540,6 +559,9 @@ found: 11
 2251799813685595 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:27.621+0000 p:2251799813685590 i:false
 2251799813685606 dev01 C87SimpleUserTask_Process v2 ACTIVE s:2025-09-09T22:01:33.533+0000 p:2251799813685601 i:false
 2251799813685614 dev01 C87SimpleUserTask_Process v3 ACTIVE s:2025-09-10T10:03:12.700+0000 i:false
+```
+List only process instances for version 1 of the process definition:
+```
 $ camunder get pi --bpmn-process-id=C87SimpleUserTask_Process --one-line --process-version=1
 found: 3
 2251799813685518 dev01 C87SimpleUserTask_Process v1/v1.0.0 ACTIVE s:2025-09-09T12:14:36.618+0000 i:false
