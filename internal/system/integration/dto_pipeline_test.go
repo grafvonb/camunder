@@ -3,8 +3,8 @@ package integration_test
 import (
 	"testing"
 
-	"github.com/grafvonb/camunder/internal/system/adapters/pubconv"
-	"github.com/grafvonb/camunder/internal/system/adapters/wireconv"
+	spc "github.com/grafvonb/camunder/internal/system/adapters/pubconv"
+	swc "github.com/grafvonb/camunder/internal/system/adapters/wireconv"
 	d "github.com/grafvonb/camunder/internal/system/domain"
 	"github.com/grafvonb/camunder/internal/system/wire"
 	"github.com/stretchr/testify/require"
@@ -43,10 +43,10 @@ func Test_FromWireOverDomainToPublic(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, ws, 2)
 
-	s0, _ := wireconv.FromWire(ws[0])
+	s0, _ := swc.FromWire(ws[0])
 	require.Equal(t, "809601fb-05e1-49a4-a64b-b92a7418d8eb", s0.ID)
 	require.Equal(t, "Atruvia", s0.DisplayName)
-	s1, _ := wireconv.FromWire(ws[1])
+	s1, _ := swc.FromWire(ws[1])
 	require.Equal(t, "dc0fc84f-5a74-4eb0-80a8-6cf777f2c929", s1.ID)
 	require.Equal(t, "AADUMGPrefixTest001", s1.DisplayName)
 
@@ -55,7 +55,7 @@ func Test_FromWireOverDomainToPublic(t *testing.T) {
 		require.NoError(t, ds[i].Validate(), "idx %d", i)
 	}
 
-	ps, _ := pubconv.ToPublicSlice(ds)
+	ps, _ := spc.ToPublicSlice(ds)
 	require.Len(t, ps, 2)
 
 	require.Equal(t, "809601fb-05e1-49a4-a64b-b92a7418d8eb", ps[0].ID)

@@ -1,6 +1,8 @@
-package pubconv
+package systempubconv
 
 import (
+	"errors"
+
 	d "github.com/grafvonb/camunder/internal/system/domain"
 	p "github.com/grafvonb/camunder/pkg/system/publicv1"
 )
@@ -38,6 +40,9 @@ func ToPublicSlice(in []d.System) ([]p.System, error) {
 		if err != nil {
 			errs = append(errs, err)
 		}
+	}
+	if len(errs) > 0 {
+		return out, errors.Join(errs...)
 	}
 	return out, nil
 }

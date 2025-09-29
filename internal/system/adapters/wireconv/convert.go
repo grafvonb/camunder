@@ -1,4 +1,4 @@
-package wireconv
+package systemwireconv
 
 import (
 	conv "github.com/grafvonb/camunder/internal/api/convert"
